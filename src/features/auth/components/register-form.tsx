@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import Image from "next/image";
 
 const registerSchema = z
   .object({
@@ -88,6 +89,12 @@ export const RegisterForm = () => {
                     type="button"
                     disabled={isPending}
                   >
+                    <Image
+                      src={"/logos/github.svg"}
+                      alt="github"
+                      width={20}
+                      height={20}
+                    />
                     Masuk dengan Github
                   </Button>
                   <Button
@@ -96,6 +103,12 @@ export const RegisterForm = () => {
                     type="button"
                     disabled={isPending}
                   >
+                    <Image
+                      src={"/logos/google.svg"}
+                      alt="github"
+                      width={20}
+                      height={20}
+                    />
                     Masuk dengan Google
                   </Button>
                 </div>
