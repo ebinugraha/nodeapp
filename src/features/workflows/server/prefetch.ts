@@ -8,5 +8,5 @@ type Input = inferInput<typeof trpc.workflows.getAll>;
  */
 
 export const prefetchWorkflows = async (params: Input) => {
-  return prefetch(trpc.workflows.getAll.queryOptions(params));
+  return await prefetch(trpc.workflows.getAll.queryOptions(params));
 };
