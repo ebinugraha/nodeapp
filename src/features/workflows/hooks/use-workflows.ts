@@ -35,9 +35,34 @@ export const useCreateWorkflow = () => {
         await queryClient.invalidateQueries(
           trpc.workflows.getAll.queryOptions({})
         );
+        await queryClient.invalidateQueries(
+          trpc.workflows.getOne.queryFilter({ id: data.id })
+        );
       },
       onError: (error) => {
         toast.error(`Failed to create workflow : ${error.message}`);
+      },
+    })
+  );
+};
+
+export const useRemoveWorkflow = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.delete.mutationOptions({
+      onSuccess: async (data) => {
+        toast.success(`Workflow "${data.name}" removed`);
+        await queryClient.invalidateQueries(
+          trpc.workflows.getAll.queryOptions({})
+        );
+        await queryClient.invalidateQueries(
+          trpc.workflows.getOne.queryFilter({ id: data.id })
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to delete workflow : ${error.message}`);
       },
     })
   );
