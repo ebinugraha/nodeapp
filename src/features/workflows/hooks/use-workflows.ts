@@ -67,3 +67,35 @@ export const useRemoveWorkflow = () => {
     })
   );
 };
+
+/**
+ * Hook to fetch a get one workflow
+ */
+
+export const useSuspenseWorkflow = (id: string) => {
+  const trpc = useTRPC();
+
+  return useSuspenseQuery(trpc.workflows.getOne.queryOptions({ id }));
+};
+
+export const useUpdateWorkflowName = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.updateName.mutationOptions({
+      onSuccess: async (data) => {
+        toast.success(`Workflow "${data.name}" updated`);
+        await queryClient.invalidateQueries(
+          trpc.workflows.getAll.queryOptions({})
+        );
+        await queryClient.invalidateQueries(
+          trpc.workflows.getOne.queryOptions({ id: data.id })
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to update workflow : ${error.message}`);
+      },
+    })
+  );
+};
