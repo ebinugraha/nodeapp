@@ -37,6 +37,86 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
     }),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        nodes: z.array(
+          z.object({
+            id: z.string(),
+            type: z.string().nullish(),
+            data: z.record(z.string(), z.any()),
+            position: z.object({
+              x: z.number(),
+              y: z.number(),
+            }),
+          })
+        ),
+        edges: z.array(
+          z.object({
+            source: z.string(),
+            target: z.string(),
+            sourceHandle: z.string().nullish(),
+            targetHandle: z.string().nullish(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { edges, id, nodes } = input;
+
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id,
+          userId: ctx.auth.user.id,
+        },
+      });
+
+      // Transaction untuk memastikan konsistensi
+      return await prisma.$transaction(async (tx) => {
+        // hapus semua node terlebih dahulu
+        await tx.node.deleteMany({
+          where: {
+            workflowId: id,
+          },
+        });
+
+        // masukan lagi node terbaru
+        await tx.node.createMany({
+          data: nodes.map((node) => ({
+            id: node.id,
+            name: node.type || "unknown",
+            type: node.type as NodeType,
+            position: node.position,
+            data: node.data || {},
+            workflowId: id,
+          })),
+        });
+
+        // membuat connection
+        await tx.connection.createMany({
+          data: edges.map((edge) => ({
+            workflowId: id,
+            fromNodeId: edge.source,
+            toNodeId: edge.target,
+            fromOutput: edge.sourceHandle || "main",
+            toInput: edge.targetHandle || "main",
+          })),
+        });
+
+        // update kolom updatedAt di workflow
+        await tx.workflow.update({
+          data: {
+            updatedAt: new Date(),
+          },
+          where: {
+            id,
+          },
+        });
+
+        return workflow;
+      });
+    }),
   updateName: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string() }))
     .mutation(async ({ ctx, input }) => {

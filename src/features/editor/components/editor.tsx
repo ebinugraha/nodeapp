@@ -22,6 +22,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useCallback, useState } from "react";
 import { AddNoteButton } from "./add-node-button";
+import { useSetAtom } from "jotai";
+import { editorAtom } from "../store/atoms";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -33,6 +35,8 @@ export const EditorError = () => {
 
 export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: wofkflow } = useSuspenseWorkflow(workflowId);
+
+  const setWorkflow = useSetAtom(editorAtom);
 
   const [nodes, setNodes] = useState<Node[]>(wofkflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(wofkflow.edges);
@@ -66,6 +70,12 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         proOptions={{
           hideAttribution: true,
         }}
+        onInit={setWorkflow}
+        snapGrid={[10, 10]}
+        snapToGrid
+        panOnScroll
+        panOnDrag={false}
+        selectionOnDrag
       >
         <Background />
         <Controls />
