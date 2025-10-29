@@ -28,7 +28,7 @@ export function WorkflowNode({
           <Button size={"sm"} variant={"ghost"} onClick={onSettings}>
             <Settings2Icon className="size-4" />
           </Button>
-          <Button size={"sm"} variant={"ghost"} onClick={onSettings}>
+          <Button size={"sm"} variant={"ghost"} onClick={onDelete}>
             <Trash2Icon className="size-4" />
           </Button>
         </NodeToolbar>

@@ -46,6 +46,9 @@ export const useCreateWorkflow = () => {
   );
 };
 
+/**
+ * Hook untuk menghapus workflows
+ */
 export const useRemoveWorkflow = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -63,6 +66,33 @@ export const useRemoveWorkflow = () => {
       },
       onError: (error) => {
         toast.error(`Failed to delete workflow : ${error.message}`);
+      },
+    })
+  );
+};
+
+/**
+ * Hook untuk menghubah/menyimpan perubahan workflows
+ * @returns update mutation
+ */
+
+export const useUpdateWorkflow = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.update.mutationOptions({
+      onSuccess: async (data) => {
+        toast.success(`Workflow "${data.name}" saved`);
+        await queryClient.invalidateQueries(
+          trpc.workflows.getAll.queryOptions({})
+        );
+        await queryClient.invalidateQueries(
+          trpc.workflows.getOne.queryFilter({ id: data.id })
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to save workflow : ${error.message}`);
       },
     })
   );
