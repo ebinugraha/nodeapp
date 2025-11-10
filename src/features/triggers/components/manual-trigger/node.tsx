@@ -11,7 +11,7 @@ export const ManualTriggerNode = memo((props: NodeProps) => {
     setIsDialogOpen(true);
   };
 
-  const status = "loading";
+  const status = "initial";
 
   return (
     <>

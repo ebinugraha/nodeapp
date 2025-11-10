@@ -4,13 +4,12 @@ import { Node, NodeProps, useReactFlow } from "@xyflow/react";
 import { memo, useState } from "react";
 import { BaseExecutionNode } from "../base-execution-node";
 import { GlobeIcon } from "lucide-react";
-import { formSchema, HTTPRequestDialog } from "./dialog";
+import { HTTPRequestDialog, HttpRequestFormValues } from "./dialog";
 
 type HttpRequestNodeData = {
   endpoint?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
-  [key: string]: unknown;
 };
 
 type HttpRequestNodeyType = Node<HttpRequestNodeData>;
@@ -24,23 +23,24 @@ export const HttpRequestNode = memo(
       setIsDialogOpen(true);
     };
 
-    const status = "loading";
+    const status = "initial";
 
     const nodeData = props.data;
     const description = nodeData?.endpoint
       ? `${nodeData.method || "GET"} : ${nodeData.endpoint}`
       : "Not configured";
 
-    const onSubmit = (value: formSchema) => {
+    const onSubmit = (values: HttpRequestFormValues) => {
+      console.log(values);
       setNodes((nodes) =>
         nodes.map((node) => {
           if (node.id === props.id) {
             return {
               ...node,
               data: {
-                endpoint: value.endPoint,
-                method: value.method,
-                body: value.body,
+                endpoint: values.endPoint,
+                method: values.method,
+                body: values.body,
               },
             };
           }
@@ -55,9 +55,7 @@ export const HttpRequestNode = memo(
           onSubmit={onSubmit}
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          defaultBody={nodeData.body}
-          defaultEndpoint={nodeData.endpoint}
-          defaultMethod={nodeData.method}
+          defaultValues={nodeData}
         />
         <BaseExecutionNode
           {...props}
