@@ -29,6 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { HttpRequestNode } from "./node";
 
 const formSchema = z.object({
   endPoint: z.url({ message: "Please enter a valid URL" }),
@@ -36,30 +37,26 @@ const formSchema = z.object({
   body: z.string().optional(), // TODO add refine
 });
 
-export type formSchema = z.infer<typeof formSchema>;
+export type HttpRequestFormValues = z.infer<typeof formSchema>;
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (value: z.infer<typeof formSchema>) => void;
-  defaultEndpoint?: string;
-  defaultMethod?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  defaultBody?: string;
+  onSubmit: (value: HttpRequestFormValues) => void;
+  defaultValues?: Partial<HttpRequestFormValues>;
 }
 
 export const HTTPRequestDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  defaultEndpoint = "",
-  defaultBody = "",
-  defaultMethod = "GET",
+  defaultValues = {},
 }: Props) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<HttpRequestFormValues>({
     defaultValues: {
-      body: defaultBody,
-      endPoint: defaultEndpoint,
-      method: defaultMethod,
+      body: defaultValues.body || "",
+      endPoint: defaultValues.endPoint || "",
+      method: defaultValues.method || "GET",
     },
     resolver: zodResolver(formSchema),
   });
@@ -67,17 +64,17 @@ export const HTTPRequestDialog = ({
   useEffect(() => {
     if (open === true) {
       form.reset({
-        body: defaultBody,
-        endPoint: defaultEndpoint,
-        method: defaultMethod,
+        body: defaultValues.body || "",
+        endPoint: defaultValues.endPoint || "",
+        method: defaultValues.method || "GET",
       });
     }
-  }, [open, form, defaultBody, defaultEndpoint, defaultMethod]);
+  }, [open, form, defaultValues]);
 
   const watchMethod = form.watch("method");
   const showBodyField = ["POST", "PUT", "PATCH"].includes(watchMethod);
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = (values: HttpRequestFormValues) => {
     onSubmit(values);
     onOpenChange(false);
   };
