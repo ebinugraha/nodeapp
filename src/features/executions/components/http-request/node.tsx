@@ -8,7 +8,7 @@ import { HTTPRequestDialog, HttpRequestFormValues } from "./dialog";
 
 type HttpRequestNodeData = {
   variableName?: string;
-  endpoint?: string;
+  endPoint?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
 };
@@ -27,8 +27,8 @@ export const HttpRequestNode = memo(
     const status = "initial";
 
     const nodeData = props.data;
-    const description = nodeData?.endpoint
-      ? `${nodeData.method || "GET"} : ${nodeData.endpoint}`
+    const description = nodeData?.endPoint
+      ? `${nodeData.method || "GET"} : ${nodeData.endPoint}`
       : "Not configured";
 
     const onSubmit = (values: HttpRequestFormValues) => {
@@ -40,7 +40,7 @@ export const HttpRequestNode = memo(
               ...node,
               data: {
                 variableName: values.variableName,
-                endpoint: values.endPoint,
+                endPoint: values.endPoint,
                 method: values.method,
                 body: values.body,
               },

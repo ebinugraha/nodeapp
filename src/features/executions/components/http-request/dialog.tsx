@@ -164,7 +164,9 @@ export const HTTPRequestDialog = ({
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription></FormDescription>
+                  <FormDescription>
+                    Static URL or use '{"{{variables}}"}'
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -175,7 +177,7 @@ export const HTTPRequestDialog = ({
                 name="body"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Endpoint URL</FormLabel>
+                    <FormLabel>Body</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder={"{\n 'userId': '12345 ' \n}"}
@@ -183,7 +185,9 @@ export const HTTPRequestDialog = ({
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription></FormDescription>
+                    <FormDescription>
+                      Static URL or use '{"{{variables}}"}'
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
