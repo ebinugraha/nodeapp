@@ -7,6 +7,7 @@ import { GlobeIcon } from "lucide-react";
 import { HTTPRequestDialog, HttpRequestFormValues } from "./dialog";
 
 type HttpRequestNodeData = {
+  variableName?: string;
   endpoint?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
@@ -38,6 +39,7 @@ export const HttpRequestNode = memo(
             return {
               ...node,
               data: {
+                variableName: values.variableName,
                 endpoint: values.endPoint,
                 method: values.method,
                 body: values.body,
