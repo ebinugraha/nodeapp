@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "ngrok:dev": "ngrok http --url=gopher-driven-cattle.ngrok-free.app 3000",
     "lint": "biome check",
     "format": "biome format --write"
   },
