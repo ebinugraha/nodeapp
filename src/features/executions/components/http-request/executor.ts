@@ -10,9 +10,9 @@ Handlebars.registerHelper("json", (context) => {
 });
 
 type HTTPRequestData = {
-  variableName: string;
-  endPoint: string;
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  variableName?: string;
+  endPoint?: string;
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   body?: string;
 };
 
@@ -30,37 +30,40 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
     })
   );
 
-  if (!data.endPoint) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
-    throw new NonRetriableError("No endpoint provided for HTTP request");
-  }
-
-  if (!data.variableName) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
-    throw new NonRetriableError("No variable name provided for HTTP request");
-  }
-
-  if (!data.method) {
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
-    throw new NonRetriableError("No method provided for HTTP request");
-  }
   try {
     const result = await step.run("http-request", async () => {
+      if (!data.endPoint) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          })
+        );
+        throw new NonRetriableError("No endpoint provided for HTTP request");
+      }
+
+      if (!data.variableName) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          })
+        );
+        throw new NonRetriableError(
+          "No variable name provided for HTTP request"
+        );
+      }
+
+      if (!data.method) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          })
+        );
+        throw new NonRetriableError("No method provided for HTTP request");
+      }
+
       const endpoint = Handlebars.compile(data.endPoint)(context);
 
       console.log("Making HTTP request to:", context);
