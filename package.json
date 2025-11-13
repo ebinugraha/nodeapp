@@ -12,6 +12,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^1.0.28",
     "@ai-sdk/google": "^2.0.23",
     "@hookform/resolvers": "^5.2.2",
     "@inngest/realtime": "^0.4.4",
