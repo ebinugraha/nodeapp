@@ -8,6 +8,7 @@ import { httpRequestChannel } from "./channels/http-request";
 import { manualTriggerChannel } from "./channels/manual-trigger";
 import { googleFormTriggerChannel } from "./channels/google-form-trigger";
 import { stripeTriggerChannel } from "./channels/stripe-trigger";
+import { geminiExecutionChannel } from "./channels/gemini";
 
 export const executeWorkflow = inngest.createFunction(
   { id: "execute-workflow", retries: 0 },
@@ -18,6 +19,7 @@ export const executeWorkflow = inngest.createFunction(
       manualTriggerChannel(),
       googleFormTriggerChannel(),
       stripeTriggerChannel(),
+      geminiExecutionChannel(),
     ],
   },
   async ({ event, step, publish }) => {
@@ -27,7 +29,7 @@ export const executeWorkflow = inngest.createFunction(
       throw new NonRetriableError("No workflow ID provided");
     }
 
-    const sortedNodes = await step.run("fetch workflow nodes", async () => {
+    const sortedNodes = await step.run("prepare-workflow-node", async () => {
       const workflow = await prisma.workflow.findUniqueOrThrow({
         where: { id: workflowId },
         include: {
