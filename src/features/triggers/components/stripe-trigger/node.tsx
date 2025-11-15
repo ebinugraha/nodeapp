@@ -26,10 +26,10 @@ export const StripeTriggerNode = memo((props: NodeProps) => {
       <StripeTriggerDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
       <BaseTriggerNode
         {...props}
-        Icon={"/logos/stripe.svg"}
+        Icon={"/logos/youtube.svg"}
         status={nodeStatus}
-        name="Stripe'"
-        description="when stripe event is captured"
+        name="Youtube live stream'"
+        description="When stream is started"
         onSettings={handleSetting}
         onDoubleClick={handleSetting}
       />
