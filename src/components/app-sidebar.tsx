@@ -61,11 +61,11 @@ export const AppSidebar = () => {
             <Link href="/workflows" prefetch>
               <Image
                 src={"/logos/logo.svg"}
-                alt="NodeApp"
+                alt="Cleenchat"
                 width={30}
                 height={30}
               />
-              <span className="font-semibold text-sm">Nodeappp</span>
+              <span className="font-semibold text-sm">CleenChat</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

@@ -40,10 +40,10 @@ const triggerNodes: NodeTypeOption[] = [
   },
   {
     type: NodeType.STRIPE_TRIGGER,
-    label: "Stripe Trigger",
+    label: "Youtube live stream",
     description:
-      "Runs the flow when a Stripe event is captured. Useful for payment processing",
-    icon: "/logos/stripe.svg",
+      "Runs the flow when a youtube live event is captured. Useful for getting data",
+    icon: "/logos/youtube.svg",
   },
 ];
 
