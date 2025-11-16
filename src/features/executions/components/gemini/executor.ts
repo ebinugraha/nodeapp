@@ -23,6 +23,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   data,
   nodeId,
   context,
+  userId,
   step,
   publish,
 }) => {
@@ -77,6 +78,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     return prisma.credential.findUnique({
       where: {
         id: data.credentialId,
+        userId,
       },
     });
   });
@@ -86,7 +88,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   }
 
   const google = createGoogleGenerativeAI({
-    apiKey: credential.id,
+    apiKey: credential.value,
   });
 
   try {
