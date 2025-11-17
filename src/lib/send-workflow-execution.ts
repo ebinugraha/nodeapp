@@ -1,4 +1,5 @@
 import { inngest } from "@/inngest/client";
+import { createId } from "@paralleldrive/cuid2";
 
 export const sendWorkflowExecution = async (data: {
   workflowId: string;
@@ -7,5 +8,6 @@ export const sendWorkflowExecution = async (data: {
   return inngest.send({
     name: "workflows/execute.workflow",
     data,
+    id: createId(),
   });
 };
