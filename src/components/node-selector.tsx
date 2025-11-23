@@ -43,7 +43,13 @@ const triggerNodes: NodeTypeOption[] = [
     label: "Youtube live stream",
     description:
       "Runs the flow when a youtube live event is captured. Useful for getting data",
-    icon: "/logos/youtube.svg",
+    icon: "/logos/stripe.svg",
+  },
+  {
+    type: NodeType.YOUTUBE_LIVE_CHAT,
+    label: "YouTube Live Chat",
+    description: "Trigger workflow on new live chat messages",
+    icon: "/logos/youtube.svg", // Reuse logo youtube
   },
 ];
 

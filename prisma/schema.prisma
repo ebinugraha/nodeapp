@@ -122,6 +122,7 @@ enum NodeType {
   DEEPSEEK
   DISCORD
   SLACK
+  YOUTUBE_LIVE_CHAT
 }
 model Node {
   id String @id @default(cuid())

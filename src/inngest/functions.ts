@@ -10,6 +10,7 @@ import { googleFormTriggerChannel } from "./channels/google-form-trigger";
 import { stripeTriggerChannel } from "./channels/stripe-trigger";
 import { geminiExecutionChannel } from "./channels/gemini";
 import { discordExecutionChannel } from "./channels/discord";
+import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
 
 export const executeWorkflow = inngest.createFunction(
   {
@@ -35,6 +36,7 @@ export const executeWorkflow = inngest.createFunction(
       stripeTriggerChannel(),
       geminiExecutionChannel(),
       discordExecutionChannel(),
+      youtubeLiveChatChannel(),
     ],
   },
   async ({ event, step, publish }) => {
@@ -104,5 +106,116 @@ export const executeWorkflow = inngest.createFunction(
     });
 
     return { workflowId, result: context };
+  }
+);
+
+// Tambahkan function baru ini
+// Tambahkan function baru ini
+export const pollYoutubeLiveChat = inngest.createFunction(
+  { id: "poll-youtube-live-chat" },
+  { event: "trigger/youtube.poll" },
+  async ({ event, step }) => {
+    const nodeId = event.data.nodeId;
+    const videoId = event.data.videoId;
+    const pollingInterval = event.data.pollingInterval;
+
+    // 1. Cek status node (pause / continue)
+    const { isActive, workflowId } = await step.run(
+      "check-node-status",
+      async () => {
+        const node = await prisma.node.findUnique({
+          where: { id: nodeId },
+          select: { data: true, workflowId: true },
+        });
+
+        if (!node) return { isActive: false, workflowId: null };
+
+        const data = node.data as { isActive?: boolean } | null;
+        return {
+          isActive: data?.isActive ?? false,
+          workflowId: node.workflowId,
+        };
+      }
+    );
+
+    if (!isActive || !workflowId) {
+      return { status: "stopped" };
+    }
+
+    // 2. Ambil last timestamp message dari run state
+    const lastTimestamp = await step.run("load-last-timestamp", async () => {
+      return (event.data.lastTimestamp ?? null) as string | null;
+    });
+
+    // 3. Fetch YouTube messages
+    const messages = await step.run("fetch-youtube-messages", async () => {
+      const apiKey = process.env.GOOGLE_API_KEY;
+
+      const videoRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`
+      );
+      const videoData = await videoRes.json();
+      const liveChatId =
+        videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+
+      if (!liveChatId) return [];
+
+      const chatRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`
+      );
+      const chatData = await chatRes.json();
+
+      return chatData.items || [];
+    });
+
+    // 4. DEDUPE: Ambil HANYA pesan dengan timestamp lebih baru
+    const newMessages = messages.filter((m: any) => {
+      const ts = m.snippet.publishedAt;
+      return !lastTimestamp || ts > lastTimestamp;
+    });
+
+    // 5. Trigger workflow hanya untuk pesan baru
+    if (newMessages.length > 0) {
+      const newest = newMessages[newMessages.length - 1];
+
+      await step.sendEvent("trigger-workflow-execution", {
+        name: "workflows/execute.workflow",
+        data: {
+          workflowId,
+          initialData: {
+            youtubeLiveChat: {
+              message: newest.snippet.displayMessage,
+              author: newest.authorDetails.displayName,
+              publishedAt: newest.snippet.publishedAt,
+              raw: newest,
+            },
+          },
+        },
+      });
+    }
+
+    // 6. Simpan timestamp terbaru hanya dalam event berikutnya (tanpa database!)
+    const latestTimestamp =
+      messages[messages.length - 1]?.snippet.publishedAt ?? lastTimestamp;
+
+    // 7. Sleep
+    await step.sleep("wait-interval", pollingInterval * 1000);
+
+    // 8. Recursive poll
+    await step.sendEvent("continue-polling", {
+      name: "trigger/youtube.poll",
+      data: {
+        nodeId,
+        videoId,
+        pollingInterval,
+        lastTimestamp: latestTimestamp,
+      },
+    });
+
+    return {
+      status: "polling-continued",
+      processed: messages.length,
+      newMessages: newMessages.length,
+    };
   }
 );
