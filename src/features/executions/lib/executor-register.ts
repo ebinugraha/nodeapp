@@ -5,6 +5,7 @@ import { httpRequestExecutor } from "../components/http-request/executor";
 import { GoogleFormTriggerExecutor } from "@/features/triggers/components/google-form-trigger/executor";
 import { GeminiExecutor } from "../components/gemini/executor";
 import { DiscordExecutor } from "../components/discord/executor";
+import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-live-chat/executor";
 
 export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -18,6 +19,7 @@ export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.STRIPE_TRIGGER]: GeminiExecutor,
   [NodeType.DISCORD]: DiscordExecutor,
   [NodeType.SLACK]: DiscordExecutor,
+  [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
