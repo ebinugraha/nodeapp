@@ -1,4 +1,5 @@
 import { InitialNode } from "@/components/initial-node";
+import { DecisionNode } from "@/features/executions/components/decision/node";
 import { DiscordNode } from "@/features/executions/components/discord/node";
 import { GeminitNode } from "@/features/executions/components/gemini/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
@@ -18,6 +19,7 @@ export const nodeComponents = {
   [NodeType.GEMINI]: GeminitNode,
   [NodeType.DISCORD]: DiscordNode,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatNode,
+  [NodeType.DECISION]: DecisionNode,
 } as const satisfies NodeTypes;
 
 export type RegisteredNodeType = keyof typeof nodeComponents;

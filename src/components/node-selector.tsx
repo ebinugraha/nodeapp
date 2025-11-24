@@ -2,7 +2,12 @@
 
 import { NodeType } from "@/generated/prisma";
 import { createId } from "@paralleldrive/cuid2";
-import { Globe2Icon, GlobeIcon, MousePointerIcon } from "lucide-react";
+import {
+  Globe2Icon,
+  GlobeIcon,
+  MousePointerIcon,
+  SplitIcon,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -71,6 +76,12 @@ const executionNode: NodeTypeOption[] = [
     label: "Discord",
     description: "Send a message to Discord",
     icon: "/logos/discord.svg",
+  },
+  {
+    type: NodeType.DECISION,
+    label: "Decision",
+    description: "Make a decision based on conditions",
+    icon: SplitIcon,
   },
 ];
 

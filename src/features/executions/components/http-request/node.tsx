@@ -40,7 +40,6 @@ export const HttpRequestNode = memo(
       : "Not configured";
 
     const onSubmit = (values: HttpRequestFormValues) => {
-      console.log(values);
       setNodes((nodes) =>
         nodes.map((node) => {
           if (node.id === props.id) {

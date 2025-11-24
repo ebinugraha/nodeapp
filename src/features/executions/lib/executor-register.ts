@@ -6,6 +6,7 @@ import { GoogleFormTriggerExecutor } from "@/features/triggers/components/google
 import { GeminiExecutor } from "../components/gemini/executor";
 import { DiscordExecutor } from "../components/discord/executor";
 import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-live-chat/executor";
+import { DecisionExecutor } from "../components/decision/executor";
 
 export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -20,6 +21,7 @@ export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.DISCORD]: DiscordExecutor,
   [NodeType.SLACK]: DiscordExecutor,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
+  [NodeType.DECISION]: DecisionExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

@@ -12,6 +12,36 @@ import { geminiExecutionChannel } from "./channels/gemini";
 import { discordExecutionChannel } from "./channels/discord";
 import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
 
+const getDescendants = (
+  nodes: any[],
+  connections: any[],
+  startNodeId: string,
+  outputHandle: string
+) => {
+  const descendants = new Set<string>();
+  const queue = [{ nodeId: startNodeId, outputHandle }];
+
+  while (queue.length > 0) {
+    const { nodeId, outputHandle } = queue.shift()!;
+
+    // Cari koneksi yang keluar dari node ini lewat handle spesifik
+    const outgoing = connections.filter(
+      (c) =>
+        c.fromNodeId === nodeId &&
+        (outputHandle ? c.fromOutput === outputHandle : true)
+    );
+
+    for (const conn of outgoing) {
+      if (!descendants.has(conn.toNodeId)) {
+        descendants.add(conn.toNodeId);
+        // Untuk node berikutnya, kita ambil semua outputnya (karena cabangnya sudah mati)
+        queue.push({ nodeId: conn.toNodeId, outputHandle: null as any });
+      }
+    }
+  }
+  return descendants;
+};
+
 export const executeWorkflow = inngest.createFunction(
   {
     id: "execute-workflow",
@@ -44,7 +74,7 @@ export const executeWorkflow = inngest.createFunction(
     const workflowId = event.data.workflowId;
 
     if (!workflowId || !inngestEventId) {
-      throw new NonRetriableError("No workflow ID provided");
+      throw new NonRetriableError("N o workflow ID provided");
     }
 
     await step.run("create-execution", async () => {
@@ -53,6 +83,13 @@ export const executeWorkflow = inngest.createFunction(
           workflowId,
           inngestEventId,
         },
+      });
+    });
+
+    const workflow = await step.run("load-workflow-data", async () => {
+      return prisma.workflow.findUniqueOrThrow({
+        where: { id: workflowId },
+        include: { nodes: true, connections: true },
       });
     });
 
@@ -80,9 +117,15 @@ export const executeWorkflow = inngest.createFunction(
     });
 
     let context = event.data.initialData || {};
+    const skippedNodeIds = new Set<string>(); // Track node yang di-skip
 
     // execute each node
     for (const node of sortedNodes) {
+      // 1. Cek apakah node ini harus di-skip
+      if (skippedNodeIds.has(node.id)) {
+        continue;
+      }
+
       const executor = getExecutor(node.type as NodeType);
       context = await executor({
         data: node.data as Record<string, unknown>,
@@ -92,6 +135,62 @@ export const executeWorkflow = inngest.createFunction(
         step,
         publish,
       });
+
+      // 2. LOGIKA DECISION NODE
+      // C. Logika Khusus DECISION NODE
+      if (node.type === "DECISION") {
+        const nodeData = node.data as Record<string, any>;
+
+        // Fallback ke 'decision' jika user lupa isi variableName di UI
+        const variableName = nodeData.variableName || "decision";
+
+        console.log("variabel name = ", variableName);
+
+        // Ambil hasil dari context
+        const executionResult = (context as any)[variableName];
+
+        // DEBUGGING: Cek kenapa undefined
+        if (!executionResult) {
+          console.error(
+            `[Decision Node] ❌ ERROR: Variable '${variableName}' tidak ditemukan di context!`
+          );
+          console.log(
+            `[Decision Node] ℹ️ Keys yang tersedia di context:`,
+            Object.keys(context)
+          );
+
+          // Lempar error agar execution status jadi FAILED dan kita sadar ada masalah
+          throw new NonRetriableError(
+            `Decision Node Error: Variable '${variableName}' not found in context. Please check your Decision Node configuration.`
+          );
+        }
+
+        const decisionResult = executionResult.result; // Harus boolean true/false
+
+        console.log(
+          `[Decision Node] ✅ Evaluasi '${variableName}':`,
+          decisionResult
+        );
+
+        // Tentukan jalur yang MATI (Inactive)
+        // Jika True -> Jalur 'false' dimatikan
+        // Jika False -> Jalur 'true' dimatikan
+        const inactiveHandle = decisionResult ? "false" : "true";
+
+        // Cari semua anak-cucu di jalur yang mati
+        const nodesToSkip = getDescendants(
+          workflow.nodes,
+          workflow.connections,
+          node.id,
+          inactiveHandle
+        );
+
+        nodesToSkip.forEach((id) => skippedNodeIds.add(id));
+
+        console.log(
+          `[Decision Node] 🚫 Skipping ${nodesToSkip.size} nodes di jalur '${inactiveHandle}'`
+        );
+      }
     }
 
     await step.run("update-execution", async () => {
@@ -158,7 +257,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       const liveChatId =
         videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
 
-      if (!liveChatId) return [];
+      if (!liveChatId) {
+        throw new NonRetriableError(
+          "Live chat ID not found for the given video ID"
+        );
+      }
 
       const chatRes = await fetch(
         `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`

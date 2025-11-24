@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// @ts-ignore: side-effect CSS import without type declarations
 import "./globals.css";
 import { Provider } from "jotai";
 import { TRPCReactProvider } from "@/trpc/client";

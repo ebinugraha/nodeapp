@@ -18,7 +18,7 @@ import {
   MiniMap,
   Panel,
 } from "@xyflow/react";
-
+// @ts-ignore: side-effect CSS import without type declarations
 import "@xyflow/react/dist/style.css";
 import { useCallback, useMemo, useState } from "react";
 import { AddNoteButton } from "./add-node-button";
