@@ -7,6 +7,7 @@ import { GeminiExecutor } from "../components/gemini/executor";
 import { DiscordExecutor } from "../components/discord/executor";
 import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-live-chat/executor";
 import { DecisionExecutor } from "../components/decision/executor";
+import { YoutubeDeleteExecutor } from "../components/youtube-delete/executor";
 
 export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -22,6 +23,7 @@ export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.SLACK]: DiscordExecutor,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
   [NodeType.DECISION]: DecisionExecutor,
+  [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

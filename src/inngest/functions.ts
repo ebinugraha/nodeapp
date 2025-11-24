@@ -11,6 +11,7 @@ import { stripeTriggerChannel } from "./channels/stripe-trigger";
 import { geminiExecutionChannel } from "./channels/gemini";
 import { discordExecutionChannel } from "./channels/discord";
 import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
+import { youtubeDeleteChannel } from "./channels/youtube-delete";
 
 const getDescendants = (
   nodes: any[],
@@ -67,6 +68,7 @@ export const executeWorkflow = inngest.createFunction(
       geminiExecutionChannel(),
       discordExecutionChannel(),
       youtubeLiveChatChannel(),
+      youtubeDeleteChannel(),
     ],
   },
   async ({ event, step, publish }) => {
