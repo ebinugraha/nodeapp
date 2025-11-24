@@ -123,6 +123,7 @@ enum NodeType {
   DISCORD
   SLACK
   YOUTUBE_LIVE_CHAT
+  DECISION
 }
 model Node {
   id String @id @default(cuid())
