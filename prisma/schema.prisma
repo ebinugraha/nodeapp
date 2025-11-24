@@ -108,6 +108,7 @@ enum CredentialType {
   OPENAI
   ANTHROPIC
   GEMINI
+  YOUTUBE
 }
 
 enum NodeType {
@@ -123,6 +124,7 @@ enum NodeType {
   DISCORD
   SLACK
   YOUTUBE_LIVE_CHAT
+  YOUTUBE_DELETE_CHAT
   DECISION
 }
 model Node {

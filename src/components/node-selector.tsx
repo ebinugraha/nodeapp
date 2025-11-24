@@ -83,6 +83,12 @@ const executionNode: NodeTypeOption[] = [
     description: "Make a decision based on conditions",
     icon: SplitIcon,
   },
+  {
+    type: NodeType.YOUTUBE_DELETE_CHAT,
+    label: "Delete YouTube Chat Message",
+    description: "Delete a message from YouTube live chat",
+    icon: "/logos/youtube_delete.svg", // Reuse logo youtube
+  },
 ];
 
 interface NodeSelectorProps {

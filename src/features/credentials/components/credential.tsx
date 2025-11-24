@@ -62,6 +62,11 @@ const credentialTypeOptions = [
     label: "Gemini",
     logo: "/logos/gemini.svg",
   },
+  {
+    value: CredentialType.YOUTUBE,
+    label: "YouTube",
+    logo: "/logos/youtube.svg",
+  },
 ];
 
 interface CredentialFormProps {
