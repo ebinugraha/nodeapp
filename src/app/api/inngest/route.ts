@@ -1,6 +1,10 @@
 import { serve } from "inngest/next";
 import { inngest } from "../../../inngest/client";
-import { executeWorkflow, pollYoutubeLiveChat } from "@/inngest/functions";
+import {
+  executeWorkflow,
+  pollYoutubeLiveChat,
+  pollYoutubeVideoComments,
+} from "@/inngest/functions";
 
 // Create an API that serves zero functions
 export const { GET, POST, PUT } = serve({
@@ -9,5 +13,6 @@ export const { GET, POST, PUT } = serve({
     /* your functions will be passed here later! */
     executeWorkflow,
     pollYoutubeLiveChat,
+    pollYoutubeVideoComments,
   ],
 });

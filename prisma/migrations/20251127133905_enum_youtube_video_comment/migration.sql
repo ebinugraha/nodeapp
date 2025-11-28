@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "NodeType" ADD VALUE 'YOUTUBE_VIDEO_COMMENT';
