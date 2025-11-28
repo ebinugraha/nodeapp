@@ -67,6 +67,11 @@ const credentialTypeOptions = [
     label: "YouTube",
     logo: "/logos/youtube.svg",
   },
+  {
+    value: CredentialType.GOOGLE,
+    label: "Google Sheets",
+    logo: "/logos/google.svg", // Pastikan file ini ada (sudah ada di repo Anda)
+  },
 ];
 
 interface CredentialFormProps {

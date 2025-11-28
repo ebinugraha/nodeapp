@@ -95,6 +95,12 @@ const executionNode: NodeTypeOption[] = [
     description: "Delete a message from YouTube live chat",
     icon: "/logos/youtube_delete.svg", // Reuse logo youtube
   },
+  {
+    type: NodeType.GOOGLE_SHEETS,
+    label: "Google Sheets",
+    description: "Read or write data to spreadsheets",
+    icon: "/logos/google-sheet.svg", // Pastikan file ini ada atau gunakan icon Lucide sementara
+  },
 ];
 
 interface NodeSelectorProps {
