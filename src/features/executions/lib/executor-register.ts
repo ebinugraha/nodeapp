@@ -9,6 +9,7 @@ import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-
 import { DecisionExecutor } from "../components/decision/executor";
 import { YoutubeDeleteExecutor } from "../components/youtube-delete/executor";
 import { YoutubeVideoCommentExecutor } from "@/features/triggers/components/youtube-video-comment/executor";
+import { GoogleSheetsExecutor } from "../components/google-sheets/executor";
 
 export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -26,6 +27,7 @@ export const excetorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.DECISION]: DecisionExecutor,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteExecutor,
   [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentExecutor,
+  [NodeType.GOOGLE_SHEETS]: GoogleSheetsExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

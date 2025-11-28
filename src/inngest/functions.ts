@@ -13,6 +13,7 @@ import { discordExecutionChannel } from "./channels/discord";
 import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
 import { youtubeDeleteChannel } from "./channels/youtube-delete";
 import { youtubeVideoCommentChannel } from "./channels/youtube-video-comment";
+import { googleSheetsChannel } from "./channels/google-sheets";
 
 const getDescendants = (
   nodes: any[],
@@ -71,6 +72,7 @@ export const executeWorkflow = inngest.createFunction(
       discordExecutionChannel(),
       youtubeLiveChatChannel(),
       youtubeDeleteChannel(),
+      googleSheetsChannel(),
     ],
   },
   async ({ event, step, publish }) => {

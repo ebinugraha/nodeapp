@@ -109,6 +109,7 @@ enum CredentialType {
   ANTHROPIC
   GEMINI
   YOUTUBE
+  GOOGLE
 }
 
 enum NodeType {
@@ -126,6 +127,7 @@ enum NodeType {
   YOUTUBE_LIVE_CHAT
   YOUTUBE_DELETE_CHAT
   YOUTUBE_VIDEO_COMMENT
+  GOOGLE_SHEETS
   DECISION
 }
 model Node {

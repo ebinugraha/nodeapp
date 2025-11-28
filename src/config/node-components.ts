@@ -2,6 +2,7 @@ import { InitialNode } from "@/components/initial-node";
 import { DecisionNode } from "@/features/executions/components/decision/node";
 import { DiscordNode } from "@/features/executions/components/discord/node";
 import { GeminitNode } from "@/features/executions/components/gemini/node";
+import { GoogleSheetsNode } from "@/features/executions/components/google-sheets/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import { YoutubeDeleteNode } from "@/features/executions/components/youtube-delete/node";
 import { GoogleFormTriggerNode } from "@/features/triggers/components/google-form-trigger/node";
@@ -24,6 +25,7 @@ export const nodeComponents = {
   [NodeType.DECISION]: DecisionNode,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteNode,
   [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentNode,
+  [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
 } as const satisfies NodeTypes;
 
 export type RegisteredNodeType = keyof typeof nodeComponents;
