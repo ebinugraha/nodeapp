@@ -16,6 +16,14 @@ type Events = {
       pollingInterval: number;
     };
   };
+  "trigger/youtube-video.poll": {
+    data: {
+      nodeId: string;
+      videoId: string;
+      pollingInterval: number;
+      lastTimestamp?: string;
+    };
+  };
 };
 // Create a client to send and receive events
 export const inngest = new Inngest({

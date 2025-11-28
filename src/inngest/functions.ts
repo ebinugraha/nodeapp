@@ -12,6 +12,7 @@ import { geminiExecutionChannel } from "./channels/gemini";
 import { discordExecutionChannel } from "./channels/discord";
 import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
 import { youtubeDeleteChannel } from "./channels/youtube-delete";
+import { youtubeVideoCommentChannel } from "./channels/youtube-video-comment";
 
 const getDescendants = (
   nodes: any[],
@@ -64,6 +65,7 @@ export const executeWorkflow = inngest.createFunction(
       httpRequestChannel(),
       manualTriggerChannel(),
       googleFormTriggerChannel(),
+      youtubeVideoCommentChannel(),
       stripeTriggerChannel(),
       geminiExecutionChannel(),
       discordExecutionChannel(),
@@ -322,5 +324,119 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       processed: messages.length,
       newMessages: newMessages.length,
     };
+  }
+);
+
+export const pollYoutubeVideoComments = inngest.createFunction(
+  { id: "poll-youtube-video-comments" },
+  { event: "trigger/youtube-video.poll" }, // Event name sesuai actions.ts
+  async ({ event, step }) => {
+    const nodeId = event.data.nodeId;
+    const videoId = event.data.videoId;
+    const pollingInterval = event.data.pollingInterval || 60;
+
+    // 1. Cek status node (apakah masih Active?)
+    const { isActive, workflowId } = await step.run(
+      "check-status",
+      async () => {
+        const node = await prisma.node.findUnique({
+          where: { id: nodeId },
+          select: { data: true, workflowId: true },
+        });
+        if (!node) return { isActive: false, workflowId: null };
+        const data = node.data as { isActive?: boolean };
+        return {
+          isActive: data?.isActive ?? false,
+          workflowId: node.workflowId,
+        };
+      }
+    );
+
+    if (!isActive || !workflowId) {
+      return { status: "stopped" };
+    }
+
+    // 2. Load last timestamp
+    const lastTimestamp = await step.run("load-timestamp", async () => {
+      return (event.data.lastTimestamp ?? null) as string | null;
+    });
+
+    // 3. Fetch Comments dari YouTube Data API (commentThreads)
+    const comments = await step.run("fetch-comments", async () => {
+      const apiKey = process.env.GOOGLE_API_KEY;
+      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&key=${apiKey}&maxResults=20`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // Handle error jika kuota habis atau video tidak ditemukan
+      if (data.error) {
+        throw new Error(`YouTube API Error: ${data.error.message}`);
+      }
+
+      return data.items || [];
+    });
+
+    // 4. Filter komentar baru
+    const newComments = comments.filter((item: any) => {
+      const publishedAt = item.snippet.topLevelComment.snippet.publishedAt;
+      // Jika run pertama (lastTimestamp null), ambil yang paling baru saja atau skip (tergantung preferensi)
+      // Di sini kita anggap run pertama tidak mentrigger agar tidak spam,
+      // KECUALI Anda ingin memproses komentar lama.
+      if (!lastTimestamp) return false;
+      return publishedAt > lastTimestamp;
+    });
+
+    // 5. Trigger Workflow untuk setiap komentar baru
+    // Kita urutkan dari terlama ke terbaru agar urutan eksekusi logis
+    const sortedNewComments = newComments.sort(
+      (a: any, b: any) =>
+        new Date(a.snippet.topLevelComment.snippet.publishedAt).getTime() -
+        new Date(b.snippet.topLevelComment.snippet.publishedAt).getTime()
+    );
+
+    for (const comment of sortedNewComments) {
+      const snippet = comment.snippet.topLevelComment.snippet;
+
+      await step.sendEvent("trigger-workflow", {
+        name: "workflows/execute.workflow",
+        data: {
+          workflowId,
+          initialData: {
+            youtubeVideoComment: {
+              commentId: comment.id, // Penting untuk fitur delete nanti!
+              text: snippet.textDisplay,
+              author: snippet.authorDisplayName,
+              publishedAt: snippet.publishedAt,
+              raw: comment,
+            },
+          },
+        },
+      });
+    }
+
+    // 6. Update Timestamp
+    const newestCommentTime =
+      comments.length > 0
+        ? comments[0].snippet.topLevelComment.snippet.publishedAt
+        : lastTimestamp;
+
+    // Jika ini run pertama, set timestamp ke NOW atau waktu komentar terakhir
+    const nextTimestamp = lastTimestamp || new Date().toISOString();
+
+    // 7. Sleep & Recurse
+    await step.sleep("wait-interval", pollingInterval * 1000);
+
+    await step.sendEvent("continue-polling", {
+      name: "trigger/youtube-video.poll",
+      data: {
+        nodeId,
+        videoId,
+        pollingInterval,
+        lastTimestamp: newestCommentTime || nextTimestamp,
+      },
+    });
+
+    return { processed: newComments.length };
   }
 );

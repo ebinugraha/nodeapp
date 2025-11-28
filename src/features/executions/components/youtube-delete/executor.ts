@@ -3,11 +3,12 @@ import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
 import { NonRetriableError } from "inngest";
 import prisma from "@/lib/db";
 import Handlebars from "handlebars";
-import ky, { HTTPError } from "ky";
+import ky, { HTTPError } from "ky"; // Pastikan import HTTPError
 
 type YoutubeDeleteData = {
   credentialId?: string;
   messageId?: string;
+  targetType?: "live-chat" | "comment";
 };
 
 export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
@@ -17,43 +18,66 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
   userId,
   publish,
 }) => {
-  // 1. Validasi Data Awal
-  if (!data.credentialId) throw new NonRetriableError("Credential is required");
-  if (!data.messageId) throw new NonRetriableError("Message ID is required");
-
-  // 2. Ambil Credential
-  const credential = await prisma.credential.findUnique({
-    where: { id: data.credentialId, userId },
-  });
-
-  if (!credential) throw new NonRetriableError("Credential not found in DB");
-
-  const messageId = Handlebars.compile(data.messageId)(context);
+  // Kita skip status 'loading' untuk menghindari warning Inngest "Same Step ID"
+  // jika publish dipanggil berulang kali dengan ID yang sama
 
   try {
-    // 3. Eksekusi Hapus ke YouTube
-    await ky.delete(`https://www.googleapis.com/youtube/v3/liveChat/messages`, {
-      searchParams: { id: messageId },
-      headers: {
-        Authorization: `Bearer ${credential.value}`,
-        Accept: "application/json",
-      },
+    if (!data.credentialId) {
+      await publish(
+        youtubeDeleteChannel().status({
+          nodeId,
+          status: "error",
+        })
+      );
+      throw new NonRetriableError("Credential is required");
+    }
+    if (!data.messageId) {
+      throw new NonRetriableError("Message ID is required");
+    }
+
+    const credential = await prisma.credential.findUnique({
+      where: { id: data.credentialId, userId },
     });
 
-    // Jika berhasil
-    await publish(youtubeDeleteChannel().status({ nodeId, status: "success" }));
-    return {
-      ...context,
-      youtubeDelete: { deletedId: messageId, success: true },
-    };
-  } catch (err: any) {
-    // 4. Handling Error Spesifik
-    if (err instanceof HTTPError) {
-      const status = err.response.status;
+    if (!credential) {
+      await publish(
+        youtubeDeleteChannel().status({
+          nodeId,
+          status: "error",
+        })
+      );
+      throw new NonRetriableError("Credential not found");
+    }
 
-      // Kasus A: Pesan sudah hilang (404) -> Anggap SUKSES
-      if (status === 404) {
-        console.log(`[YoutubeDelete] Message ${messageId} already gone (404).`);
+    const messageId = Handlebars.compile(data.messageId)(context);
+    const targetType = data.targetType || "live-chat";
+
+    let endpoint = "";
+    if (targetType === "comment") {
+      endpoint = "https://www.googleapis.com/youtube/v3/comments";
+    } else {
+      endpoint = "https://www.googleapis.com/youtube/v3/liveChat/messages";
+    }
+
+    // --- PERBAIKAN UTAMA DI SINI ---
+    try {
+      await ky.delete(endpoint, {
+        searchParams: {
+          id: messageId,
+        },
+        headers: {
+          Authorization: `Bearer ${credential.value}`,
+          Accept: "application/json",
+        },
+      });
+    } catch (err) {
+      // Jika errornya adalah 404 (Not Found), berarti pesan sudah hilang.
+      // Kita anggap ini SUKSES agar workflow tidak berhenti/failed.
+      if (err instanceof HTTPError && err.response.status === 404) {
+        console.log(
+          `Message ${messageId} already deleted or not found. Skipping.`
+        );
+
         await publish(
           youtubeDeleteChannel().status({ nodeId, status: "success" })
         );
@@ -62,30 +86,36 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
           youtubeDelete: {
             deletedId: messageId,
             success: true,
-            note: "Already deleted",
+            note: "Message was already deleted (404)",
           },
         };
       }
 
-      // Kasus B: Credential Salah/Expired (401/403) -> Anggap ERROR FATAL
-      if (status === 401 || status === 403) {
-        console.error(`[YoutubeDelete] Auth Error: ${status}`);
+      // Jika error lain (misal 401 Unauthorized / 403 Forbidden), lempar errornya
+      throw err;
+    }
+    // -------------------------------
 
-        // Kirim sinyal merah ke UI
-        await publish(
-          youtubeDeleteChannel().status({ nodeId, status: "error" })
-        );
+    await publish(youtubeDeleteChannel().status({ nodeId, status: "success" }));
 
-        // Throw error spesifik agar Inngest mencatatnya sebagai kegagalan
-        throw new NonRetriableError(
-          `YouTube Auth Failed (${status}). Check your credential.`
-        );
-      }
+    return {
+      ...context,
+      youtubeDelete: {
+        deletedId: messageId,
+        success: true,
+      },
+    };
+  } catch (error: any) {
+    console.error("YouTube Delete Error:", error);
+    await publish(youtubeDeleteChannel().status({ nodeId, status: "error" }));
+
+    // Jika token expired (401), beri pesan yang jelas
+    if (error instanceof HTTPError && error.response.status === 401) {
+      throw new NonRetriableError(
+        "YouTube Access Token Expired. Please update credential."
+      );
     }
 
-    // Error lainnya (Server error, network, dll)
-    console.error("[YoutubeDelete] Unknown Error:", err);
-    await publish(youtubeDeleteChannel().status({ nodeId, status: "error" }));
-    throw err;
+    throw error;
   }
 };

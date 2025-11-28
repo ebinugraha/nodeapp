@@ -56,6 +56,12 @@ const triggerNodes: NodeTypeOption[] = [
     description: "Trigger workflow on new live chat messages",
     icon: "/logos/youtube.svg", // Reuse logo youtube
   },
+  {
+    type: NodeType.YOUTUBE_VIDEO_COMMENT,
+    label: "YouTube Video Comment",
+    description: "Trigger workflow on new video comments",
+    icon: "/logos/youtube.svg",
+  },
 ];
 
 const executionNode: NodeTypeOption[] = [
