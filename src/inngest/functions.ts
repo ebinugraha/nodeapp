@@ -292,7 +292,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
         data: {
           workflowId,
           initialData: {
-            youtubeLiveChat: {
+            YOUTUBE_LIVE_CHAT: {
               message: newest.snippet.displayMessage,
               author: newest.authorDetails.displayName,
               publishedAt: newest.snippet.publishedAt,
@@ -405,7 +405,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
         data: {
           workflowId,
           initialData: {
-            youtubeVideoComment: {
+            YOUTUBE_VIDEO_COMMENT: {
               commentId: comment.id, // Penting untuk fitur delete nanti!
               text: snippet.textDisplay,
               author: snippet.authorDisplayName,
