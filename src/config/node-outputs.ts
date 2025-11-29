@@ -26,18 +26,6 @@ export const NODE_OUTPUTS: Partial<Record<NodeType, VariableDefinition[]>> = {
     { key: "publishedAt", label: "Time" },
     { key: "raw", label: "Full Raw Data" },
   ],
-  [NodeType.GOOGLE_FORM_TRIGGER]: [
-    { key: "respondentEmail", label: "Respondent Email" },
-    { key: "responses", label: "Form Responses (JSON)" },
-    { key: "timestamp", label: "Submission Time" },
-  ],
-  [NodeType.STRIPE_TRIGGER]: [
-    { key: "id", label: "Event ID" },
-    { key: "type", label: "Event Type (e.g., payment_intent.succeeded)" },
-    { key: "data", label: "Data Object" },
-    { key: "created", label: "Created At" },
-    { key: "livemode", label: "Live Mode (True/False)" },
-  ],
 
   // --- ACTIONS ---
   [NodeType.HTTP_REQUEST]: [

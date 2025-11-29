@@ -37,20 +37,6 @@ const triggerNodes: NodeTypeOption[] = [
     icon: MousePointerIcon,
   },
   {
-    type: NodeType.GOOGLE_FORM_TRIGGER,
-    label: "Google Form",
-    description:
-      "Runs the flow when a Google Form is submitted. Useful for collecting responses",
-    icon: "/logos/googleform.svg",
-  },
-  {
-    type: NodeType.STRIPE_TRIGGER,
-    label: "Youtube live stream",
-    description:
-      "Runs the flow when a youtube live event is captured. Useful for getting data",
-    icon: "/logos/stripe.svg",
-  },
-  {
     type: NodeType.YOUTUBE_LIVE_CHAT,
     label: "YouTube Live Chat",
     description: "Trigger workflow on new live chat messages",
