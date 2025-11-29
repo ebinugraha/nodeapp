@@ -46,7 +46,8 @@ export const YoutubeLiveChatNode = memo((props: NodeProps) => {
         props.id,
         newActiveState,
         data.videoId,
-        data.pollingInterval
+        data.pollingInterval,
+        data.credentialId
       );
 
       // 2. Update UI Optimistic

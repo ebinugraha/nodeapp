@@ -24,7 +24,8 @@ export async function toggleYoutubePolling(
   nodeId: string,
   isActive: boolean,
   videoId?: string,
-  pollingInterval: number = 10
+  pollingInterval: number = 10,
+  credentialId?: string // [BARU]
 ) {
   // 1. Update status di Database
   // Kita perlu mengambil data lama dulu untuk di-merge, atau update partial json jika Prisma versi baru mendukung
@@ -34,6 +35,7 @@ export async function toggleYoutubePolling(
   await prisma.node.update({
     where: { id: nodeId },
     data: {
+      credentialId: credentialId,
       data: {
         ...currentData,
         isActive, // Set status true/false di DB
