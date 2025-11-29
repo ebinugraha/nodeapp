@@ -30,6 +30,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { HttpRequestNode } from "./node";
+import { KeyValueBuilder } from "@/components/key-value-builder";
 
 const formSchema = z.object({
   variableName: z
@@ -43,6 +44,14 @@ const formSchema = z.object({
   endPoint: z.url({ message: "Please enter a valid URL" }),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
   body: z.string().optional(), // TODO add refine
+  bodyPairs: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional(),
 });
 
 export type HttpRequestFormValues = z.infer<typeof formSchema>;
@@ -52,12 +61,14 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: HttpRequestFormValues) => void;
   defaultValues?: Partial<HttpRequestFormValues>;
+  nodeId: string; // [BARU] Wajib ada untuk KeyValueBuilder
 }
 
 export const HTTPRequestDialog = ({
   open,
   onOpenChange,
   onSubmit,
+  nodeId,
   defaultValues = {},
 }: Props) => {
   const form = useForm<HttpRequestFormValues>({
@@ -66,6 +77,7 @@ export const HTTPRequestDialog = ({
       body: defaultValues.body || "",
       endPoint: defaultValues.endPoint || "",
       method: defaultValues.method || "GET",
+      bodyPairs: defaultValues.bodyPairs || [],
     },
     resolver: zodResolver(formSchema),
   });
@@ -77,6 +89,7 @@ export const HTTPRequestDialog = ({
         body: defaultValues.body || "",
         endPoint: defaultValues.endPoint || "",
         method: defaultValues.method || "GET",
+        bodyPairs: defaultValues.bodyPairs || [],
       });
     }
   }, [open, form, defaultValues]);
@@ -175,15 +188,15 @@ export const HTTPRequestDialog = ({
             {showBodyField && (
               <FormField
                 control={form.control}
-                name="body"
+                name="bodyPairs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Body</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder={"{\n 'userId': '12345 ' \n}"}
-                        className="min-h-[120px] font-mono text-sm"
-                        {...field}
+                      <KeyValueBuilder
+                        nodeId={nodeId} // Pastikan nodeId di-pass ke Dialog
+                        items={field.value || []}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormDescription>

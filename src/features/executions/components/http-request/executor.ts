@@ -13,7 +13,8 @@ type HTTPRequestData = {
   variableName?: string;
   endPoint?: string;
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  body?: string;
+  bodyPairs?: { key: string; value: string }[]; // Data dari Key-Value Builder
+  body?: string; // Data legacy (diabaikan)
 };
 
 export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
@@ -32,54 +33,53 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
 
   try {
     const result = await step.run("http-request", async () => {
+      // 1. Validasi Input
       if (!data.endPoint) {
-        await publish(
-          httpRequestChannel().status({
-            nodeId,
-            status: "error",
-          })
-        );
         throw new NonRetriableError("No endpoint provided for HTTP request");
       }
-
       if (!data.variableName) {
-        await publish(
-          httpRequestChannel().status({
-            nodeId,
-            status: "error",
-          })
-        );
         throw new NonRetriableError(
           "No variable name provided for HTTP request"
         );
       }
-
       if (!data.method) {
-        await publish(
-          httpRequestChannel().status({
-            nodeId,
-            status: "error",
-          })
-        );
         throw new NonRetriableError("No method provided for HTTP request");
       }
 
+      // 2. Compile URL
       const endpoint = Handlebars.compile(data.endPoint)(context);
-
       const method = data.method;
+
+      // 3. Rakit JSON dari Key-Value Pairs
+      let bodyPayload: any = {};
+
+      if (data.bodyPairs && Array.isArray(data.bodyPairs)) {
+        for (const pair of data.bodyPairs) {
+          if (!pair.key) continue; // Skip jika key kosong
+
+          // Compile value (ubah {{variable}} jadi data asli)
+          const compiledValue = Handlebars.compile(pair.value)(context);
+          console.log(compiledValue);
+          bodyPayload[pair.key] = compiledValue;
+        }
+      }
 
       const options: KyOptions = { method };
 
+      console.log("HTTP REQUEST BODY PAYLOAD:", bodyPayload);
+
+      // 4. Pasang Body (Tanpa validasi JSON.parse manual lagi!)
       if (["POST", "PUT", "PATCH"].includes(method)) {
-        const resolved = Handlebars.compile(data.body)(context);
-        JSON.parse(resolved); // validate JSON
-        options.body = resolved;
+        options.json = bodyPayload; // ky akan otomatis stringify ini
         options.headers = {
           "Content-Type": "application/json",
         };
       }
 
+      // 5. Kirim Request
       const response = await ky(endpoint, options);
+
+      // 6. Baca Response
       const contentType = response.headers.get("content-type");
       const responseData = contentType?.includes("application/json")
         ? await response.json()
@@ -106,7 +106,8 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
       })
     );
     return result;
-  } catch (error) {
+  } catch (error: any) {
+    console.error("HTTP Request Error:", error);
     await publish(
       httpRequestChannel().status({
         nodeId,
