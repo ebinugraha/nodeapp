@@ -17,7 +17,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { CredentialType } from "@/generated/prisma";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -25,6 +35,7 @@ import z from "zod";
 const formSchema = z.object({
   videoId: z.string().min(1),
   pollingInterval: z.coerce.number().min(5),
+  credentialId: z.string().min(1, "Account is required"), // [BARU]
 });
 
 export type YoutubeLiveChatFormValues = z.infer<typeof formSchema>;
@@ -42,10 +53,13 @@ export const YoutubeLiveChatDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
+  const { data: credentials } = useCredentialsByType(CredentialType.YOUTUBE);
+
   const form = useForm<YoutubeLiveChatFormValues>({
     defaultValues: {
       videoId: defaultValues.videoId || "",
       pollingInterval: defaultValues.pollingInterval ?? 10,
+      credentialId: defaultValues.credentialId || "", // [BARU]
     },
   });
 
@@ -54,6 +68,7 @@ export const YoutubeLiveChatDialog = ({
       form.reset({
         videoId: defaultValues.videoId || "",
         pollingInterval: defaultValues.pollingInterval || 10,
+        credentialId: defaultValues.credentialId || "", // [BARU]
       });
     }
   }, [open, form, defaultValues]);
@@ -77,6 +92,42 @@ export const YoutubeLiveChatDialog = ({
             className="w-full space-y-6 mt-4"
             onSubmit={form.handleSubmit(handleSubmit)}
           >
+            {/* [BARU] Input Pilih Akun */}
+            <FormField
+              control={form.control}
+              name="credentialId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>YouTube Account</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select account..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {credentials?.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src="/logos/youtube.svg"
+                              alt="YT"
+                              width={16}
+                              height={16}
+                            />
+                            {c.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="videoId"

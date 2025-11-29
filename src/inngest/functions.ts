@@ -210,79 +210,97 @@ export const executeWorkflow = inngest.createFunction(
   }
 );
 
-// Tambahkan function baru ini
-// Tambahkan function baru ini
+// --- FUNCTION 2: POLL YOUTUBE LIVE CHAT (DIUBAH KE OAUTH) ---
 export const pollYoutubeLiveChat = inngest.createFunction(
   { id: "poll-youtube-live-chat" },
   { event: "trigger/youtube.poll" },
   async ({ event, step }) => {
-    const nodeId = event.data.nodeId;
-    const videoId = event.data.videoId;
-    const pollingInterval = event.data.pollingInterval;
+    const { nodeId, videoId, pollingInterval } = event.data;
 
-    // 1. Cek status node (pause / continue)
-    const { isActive, workflowId } = await step.run(
+    // 1. Cek status node & AMBIL CREDENTIAL (OAUTH)
+    const { isActive, workflowId, credential } = await step.run(
       "check-node-status",
       async () => {
         const node = await prisma.node.findUnique({
           where: { id: nodeId },
-          select: { data: true, workflowId: true },
+          select: {
+            data: true,
+            workflowId: true,
+            credential: true, // [BARU] Ambil relasi credential
+          },
         });
 
-        if (!node) return { isActive: false, workflowId: null };
+        if (!node)
+          return { isActive: false, workflowId: null, credential: null };
 
-        const data = node.data as { isActive?: boolean } | null;
+        const data = node.data as { isActive?: boolean };
         return {
           isActive: data?.isActive ?? false,
           workflowId: node.workflowId,
+          credential: node.credential,
         };
       }
     );
 
-    if (!isActive || !workflowId) {
+    if (!isActive || !workflowId || !credential) {
       return { status: "stopped" };
     }
 
-    // 2. Ambil last timestamp message dari run state
+    // 2. Parse Token User
+    const accessToken = await step.run("get-access-token", async () => {
+      try {
+        const tokenData = JSON.parse(credential.value);
+        return tokenData.access_token;
+      } catch (e) {
+        throw new NonRetriableError("Invalid OAuth credential format");
+      }
+    });
+
     const lastTimestamp = await step.run("load-last-timestamp", async () => {
       return (event.data.lastTimestamp ?? null) as string | null;
     });
 
-    // 3. Fetch YouTube messages
+    // 3. Fetch YouTube messages MENGGUNAKAN TOKEN
     const messages = await step.run("fetch-youtube-messages", async () => {
-      const apiKey = process.env.GOOGLE_API_KEY;
+      const headers = { Authorization: `Bearer ${accessToken}` }; // [BARU]
 
+      // Fetch Video Details
       const videoRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`
+        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}`,
+        { headers }
       );
+
+      if (!videoRes.ok) throw new Error("Failed to fetch video details");
+
       const videoData = await videoRes.json();
       const liveChatId =
         videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
 
       if (!liveChatId) {
-        throw new NonRetriableError(
-          "Live chat ID not found for the given video ID"
-        );
+        throw new NonRetriableError("Live chat ID not found. Is stream live?");
       }
 
+      // Fetch Chat Messages
       const chatRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`
+        `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails`,
+        { headers }
       );
-      const chatData = await chatRes.json();
 
+      if (!chatRes.ok) throw new Error("Failed to fetch chat messages");
+
+      const chatData = await chatRes.json();
       return chatData.items || [];
     });
 
-    // 4. DEDUPE: Ambil HANYA pesan dengan timestamp lebih baru
+    // 4. Filter Pesan Baru (Logic lama)
     const newMessages = messages.filter((m: any) => {
       const ts = m.snippet.publishedAt;
       return !lastTimestamp || ts > lastTimestamp;
     });
 
-    // 5. Trigger workflow hanya untuk pesan baru
+    // 5. Trigger workflow
     if (newMessages.length > 0) {
       const newest = newMessages[newMessages.length - 1];
-
       await step.sendEvent("trigger-workflow-execution", {
         name: "workflows/execute.workflow",
         data: {
@@ -299,14 +317,10 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       });
     }
 
-    // 6. Simpan timestamp terbaru hanya dalam event berikutnya (tanpa database!)
+    // 6. Next Polling
     const latestTimestamp =
       messages[messages.length - 1]?.snippet.publishedAt ?? lastTimestamp;
-
-    // 7. Sleep
     await step.sleep("wait-interval", pollingInterval * 1000);
-
-    // 8. Recursive poll
     await step.sendEvent("continue-polling", {
       name: "trigger/youtube.poll",
       data: {
@@ -317,76 +331,84 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       },
     });
 
-    return {
-      status: "polling-continued",
-      processed: messages.length,
-      newMessages: newMessages.length,
-    };
+    return { status: "polling-continued", newMessages: newMessages.length };
   }
 );
 
+// --- FUNCTION 3: POLL YOUTUBE VIDEO COMMENTS (DIUBAH KE OAUTH) ---
 export const pollYoutubeVideoComments = inngest.createFunction(
   { id: "poll-youtube-video-comments" },
-  { event: "trigger/youtube-video.poll" }, // Event name sesuai actions.ts
+  { event: "trigger/youtube-video.poll" },
   async ({ event, step }) => {
-    const nodeId = event.data.nodeId;
-    const videoId = event.data.videoId;
-    const pollingInterval = event.data.pollingInterval || 60;
+    const { nodeId, videoId, pollingInterval = 60, credentialId } = event.data;
 
-    // 1. Cek status node (apakah masih Active?)
-    const { isActive, workflowId } = await step.run(
+    // 1. Cek Status & CREDENTIAL (OAUTH)
+    const { isActive, workflowId, credential } = await step.run(
       "check-status",
       async () => {
         const node = await prisma.node.findUnique({
           where: { id: nodeId },
-          select: { data: true, workflowId: true },
+          select: {
+            data: true,
+            workflowId: true,
+            credential: true, // [BARU]
+          },
         });
-        if (!node) return { isActive: false, workflowId: null };
+        if (!node)
+          return { isActive: false, workflowId: null, credential: null };
         const data = node.data as { isActive?: boolean };
         return {
           isActive: data?.isActive ?? false,
           workflowId: node.workflowId,
+          credential: node.credential,
         };
       }
     );
 
-    if (!isActive || !workflowId) {
+    if (!isActive || !workflowId || !credential) {
       return { status: "stopped" };
     }
 
-    // 2. Load last timestamp
+    // 2. Parse Token
+    const accessToken = await step.run("get-token", async () => {
+      try {
+        const tokenData = JSON.parse(credential.value);
+        return tokenData.access_token;
+      } catch (e) {
+        throw new NonRetriableError("Invalid OAuth credential format");
+      }
+    });
+
     const lastTimestamp = await step.run("load-timestamp", async () => {
       return (event.data.lastTimestamp ?? null) as string | null;
     });
 
-    // 3. Fetch Comments dari YouTube Data API (commentThreads)
+    // 3. Fetch Comments VIA TOKEN
     const comments = await step.run("fetch-comments", async () => {
-      const apiKey = process.env.GOOGLE_API_KEY;
-      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&key=${apiKey}&maxResults=20`;
+      // HAPUS GOOGLE_API_KEY
+      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&maxResults=20`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // [BARU] Pakai Token User
+          Accept: "application/json",
+        },
+      });
+
       const data = await res.json();
-
-      // Handle error jika kuota habis atau video tidak ditemukan
-      if (data.error) {
+      if (data.error)
         throw new Error(`YouTube API Error: ${data.error.message}`);
-      }
-
       return data.items || [];
     });
 
-    // 4. Filter komentar baru
+    // 4. Filter Komentar Baru
     const newComments = comments.filter((item: any) => {
       const publishedAt = item.snippet.topLevelComment.snippet.publishedAt;
-      // Jika run pertama (lastTimestamp null), ambil yang paling baru saja atau skip (tergantung preferensi)
-      // Di sini kita anggap run pertama tidak mentrigger agar tidak spam,
-      // KECUALI Anda ingin memproses komentar lama.
-      if (!lastTimestamp) return false;
+      if (!lastTimestamp) return false; // Skip run pertama agar tidak spam
       return publishedAt > lastTimestamp;
     });
 
-    // 5. Trigger Workflow untuk setiap komentar baru
-    // Kita urutkan dari terlama ke terbaru agar urutan eksekusi logis
+    // 5. Trigger Workflow (Looping)
     const sortedNewComments = newComments.sort(
       (a: any, b: any) =>
         new Date(a.snippet.topLevelComment.snippet.publishedAt).getTime() -
@@ -395,14 +417,13 @@ export const pollYoutubeVideoComments = inngest.createFunction(
 
     for (const comment of sortedNewComments) {
       const snippet = comment.snippet.topLevelComment.snippet;
-
       await step.sendEvent("trigger-workflow", {
         name: "workflows/execute.workflow",
         data: {
           workflowId,
           initialData: {
             YOUTUBE_VIDEO_COMMENT: {
-              commentId: comment.id, // Penting untuk fitur delete nanti!
+              commentId: comment.id,
               text: snippet.textDisplay,
               author: snippet.authorDisplayName,
               publishedAt: snippet.publishedAt,
@@ -413,18 +434,14 @@ export const pollYoutubeVideoComments = inngest.createFunction(
       });
     }
 
-    // 6. Update Timestamp
+    // 6. Next Poll
     const newestCommentTime =
       comments.length > 0
         ? comments[0].snippet.topLevelComment.snippet.publishedAt
         : lastTimestamp;
-
-    // Jika ini run pertama, set timestamp ke NOW atau waktu komentar terakhir
     const nextTimestamp = lastTimestamp || new Date().toISOString();
 
-    // 7. Sleep & Recurse
     await step.sleep("wait-interval", pollingInterval * 1000);
-
     await step.sendEvent("continue-polling", {
       name: "trigger/youtube-video.poll",
       data: {

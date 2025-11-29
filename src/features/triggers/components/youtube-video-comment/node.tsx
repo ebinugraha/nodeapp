@@ -39,6 +39,14 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
       return;
     }
 
+    // 2. [TAMBAHAN] Validasi Credential ID (Penting!)
+    // Mencegah user mengaktifkan node tanpa memilih akun
+    if (!data.credentialId) {
+      toast.error("Please select a YouTube Account in settings first");
+      setIsDialogOpen(true);
+      return;
+    }
+
     try {
       setIsToggling(true);
       const newActiveState = !isActive;
@@ -46,7 +54,8 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
         props.id,
         newActiveState,
         data.videoId,
-        data.pollingInterval
+        data.pollingInterval,
+        data.credentialId
       );
       setNodes((nodes) =>
         nodes.map((node) => {
