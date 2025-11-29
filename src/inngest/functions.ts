@@ -6,8 +6,6 @@ import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-register";
 import { httpRequestChannel } from "./channels/http-request";
 import { manualTriggerChannel } from "./channels/manual-trigger";
-import { googleFormTriggerChannel } from "./channels/google-form-trigger";
-import { stripeTriggerChannel } from "./channels/stripe-trigger";
 import { geminiExecutionChannel } from "./channels/gemini";
 import { discordExecutionChannel } from "./channels/discord";
 import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
@@ -65,9 +63,7 @@ export const executeWorkflow = inngest.createFunction(
     channels: [
       httpRequestChannel(),
       manualTriggerChannel(),
-      googleFormTriggerChannel(),
       youtubeVideoCommentChannel(),
-      stripeTriggerChannel(),
       geminiExecutionChannel(),
       discordExecutionChannel(),
       youtubeLiveChatChannel(),
