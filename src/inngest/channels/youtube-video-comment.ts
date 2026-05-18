@@ -1,10 +1,14 @@
-import { channel, topic } from "@inngest/realtime";
+import { channel } from "inngest/realtime";
+import { z } from "zod";
 
-export const youtubeVideoCommentChannel = channel(
-  "youtube-video-comment-execution"
-).addTopic(
-  topic("status").type<{
-    nodeId: string;
-    status: "loading" | "success" | "error";
-  }>()
-);
+const statusSchema = z.object({
+  nodeId: z.string(),
+  status: z.enum(["loading", "success", "error"]),
+});
+
+export const youtubeVideoCommentChannel = channel({
+  name: "youtube-video-comment-execution",
+  topics: {
+    status: { schema: statusSchema },
+  },
+});

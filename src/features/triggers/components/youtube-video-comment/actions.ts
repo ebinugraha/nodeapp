@@ -3,16 +3,16 @@
 import { youtubeVideoCommentChannel } from "@/inngest/channels/youtube-video-comment";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getSubscriptionToken, Realtime } from "@inngest/realtime";
+import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
-export type YoutubeVideoCommentToken = Realtime.Token<
+export type YoutubeVideoCommentToken = Realtime.Subscribe.Token<
   typeof youtubeVideoCommentChannel,
   ["status"]
 >;
 
 export async function fetchYoutubeVideoCommentToken(): Promise<YoutubeVideoCommentToken> {
   const token = await getSubscriptionToken(inngest, {
-    channel: youtubeVideoCommentChannel(),
+    channel: youtubeVideoCommentChannel,
     topics: ["status"],
   });
   return token;

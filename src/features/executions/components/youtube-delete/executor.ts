@@ -1,7 +1,7 @@
 import { NodeExecutor } from "@/features/executions/type";
+import { inngest } from "@/inngest/client";
 import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
 import { NonRetriableError } from "inngest";
-import prisma from "@/lib/db";
 import Handlebars from "handlebars";
 import ky, { HTTPError } from "ky";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
@@ -16,12 +16,13 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
   data,
   nodeId,
   context,
-  userId,
-  publish,
 }) => {
   try {
     if (!data.credentialId) {
-      await publish(youtubeDeleteChannel().status({ nodeId, status: "error" }));
+      await inngest.realtime.publish(youtubeDeleteChannel.status, {
+        nodeId,
+        status: "error",
+      });
       throw new NonRetriableError("Credential is required");
     }
     if (!data.messageId) {
@@ -75,9 +76,10 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
           `Message ${messageId} already deleted or not found. Skipping.`
         );
 
-        await publish(
-          youtubeDeleteChannel().status({ nodeId, status: "success" })
-        );
+        await inngest.realtime.publish(youtubeDeleteChannel.status, {
+          nodeId,
+          status: "success",
+        });
         return {
           ...context,
           youtubeDelete: {
@@ -90,7 +92,10 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
       throw err;
     }
 
-    await publish(youtubeDeleteChannel().status({ nodeId, status: "success" }));
+    await inngest.realtime.publish(youtubeDeleteChannel.status, {
+      nodeId,
+      status: "success",
+    });
 
     return {
       ...context,
@@ -101,7 +106,10 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     };
   } catch (error: any) {
     console.error("YouTube Delete Error:", error);
-    await publish(youtubeDeleteChannel().status({ nodeId, status: "error" }));
+    await inngest.realtime.publish(youtubeDeleteChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     if (error instanceof HTTPError && error.response.status === 401) {
       throw new NonRetriableError(

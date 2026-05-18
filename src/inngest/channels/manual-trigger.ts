@@ -1,10 +1,14 @@
-import { channel, topic } from "@inngest/realtime";
+import { channel } from "inngest/realtime";
+import { z } from "zod";
 
-export const manualTriggerChannel = channel(
-  "manual-trigger-execution"
-).addTopic(
-  topic("status").type<{
-    nodeId: string;
-    status: "loading" | "success" | "error";
-  }>()
-);
+const statusSchema = z.object({
+  nodeId: z.string(),
+  status: z.enum(["loading", "success", "error"]),
+});
+
+export const manualTriggerChannel = channel({
+  name: "manual-trigger-execution",
+  topics: {
+    status: { schema: statusSchema },
+  },
+});

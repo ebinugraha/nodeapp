@@ -1,15 +1,23 @@
 "use client";
 
 import { NodeStatus } from "@/components/react-flow/node-status-indicator";
-import { Realtime } from "@inngest/realtime";
 import { useEffect, useState } from "react";
-import { useInngestSubscription } from "@inngest/realtime/hooks";
+import { useRealtime } from "inngest/react";
+import type { Realtime } from "inngest/realtime";
 
 interface UseNodeStatusOptions {
   nodeId: string;
   channel: string;
   topic: string;
   refreshToken: () => Promise<Realtime.Subscribe.Token>;
+}
+
+interface NodeStatusMessage {
+  kind: string;
+  channel?: string;
+  topic?: string;
+  data?: { nodeId?: string; status?: NodeStatus };
+  createdAt?: Date;
 }
 
 export function useNodeStatus({
@@ -20,35 +28,32 @@ export function useNodeStatus({
 }: UseNodeStatusOptions) {
   const [status, setStatus] = useState<NodeStatus>("initial");
 
-  const { data } = useInngestSubscription({
-    refreshToken,
+  const { messages } = useRealtime({
+    token: refreshToken,
     enabled: true,
   });
 
   useEffect(() => {
-    if (!data.length) return;
+    if (!messages.all.length) return;
 
-    const latestMessage = data
+    const latestMessage = (messages.all as NodeStatusMessage[])
       .filter(
         (msg) =>
           msg.kind === "data" &&
           msg.channel === channel &&
           msg.topic === topic &&
-          msg.data.nodeId === nodeId
+          msg.data?.nodeId === nodeId
       )
       .sort((a, b) => {
-        if (a.kind === "data" && b.kind === "data") {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        }
-        return 0;
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
       })[0];
 
-    if (latestMessage?.kind === "data") {
-      setStatus(latestMessage.data.status as NodeStatus);
+    if (latestMessage?.kind === "data" && latestMessage.data?.status) {
+      setStatus(latestMessage.data.status);
     }
-  }, [data, nodeId, channel, topic]);
+  }, [messages.all, nodeId, channel, topic]);
 
   return status;
 }

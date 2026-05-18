@@ -27,7 +27,7 @@ export const DiscordNode = memo((props: NodeProps<DiscordNodeType>) => {
 
   const status = useNodeStatus({
     nodeId: props.id,
-    channel: discordExecutionChannel().name,
+    channel: discordExecutionChannel.name,
     topic: "status",
     refreshToken: fetchDiscordToken,
   });

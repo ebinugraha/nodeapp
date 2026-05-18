@@ -2,10 +2,10 @@
 
 import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
 import { inngest } from "@/inngest/client";
-import { getSubscriptionToken, Realtime } from "@inngest/realtime";
+import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
 // Definisikan tipe token agar sesuai dengan channel delete
-export type YoutubeDeleteToken = Realtime.Token<
+export type YoutubeDeleteToken = Realtime.Subscribe.Token<
   typeof youtubeDeleteChannel,
   ["status"]
 >;
@@ -13,7 +13,7 @@ export type YoutubeDeleteToken = Realtime.Token<
 export async function fetchYoutubeDeleteToken(): Promise<YoutubeDeleteToken> {
   // [PENTING] Menggunakan channel yang benar: youtubeDeleteChannel
   const token = await getSubscriptionToken(inngest, {
-    channel: youtubeDeleteChannel(),
+    channel: youtubeDeleteChannel,
     topics: ["status"],
   });
 

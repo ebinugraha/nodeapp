@@ -1,4 +1,3 @@
-import type { Realtime } from "@inngest/realtime";
 import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
 import prisma from "@/lib/db";
@@ -6,6 +5,7 @@ import { topologicalSort } from "@/lib/topologicalSort";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-register";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { MaybePromise, Realtime } from "@inngest/realtime";
 
 const getDescendants = (
   nodes: any[],
@@ -53,13 +53,7 @@ export const executeWorkflow = inngest.createFunction(
       });
     },
   },
-  async (ctx) => {
-    const { event, step } = ctx;
-    // `publish` is injected at runtime by `@inngest/realtime`'s middleware (see
-    // `client.ts`), but `@inngest/realtime@0.4` was built against `inngest@3`,
-    // so its middleware context extension doesn't flow through inngest v4's
-    // strict generic system at type-check time.  Assert the runtime shape.
-    const { publish } = ctx as typeof ctx & { publish: Realtime.PublishFn };
+  async ({ event, step }) => {
     const inngestEventId = event.id;
     const workflowId = event.data.workflowId;
 
@@ -123,7 +117,11 @@ export const executeWorkflow = inngest.createFunction(
         context,
         userId,
         step,
-        publish,
+        publish: function <
+          TMessage extends MaybePromise<Realtime.Message.Input>,
+        >(message: TMessage): Promise<Awaited<TMessage>["data"]> {
+          throw new Error("Function not implemented.");
+        },
       });
 
       // 2. LOGIKA DECISION NODE

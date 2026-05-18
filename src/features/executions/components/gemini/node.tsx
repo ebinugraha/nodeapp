@@ -34,7 +34,7 @@ export const GeminitNode = memo((props: NodeProps<GeminiNodeyType>) => {
 
   const status = useNodeStatus({
     nodeId: props.id,
-    channel: geminiExecutionChannel().name,
+    channel: geminiExecutionChannel.name,
     topic: "status",
     refreshToken: fetchGeminiToken,
   });

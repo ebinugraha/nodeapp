@@ -3,16 +3,16 @@
 import { youtubeLiveChatChannel } from "@/inngest/channels/youtube-live-chat";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getSubscriptionToken, Realtime } from "@inngest/realtime";
+import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
-export type YoutubeTriggerToken = Realtime.Token<
+export type YoutubeTriggerToken = Realtime.Subscribe.Token<
   typeof youtubeLiveChatChannel,
   ["status"]
 >;
 
 export async function fetchYoutubeToken(): Promise<YoutubeTriggerToken> {
   const token = await getSubscriptionToken(inngest, {
-    channel: youtubeLiveChatChannel(),
+    channel: youtubeLiveChatChannel,
     topics: ["status"],
   });
 

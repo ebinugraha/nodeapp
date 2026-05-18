@@ -30,7 +30,7 @@ export const HttpRequestNode = memo(
 
     const status = useNodeStatus({
       nodeId: props.id,
-      channel: httpRequestChannel().name,
+      channel: httpRequestChannel.name,
       topic: "status",
       refreshToken: fetchHttpRequestToken,
     });
