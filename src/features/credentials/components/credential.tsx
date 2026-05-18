@@ -221,7 +221,7 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
             toast.success("Credential updated");
             router.push("/credentials");
           },
-        }
+        },
       );
     } else {
       await createCredential.mutateAsync(
@@ -237,7 +237,7 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
           onError: (error) => {
             handleError(error);
           },
-        }
+        },
       );
     }
   };
@@ -357,32 +357,64 @@ export const CredentialForm = ({ initialData }: CredentialFormProps) => {
                     )}
                   />
 
-                  {/* Info Box: Redirect URI */}
-                  <div className="bg-yellow-50/50 border border-yellow-200/50 p-3 rounded-md text-xs text-yellow-800 dark:text-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-                    <p className="font-semibold mb-1">Setup Instructions:</p>
-                    <ol className="list-decimal pl-4 space-y-1">
+                  {/* Info Box: Redirect URI (Versi Bahasa Indonesia) */}
+                  <div className="bg-muted/50 border p-4 rounded-md text-sm space-y-3">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <span className="text-blue-500">ℹ️</span> Panduan
+                      Pengaturan (Langkah demi Langkah)
+                    </h4>
+                    <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
                       <li>
-                        Create a Project in{" "}
+                        Buka situs{" "}
                         <a
-                          href="https://console.cloud.google.com/apis/credentials"
+                          href="https://console.cloud.google.com/"
                           target="_blank"
                           rel="noreferrer"
-                          className="underline font-medium"
+                          className="underline font-medium text-foreground hover:text-blue-500 transition-colors"
                         >
                           Google Cloud Console
-                        </a>
+                        </a>{" "}
+                        dan buat <strong>Proyek Baru</strong> (New Project).
                       </li>
                       <li>
-                        Enable the relevant API (e.g., YouTube Data API v3)
+                        Arahkan ke menu{" "}
+                        <strong>APIs & Services &gt; Library</strong>, cari{" "}
+                        <strong>YouTube Data API v3</strong> (atau Google Sheets
+                        API), lalu klik <strong>Enable</strong> (Aktifkan).
                       </li>
                       <li>
-                        Add this URL to{" "}
-                        <strong>Authorized redirect URIs</strong>:
+                        Arahkan ke menu <strong>OAuth consent screen</strong>,
+                        pilih tipe pengguna <strong>External</strong>, lalu isi
+                        nama aplikasi dan email yang diminta.
+                      </li>
+                      <li>
+                        Arahkan ke menu <strong>Credentials</strong>{" "}
+                        (Kredensial), klik tombol{" "}
+                        <strong>+ CREATE CREDENTIALS</strong> di atas, lalu
+                        pilih <strong>OAuth client ID</strong>.
+                      </li>
+                      <li>
+                        Pada pilihan tipe aplikasi (<em>Application type</em>),
+                        pastikan Anda memilih <strong>Web application</strong>.
+                      </li>
+                      <li>
+                        Gulir ke bawah ke bagian{" "}
+                        <strong>Authorized redirect URIs</strong>. Salin URL di
+                        bawah ini, klik tombol <strong>+ ADD URI</strong>, dan
+                        tempel (<em>paste</em>) URL-nya. Lalu klik{" "}
+                        <strong>Create</strong>.
                       </li>
                     </ol>
-                    <div className="mt-2 bg-background border p-2 rounded select-all font-mono">
-                      {origin}/api/credentials/oauth/callback
+
+                    <div className="mt-3 bg-background border border-border/50 p-3 rounded-md select-all font-mono text-xs text-foreground cursor-copy relative group hover:bg-muted/50 transition-colors">
+                      <code>{origin}/api/credentials/oauth/callback</code>
                     </div>
+
+                    <p className="text-xs text-muted-foreground mt-2 border-t pt-2">
+                      Terakhir, salin <strong>Client ID</strong> dan{" "}
+                      <strong>Client Secret</strong> yang Anda dapatkan ke dalam
+                      kolom isian di atas.
+                    </p>
                   </div>
 
                   {/* Indikator Koneksi */}

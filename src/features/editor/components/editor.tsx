@@ -98,3 +98,5 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     </div>
   );
 };
+
+// myAcc._balance = 0; // Error: Property '_balance' is private

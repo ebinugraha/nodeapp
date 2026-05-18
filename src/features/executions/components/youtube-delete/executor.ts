@@ -4,6 +4,7 @@ import { NonRetriableError } from "inngest";
 import prisma from "@/lib/db";
 import Handlebars from "handlebars";
 import ky, { HTTPError } from "ky";
+import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 
 type YoutubeDeleteData = {
   credentialId?: string;
@@ -27,21 +28,11 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
       throw new NonRetriableError("Message ID is required");
     }
 
-    const credential = await prisma.credential.findUnique({
-      where: { id: data.credentialId, userId },
-    });
-
-    if (!credential) {
-      await publish(youtubeDeleteChannel().status({ nodeId, status: "error" }));
-      throw new NonRetriableError("Credential not found");
-    }
-
     // --- [PERBAIKAN DIMULAI DISINI] ---
     // Kita harus parse JSON untuk mendapatkan access_token
     let accessToken = "";
     try {
-      const tokenData = JSON.parse(credential.value);
-      accessToken = tokenData.access_token;
+      accessToken = await getOrRefreshAccessToken(data.credentialId);
     } catch (e) {
       // Jika gagal parse, lempar error karena format baru wajib JSON OAuth
       throw new NonRetriableError(

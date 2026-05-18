@@ -12,12 +12,13 @@ import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
 import { youtubeDeleteChannel } from "./channels/youtube-delete";
 import { youtubeVideoCommentChannel } from "./channels/youtube-video-comment";
 import { googleSheetsChannel } from "./channels/google-sheets";
+import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 
 const getDescendants = (
   nodes: any[],
   connections: any[],
   startNodeId: string,
-  outputHandle: string
+  outputHandle: string,
 ) => {
   const descendants = new Set<string>();
   const queue = [{ nodeId: startNodeId, outputHandle }];
@@ -29,7 +30,7 @@ const getDescendants = (
     const outgoing = connections.filter(
       (c) =>
         c.fromNodeId === nodeId &&
-        (outputHandle ? c.fromOutput === outputHandle : true)
+        (outputHandle ? c.fromOutput === outputHandle : true),
     );
 
     for (const conn of outgoing) {
@@ -154,16 +155,16 @@ export const executeWorkflow = inngest.createFunction(
         // DEBUGGING: Cek kenapa undefined
         if (!executionResult) {
           console.error(
-            `[Decision Node] ❌ ERROR: Variable '${variableName}' tidak ditemukan di context!`
+            `[Decision Node] ❌ ERROR: Variable '${variableName}' tidak ditemukan di context!`,
           );
           console.log(
             `[Decision Node] ℹ️ Keys yang tersedia di context:`,
-            Object.keys(context)
+            Object.keys(context),
           );
 
           // Lempar error agar execution status jadi FAILED dan kita sadar ada masalah
           throw new NonRetriableError(
-            `Decision Node Error: Variable '${variableName}' not found in context. Please check your Decision Node configuration.`
+            `Decision Node Error: Variable '${variableName}' not found in context. Please check your Decision Node configuration.`,
           );
         }
 
@@ -171,7 +172,7 @@ export const executeWorkflow = inngest.createFunction(
 
         console.log(
           `[Decision Node] ✅ Evaluasi '${variableName}':`,
-          decisionResult
+          decisionResult,
         );
 
         // Tentukan jalur yang MATI (Inactive)
@@ -184,13 +185,13 @@ export const executeWorkflow = inngest.createFunction(
           workflow.nodes,
           workflow.connections,
           node.id,
-          inactiveHandle
+          inactiveHandle,
         );
 
         nodesToSkip.forEach((id) => skippedNodeIds.add(id));
 
         console.log(
-          `[Decision Node] 🚫 Skipping ${nodesToSkip.size} nodes di jalur '${inactiveHandle}'`
+          `[Decision Node] 🚫 Skipping ${nodesToSkip.size} nodes di jalur '${inactiveHandle}'`,
         );
       }
     }
@@ -207,15 +208,18 @@ export const executeWorkflow = inngest.createFunction(
     });
 
     return { workflowId, result: context };
-  }
+  },
 );
 
 // --- FUNCTION 2: POLL YOUTUBE LIVE CHAT (DIUBAH KE OAUTH) ---
+// src/inngest/functions.ts
+
 export const pollYoutubeLiveChat = inngest.createFunction(
   { id: "poll-youtube-live-chat" },
   { event: "trigger/youtube.poll" },
   async ({ event, step }) => {
-    const { nodeId, videoId, pollingInterval } = event.data;
+    const { nodeId, videoId, pollingInterval, pageToken, liveChatId } =
+      event.data;
 
     // 1. Cek status node & AMBIL CREDENTIAL (OAUTH)
     const { isActive, workflowId, credential } = await step.run(
@@ -226,7 +230,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
           select: {
             data: true,
             workflowId: true,
-            credential: true, // [BARU] Ambil relasi credential
+            credential: true,
           },
         });
 
@@ -239,7 +243,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
           workflowId: node.workflowId,
           credential: node.credential,
         };
-      }
+      },
     );
 
     if (!isActive || !workflowId || !credential) {
@@ -247,92 +251,143 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     }
 
     // 2. Parse Token User
+    // 2. GET VALID TOKEN (Auto Refresh Logic Here)
     const accessToken = await step.run("get-access-token", async () => {
-      try {
-        const tokenData = JSON.parse(credential.value);
-        return tokenData.access_token;
-      } catch (e) {
-        throw new NonRetriableError("Invalid OAuth credential format");
+      return await getOrRefreshAccessToken(credential.id);
+    });
+
+    // 3. Fetch YouTube messages
+    // Kita definisikan tipe return agar TypeScript paham
+    const result = await step.run("fetch-youtube-messages", async () => {
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      let currentChatId = liveChatId;
+
+      // Jika belum punya Chat ID (run pertama), cari dari Video ID
+      if (!currentChatId) {
+        const videoRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}`,
+          { headers },
+        );
+
+        if (!videoRes.ok) {
+          throw new Error(
+            `Failed to fetch video details: ${videoRes.statusText}`,
+          );
+        }
+
+        const videoData = await videoRes.json();
+        currentChatId =
+          videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+
+        // Jika tidak ada Chat ID, berarti Stream Offline
+        if (!currentChatId) {
+          return { isOffline: true };
+        }
       }
-    });
 
-    const lastTimestamp = await step.run("load-last-timestamp", async () => {
-      return (event.data.lastTimestamp ?? null) as string | null;
-    });
-
-    // 3. Fetch YouTube messages MENGGUNAKAN TOKEN
-    const messages = await step.run("fetch-youtube-messages", async () => {
-      const headers = { Authorization: `Bearer ${accessToken}` }; // [BARU]
-
-      // Fetch Video Details
-      const videoRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}`,
-        { headers }
+      // Bangun URL Request
+      const url = new URL(
+        "https://www.googleapis.com/youtube/v3/liveChat/messages",
       );
+      url.searchParams.append("liveChatId", currentChatId);
+      url.searchParams.append("part", "snippet,authorDetails");
 
-      if (!videoRes.ok) throw new Error("Failed to fetch video details");
-
-      const videoData = await videoRes.json();
-      const liveChatId =
-        videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-
-      if (!liveChatId) {
-        throw new NonRetriableError("Live chat ID not found. Is stream live?");
+      if (pageToken) {
+        url.searchParams.append("pageToken", pageToken);
       }
 
-      // Fetch Chat Messages
-      const chatRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails`,
-        { headers }
-      );
+      const chatRes = await fetch(url.toString(), { headers });
 
-      if (!chatRes.ok) throw new Error("Failed to fetch chat messages");
+      // Handle Token Expired / Chat Reset
+      if (!chatRes.ok) {
+        if ([400, 404, 410].includes(chatRes.status)) {
+          return { reset: true };
+        }
+        throw new Error(
+          `YouTube API Error: ${chatRes.status} ${chatRes.statusText}`,
+        );
+      }
 
-      const chatData = await chatRes.json();
-      return chatData.items || [];
+      const data = await chatRes.json();
+
+      return {
+        isSuccess: true, // Marker untuk TypeScript
+        items: data.items || [],
+        nextPageToken: data.nextPageToken,
+        suggestedInterval: data.pollingIntervalMillis
+          ? Math.ceil(data.pollingIntervalMillis / 1000)
+          : pollingInterval,
+        activeLiveChatId: currentChatId,
+      };
     });
 
-    // 4. Filter Pesan Baru (Logic lama)
-    const newMessages = messages.filter((m: any) => {
-      const ts = m.snippet.publishedAt;
-      return !lastTimestamp || ts > lastTimestamp;
-    });
+    // --- Handling Hasil Fetch (Type Guarding) ---
 
-    // 5. Trigger workflow
-    if (newMessages.length > 0) {
-      const newest = newMessages[newMessages.length - 1];
-      await step.sendEvent("trigger-workflow-execution", {
+    // Skenario A: Stream Offline
+    if ("isOffline" in result && result.isOffline) {
+      await step.sleep("wait-offline", 60 * 1000);
+      await step.sendEvent("continue-polling", {
+        name: "trigger/youtube.poll",
+        data: { ...event.data, pageToken: null, liveChatId: null },
+      });
+      return { status: "stream-offline-retrying", newMessages: 0 };
+    }
+
+    // Skenario B: Token Error / Reset
+    if ("reset" in result && result.reset) {
+      await step.sendEvent("retry-reset", {
+        name: "trigger/youtube.poll",
+        data: { ...event.data, pageToken: null, liveChatId: null },
+      });
+      return { status: "resetting-state", newMessages: 0 };
+    }
+
+    // Skenario C: Sukses (Normal Flow)
+    // Karena sudah melewati if di atas, TypeScript sekarang tahu ini pasti objek sukses
+    // Tapi kita cast 'as any' atau cek properti agar aman 100% jika inferensi step.run hilang
+    const successResult = result as any;
+    const messages = successResult.items || [];
+
+    if (messages.length > 0) {
+      const events = messages.map((msg: any) => ({
         name: "workflows/execute.workflow",
         data: {
           workflowId,
           initialData: {
             YOUTUBE_LIVE_CHAT: {
-              message: newest.snippet.displayMessage,
-              author: newest.authorDetails.displayName,
-              publishedAt: newest.snippet.publishedAt,
-              raw: newest,
+              message: msg.snippet.displayMessage,
+              author: msg.authorDetails.displayName,
+              publishedAt: msg.snippet.publishedAt,
+              raw: msg,
             },
           },
         },
-      });
+      }));
+
+      await step.sendEvent("trigger-workflow-execution", events);
     }
 
-    // 6. Next Polling
-    const latestTimestamp =
-      messages[messages.length - 1]?.snippet.publishedAt ?? lastTimestamp;
-    await step.sleep("wait-interval", pollingInterval * 1000);
+    const nextInterval = Math.max(
+      pollingInterval,
+      successResult.suggestedInterval || 0,
+    );
+
+    await step.sleep("wait-interval", nextInterval * 1000);
+
     await step.sendEvent("continue-polling", {
       name: "trigger/youtube.poll",
       data: {
         nodeId,
         videoId,
         pollingInterval,
-        lastTimestamp: latestTimestamp,
+        pageToken: successResult.nextPageToken,
+        liveChatId: successResult.activeLiveChatId,
       },
     });
 
-    return { status: "polling-continued", newMessages: newMessages.length };
-  }
+    return { status: "polling-continued", newMessages: messages.length };
+  },
 );
 
 // --- FUNCTION 3: POLL YOUTUBE VIDEO COMMENTS (DIUBAH KE OAUTH) ---
@@ -362,7 +417,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
           workflowId: node.workflowId,
           credential: node.credential,
         };
-      }
+      },
     );
 
     if (!isActive || !workflowId || !credential) {
@@ -370,13 +425,8 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     }
 
     // 2. Parse Token
-    const accessToken = await step.run("get-token", async () => {
-      try {
-        const tokenData = JSON.parse(credential.value);
-        return tokenData.access_token;
-      } catch (e) {
-        throw new NonRetriableError("Invalid OAuth credential format");
-      }
+    const accessToken = await step.run("get-access-token", async () => {
+      return await getOrRefreshAccessToken(credential.id);
     });
 
     const lastTimestamp = await step.run("load-timestamp", async () => {
@@ -385,7 +435,6 @@ export const pollYoutubeVideoComments = inngest.createFunction(
 
     // 3. Fetch Comments VIA TOKEN
     const comments = await step.run("fetch-comments", async () => {
-      // HAPUS GOOGLE_API_KEY
       const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&maxResults=20`;
 
       const res = await fetch(url, {
@@ -412,7 +461,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     const sortedNewComments = newComments.sort(
       (a: any, b: any) =>
         new Date(a.snippet.topLevelComment.snippet.publishedAt).getTime() -
-        new Date(b.snippet.topLevelComment.snippet.publishedAt).getTime()
+        new Date(b.snippet.topLevelComment.snippet.publishedAt).getTime(),
     );
 
     for (const comment of sortedNewComments) {
@@ -453,5 +502,5 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     });
 
     return { processed: newComments.length };
-  }
+  },
 );
