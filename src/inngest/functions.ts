@@ -1,17 +1,10 @@
+import type { Realtime } from "@inngest/realtime";
 import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
 import prisma from "@/lib/db";
 import { topologicalSort } from "@/lib/topologicalSort";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-register";
-import { httpRequestChannel } from "./channels/http-request";
-import { manualTriggerChannel } from "./channels/manual-trigger";
-import { geminiExecutionChannel } from "./channels/gemini";
-import { discordExecutionChannel } from "./channels/discord";
-import { youtubeLiveChatChannel } from "./channels/youtube-live-chat";
-import { youtubeDeleteChannel } from "./channels/youtube-delete";
-import { youtubeVideoCommentChannel } from "./channels/youtube-video-comment";
-import { googleSheetsChannel } from "./channels/google-sheets";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 
 const getDescendants = (
@@ -48,6 +41,7 @@ export const executeWorkflow = inngest.createFunction(
   {
     id: "execute-workflow",
     retries: 0,
+    triggers: [{ event: "workflows/execute.workflow" }],
     onFailure: async ({ event, step }) => {
       return prisma.execution.update({
         where: { inngestEventId: event.data.event.id },
@@ -59,20 +53,13 @@ export const executeWorkflow = inngest.createFunction(
       });
     },
   },
-  {
-    event: "workflows/execute.workflow",
-    channels: [
-      httpRequestChannel(),
-      manualTriggerChannel(),
-      youtubeVideoCommentChannel(),
-      geminiExecutionChannel(),
-      discordExecutionChannel(),
-      youtubeLiveChatChannel(),
-      youtubeDeleteChannel(),
-      googleSheetsChannel(),
-    ],
-  },
-  async ({ event, step, publish }) => {
+  async (ctx) => {
+    const { event, step } = ctx;
+    // `publish` is injected at runtime by `@inngest/realtime`'s middleware (see
+    // `client.ts`), but `@inngest/realtime@0.4` was built against `inngest@3`,
+    // so its middleware context extension doesn't flow through inngest v4's
+    // strict generic system at type-check time.  Assert the runtime shape.
+    const { publish } = ctx as typeof ctx & { publish: Realtime.PublishFn };
     const inngestEventId = event.id;
     const workflowId = event.data.workflowId;
 
@@ -215,8 +202,10 @@ export const executeWorkflow = inngest.createFunction(
 // src/inngest/functions.ts
 
 export const pollYoutubeLiveChat = inngest.createFunction(
-  { id: "poll-youtube-live-chat" },
-  { event: "trigger/youtube.poll" },
+  {
+    id: "poll-youtube-live-chat",
+    triggers: [{ event: "trigger/youtube.poll" }],
+  },
   async ({ event, step }) => {
     const { nodeId, videoId, pollingInterval, pageToken, liveChatId } =
       event.data;
@@ -392,8 +381,10 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
 // --- FUNCTION 3: POLL YOUTUBE VIDEO COMMENTS (DIUBAH KE OAUTH) ---
 export const pollYoutubeVideoComments = inngest.createFunction(
-  { id: "poll-youtube-video-comments" },
-  { event: "trigger/youtube-video.poll" },
+  {
+    id: "poll-youtube-video-comments",
+    triggers: [{ event: "trigger/youtube-video.poll" }],
+  },
   async ({ event, step }) => {
     const { nodeId, videoId, pollingInterval = 60, credentialId } = event.data;
 
