@@ -20,7 +20,6 @@ export const DecisionExecutor: NodeExecutor<DecisionData> = async ({
   data,
   context,
   nodeId,
-  publish,
 }) => {
   // 1. Validasi
   if (!data.variableName) {

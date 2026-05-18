@@ -1,10 +1,7 @@
 import { NodeExecutor } from "@/features/executions/type";
 import Handlebars from "handlebars";
-import { geminiExecutionChannel } from "@/inngest/channels/gemini";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateText } from "ai";
 import { NonRetriableError } from "inngest";
-import prisma from "@/lib/db";
+import { inngest } from "@/inngest/client";
 import { discordExecutionChannel } from "@/inngest/channels/discord";
 import { decode } from "html-entities";
 import ky from "ky";
@@ -25,44 +22,34 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
   data,
   nodeId,
   context,
-  userId,
   step,
-  publish,
 }) => {
-  await publish(
-    discordExecutionChannel().status({
-      nodeId,
-      status: "loading",
-    })
-  );
+  await inngest.realtime.publish(discordExecutionChannel.status, {
+    nodeId,
+    status: "loading",
+  });
 
   if (!data.variableName) {
-    await publish(
-      discordExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(discordExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
     throw new NonRetriableError("Error: variable name is missing");
   }
 
   if (!data.content) {
-    await publish(
-      discordExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(discordExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
     throw new NonRetriableError("Error: content is missing");
   }
 
   if (!data.webhookUrl) {
-    await publish(
-      discordExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(discordExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
     throw new NonRetriableError("Error: webhook is missing");
   }
 
@@ -82,12 +69,10 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
       });
 
       if (!data.variableName) {
-        await publish(
-          discordExecutionChannel().status({
-            nodeId,
-            status: "error",
-          })
-        );
+        await inngest.realtime.publish(discordExecutionChannel.status, {
+          nodeId,
+          status: "error",
+        });
         throw new NonRetriableError("Error: variable name is missing");
       }
       return {
@@ -98,21 +83,17 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
       };
     });
 
-    await publish(
-      discordExecutionChannel().status({
-        nodeId,
-        status: "success",
-      })
-    );
+    await inngest.realtime.publish(discordExecutionChannel.status, {
+      nodeId,
+      status: "success",
+    });
 
     return result;
   } catch {
-    await publish(
-      discordExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(discordExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     throw new Error();
   }

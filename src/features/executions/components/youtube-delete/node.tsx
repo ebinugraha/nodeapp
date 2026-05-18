@@ -19,7 +19,7 @@ export const YoutubeDeleteNode = memo(
     // Reuse fetchYoutubeToken atau buat server action baru yang return token dari youtubeDeleteChannel
     const status = useNodeStatus({
       nodeId: props.id,
-      channel: youtubeDeleteChannel().name,
+      channel: youtubeDeleteChannel.name,
       topic: "status",
       refreshToken: fetchYoutubeDeleteToken,
     });

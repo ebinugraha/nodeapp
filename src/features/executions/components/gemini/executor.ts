@@ -1,5 +1,6 @@
 import { NodeExecutor } from "@/features/executions/type";
 import Handlebars from "handlebars";
+import { inngest } from "@/inngest/client";
 import { geminiExecutionChannel } from "@/inngest/channels/gemini";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
@@ -25,44 +26,35 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   context,
   userId,
   step,
-  publish,
 }) => {
-  await publish(
-    geminiExecutionChannel().status({
-      nodeId,
-      status: "loading",
-    })
-  );
+  await inngest.realtime.publish(geminiExecutionChannel.status, {
+    nodeId,
+    status: "loading",
+  });
 
   if (!data.variableName) {
-    await publish(
-      geminiExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(geminiExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     throw new NonRetriableError("Error: variable name is missing");
   }
 
   if (!data.userPrompt) {
-    await publish(
-      geminiExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(geminiExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     throw new NonRetriableError("Error: variable name is missing");
   }
 
   if (!data.credentialId) {
-    await publish(
-      geminiExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(geminiExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     throw new NonRetriableError("Error: Credential id required");
   }
@@ -106,12 +98,10 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     const text =
       steps[0].content[0].type === "text" ? steps[0].content[0].text : "";
 
-    await publish(
-      geminiExecutionChannel().status({
-        nodeId,
-        status: "success",
-      })
-    );
+    await inngest.realtime.publish(geminiExecutionChannel.status, {
+      nodeId,
+      status: "success",
+    });
 
     return {
       ...context,
@@ -120,12 +110,10 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
       },
     };
   } catch {
-    await publish(
-      geminiExecutionChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(geminiExecutionChannel.status, {
+      nodeId,
+      status: "error",
+    });
 
     throw new Error();
   }

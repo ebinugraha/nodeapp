@@ -78,7 +78,7 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
 
   const nodeStatus = useNodeStatus({
     nodeId: props.id,
-    channel: youtubeVideoCommentChannel().name,
+    channel: youtubeVideoCommentChannel.name,
     topic: "status",
     refreshToken: fetchYoutubeVideoCommentToken,
   });

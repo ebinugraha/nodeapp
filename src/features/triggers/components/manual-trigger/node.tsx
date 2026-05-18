@@ -16,7 +16,7 @@ export const ManualTriggerNode = memo((props: NodeProps) => {
 
   const nodeStatus = useNodeStatus({
     nodeId: props.id,
-    channel: manualTriggerChannel().name,
+    channel: manualTriggerChannel.name,
     topic: "status",
     refreshToken: fetchManualTriggerToken,
   });

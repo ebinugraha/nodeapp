@@ -21,7 +21,7 @@ export const GoogleSheetsNode = memo(
 
     const status = useNodeStatus({
       nodeId: props.id,
-      channel: googleSheetsChannel().name,
+      channel: googleSheetsChannel.name,
       topic: "status",
       refreshToken: fetchGoogleSheetsToken,
     });

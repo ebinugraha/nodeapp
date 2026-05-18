@@ -2,6 +2,7 @@ import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import ky, { type Options as KyOptions } from "ky";
 import Handlebars from "handlebars";
+import { inngest } from "@/inngest/client";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 
 Handlebars.registerHelper("json", (context) => {
@@ -22,14 +23,11 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
   nodeId,
   context,
   step,
-  publish,
 }) => {
-  await publish(
-    httpRequestChannel().status({
-      nodeId,
-      status: "loading",
-    })
-  );
+  await inngest.realtime.publish(httpRequestChannel.status, {
+    nodeId,
+    status: "loading",
+  });
 
   try {
     const result = await step.run("http-request", async () => {
@@ -99,21 +97,17 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
       };
     });
 
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "success",
-      })
-    );
+    await inngest.realtime.publish(httpRequestChannel.status, {
+      nodeId,
+      status: "success",
+    });
     return result;
   } catch (error: any) {
     console.error("HTTP Request Error:", error);
-    await publish(
-      httpRequestChannel().status({
-        nodeId,
-        status: "error",
-      })
-    );
+    await inngest.realtime.publish(httpRequestChannel.status, {
+      nodeId,
+      status: "error",
+    });
     throw error;
   }
 };
