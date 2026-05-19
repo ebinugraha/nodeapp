@@ -1,19 +1,16 @@
 "use server";
 
+import { getSubscriptionToken } from "inngest/realtime";
 import { geminiExecutionChannel } from "@/inngest/channels/gemini";
 import { inngest } from "@/inngest/client";
-import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
-export type HttpRequestToken = Realtime.Subscribe.Token<
-  typeof geminiExecutionChannel,
-  ["status"]
->;
-
-export async function fetchGeminiToken(): Promise<HttpRequestToken> {
+export async function fetchGeminiToken() {
   const token = await getSubscriptionToken(inngest, {
     channel: geminiExecutionChannel,
     topics: ["status"],
   });
-
-  return token;
+  if (!token.key) {
+    throw new Error("Failed to obtain realtime subscription token key");
+  }
+  return { key: token.key, apiBaseUrl: token.apiBaseUrl };
 }

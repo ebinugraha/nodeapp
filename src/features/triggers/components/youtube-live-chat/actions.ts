@@ -1,22 +1,19 @@
 "use server";
 
+import { getSubscriptionToken } from "inngest/realtime";
 import { youtubeLiveChatChannel } from "@/inngest/channels/youtube-live-chat";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
-export type YoutubeTriggerToken = Realtime.Subscribe.Token<
-  typeof youtubeLiveChatChannel,
-  ["status"]
->;
-
-export async function fetchYoutubeToken(): Promise<YoutubeTriggerToken> {
+export async function fetchYoutubeToken() {
   const token = await getSubscriptionToken(inngest, {
     channel: youtubeLiveChatChannel,
     topics: ["status"],
   });
-
-  return token;
+  if (!token.key) {
+    throw new Error("Failed to obtain realtime subscription token key");
+  }
+  return { key: token.key, apiBaseUrl: token.apiBaseUrl };
 }
 
 // Action baru untuk tombol Continue/Pause
@@ -25,7 +22,7 @@ export async function toggleYoutubePolling(
   isActive: boolean,
   videoId?: string,
   pollingInterval: number = 10,
-  credentialId?: string // [BARU]
+  credentialId?: string, // [BARU]
 ) {
   // 1. Update status di Database
   // Kita perlu mengambil data lama dulu untuk di-merge, atau update partial json jika Prisma versi baru mendukung
