@@ -1,21 +1,19 @@
 "use server";
 
+import { getSubscriptionToken } from "inngest/realtime";
 import { youtubeVideoCommentChannel } from "@/inngest/channels/youtube-video-comment";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getSubscriptionToken, type Realtime } from "inngest/realtime";
 
-export type YoutubeVideoCommentToken = Realtime.Subscribe.Token<
-  typeof youtubeVideoCommentChannel,
-  ["status"]
->;
-
-export async function fetchYoutubeVideoCommentToken(): Promise<YoutubeVideoCommentToken> {
+export async function fetchYoutubeVideoCommentToken() {
   const token = await getSubscriptionToken(inngest, {
     channel: youtubeVideoCommentChannel,
     topics: ["status"],
   });
-  return token;
+  if (!token.key) {
+    throw new Error("Failed to obtain realtime subscription token key");
+  }
+  return { key: token.key, apiBaseUrl: token.apiBaseUrl };
 }
 
 export async function toggleYoutubeVideoPolling(
@@ -23,14 +21,14 @@ export async function toggleYoutubeVideoPolling(
   isActive: boolean,
   videoId?: string,
   pollingInterval: number = 60,
-  credentialId?: string
+  credentialId?: string,
 ) {
   // 1. Cek dulu apakah Node sudah ada di database (Mencegah Error Crash)
   const node = await prisma.node.findUnique({ where: { id: nodeId } });
 
   if (!node) {
     throw new Error(
-      "Node not found in database. Please SAVE the workflow first!"
+      "Node not found in database. Please SAVE the workflow first!",
     );
   }
 
