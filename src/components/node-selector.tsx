@@ -17,6 +17,9 @@ import {
   FilterIcon,
   BrainIcon,
   SendIcon,
+  ZapIcon,
+  SparklesIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import {
   Sheet,
@@ -26,10 +29,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
-import { Separator } from "./ui/separator";
 import { useReactFlow } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
 
 export type NodeTypeOption = {
   type: NodeType;
@@ -38,6 +42,64 @@ export type NodeTypeOption = {
   icon: React.ComponentType<{ className?: string }> | string;
   category?: "trigger" | "moderation" | "action" | "logic" | "ai" | "notification";
 };
+
+// Category configuration for visual styling
+const CATEGORY_CONFIG = {
+  trigger: {
+    icon: ZapIcon,
+    label: "Triggers",
+    gradient: "from-amber-500/10 to-orange-500/10",
+    borderColor: "border-amber-500/30",
+    badgeColor: "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+    iconColor: "text-amber-500",
+    description: "Start your workflow",
+  },
+  moderation: {
+    icon: ShieldIcon,
+    label: "YouTube Moderation",
+    gradient: "from-red-500/10 to-pink-500/10",
+    borderColor: "border-red-500/30",
+    badgeColor: "bg-red-500/20 text-red-600 dark:text-red-400",
+    iconColor: "text-red-500",
+    description: "Manage comments & users",
+  },
+  ai: {
+    icon: SparklesIcon,
+    label: "AI & Analysis",
+    gradient: "from-violet-500/10 to-purple-500/10",
+    borderColor: "border-violet-500/30",
+    badgeColor: "bg-violet-500/20 text-violet-600 dark:text-violet-400",
+    iconColor: "text-violet-500",
+    description: "AI-powered features",
+  },
+  notification: {
+    icon: SendIcon,
+    label: "Notifications",
+    gradient: "from-blue-500/10 to-cyan-500/10",
+    borderColor: "border-blue-500/30",
+    badgeColor: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
+    iconColor: "text-blue-500",
+    description: "Send notifications",
+  },
+  logic: {
+    icon: WorkflowIcon,
+    label: "Logic",
+    gradient: "from-emerald-500/10 to-teal-500/10",
+    borderColor: "border-emerald-500/30",
+    badgeColor: "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+    iconColor: "text-emerald-500",
+    description: "Control flow",
+  },
+  action: {
+    icon: GlobeIcon,
+    label: "Actions",
+    gradient: "from-slate-500/10 to-gray-500/10",
+    borderColor: "border-slate-500/30",
+    badgeColor: "bg-slate-500/20 text-slate-600 dark:text-slate-400",
+    iconColor: "text-slate-500",
+    description: "External integrations",
+  },
+} as const;
 
 const triggerNodes: NodeTypeOption[] = [
   {
@@ -242,6 +304,14 @@ export function NodeSelector({
     );
   }, [getNodes]);
 
+  // Get the existing trigger type for better error messaging
+  const existingTrigger = useMemo(() => {
+    const nodes = getNodes();
+    return nodes.find((node) =>
+      TRIGGER_NODE_TYPES.includes(node.type as NodeType),
+    );
+  }, [getNodes]);
+
   const handleNodeSelect = useCallback(
     (selection: NodeTypeOption) => {
       // Validate: only one trigger node allowed per workflow
@@ -295,70 +365,67 @@ export function NodeSelector({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Tambahkan Node</SheetTitle>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-0">
+        <SheetHeader className="px-6 pt-6 pb-4 border-b">
+          <SheetTitle className="flex items-center gap-2">
+            <WorkflowIcon className="size-5 text-primary" />
+            Tambahkan Node
+          </SheetTitle>
           <SheetDescription>
             Pilih node untuk menambahkan ke workflow
           </SheetDescription>
         </SheetHeader>
 
-        {/* Triggers */}
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">TRIGGERS</h3>
-          {triggerNodes.map((nodeType) => (
-            <NodeItem
-              key={nodeType.type}
-              nodeType={nodeType}
-              onSelect={handleNodeSelect}
-              disabled={hasTriggerNode()}
-            />
-          ))}
-        </div>
-        <Separator />
+        <div className="py-4 space-y-4 px-4">
+          {/* Triggers - Special handling for single trigger limit */}
+          <NodeCategory
+            category="trigger"
+            config={CATEGORY_CONFIG.trigger}
+            nodes={triggerNodes}
+            onSelect={handleNodeSelect}
+            disabled={hasTriggerNode()}
+            existingTrigger={existingTrigger?.type as NodeType}
+          />
 
-        {/* Moderation */}
-        <div className="my-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">YOUTUBE MODERATION</h3>
-          {moderationNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
-          ))}
-        </div>
-        <Separator />
+          {/* Moderation */}
+          <NodeCategory
+            category="moderation"
+            config={CATEGORY_CONFIG.moderation}
+            nodes={moderationNodes}
+            onSelect={handleNodeSelect}
+          />
 
-        {/* AI */}
-        <div className="my-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">AI & ANALYSIS</h3>
-          {aiNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
-          ))}
-        </div>
-        <Separator />
+          {/* AI */}
+          <NodeCategory
+            category="ai"
+            config={CATEGORY_CONFIG.ai}
+            nodes={aiNodes}
+            onSelect={handleNodeSelect}
+          />
 
-        {/* Notification */}
-        <div className="my-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">NOTIFICATIONS</h3>
-          {notificationNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
-          ))}
-        </div>
-        <Separator />
+          {/* Notification */}
+          <NodeCategory
+            category="notification"
+            config={CATEGORY_CONFIG.notification}
+            nodes={notificationNodes}
+            onSelect={handleNodeSelect}
+          />
 
-        {/* Logic */}
-        <div className="my-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">LOGIC</h3>
-          {logicNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
-          ))}
-        </div>
-        <Separator />
+          {/* Logic */}
+          <NodeCategory
+            category="logic"
+            config={CATEGORY_CONFIG.logic}
+            nodes={logicNodes}
+            onSelect={handleNodeSelect}
+          />
 
-        {/* Actions */}
-        <div className="my-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">ACTIONS</h3>
-          {actionNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
-          ))}
+          {/* Actions */}
+          <NodeCategory
+            category="action"
+            config={CATEGORY_CONFIG.action}
+            nodes={actionNodes}
+            onSelect={handleNodeSelect}
+          />
         </div>
       </SheetContent>
     </Sheet>
@@ -369,39 +436,137 @@ function NodeItem({
   nodeType,
   onSelect,
   disabled = false,
+  existingTrigger,
+  iconColor = "text-primary",
 }: {
   nodeType: NodeTypeOption;
   onSelect: (selection: NodeTypeOption) => void;
   disabled?: boolean;
+  existingTrigger?: NodeType;
+  iconColor?: string;
 }) {
   const Icon = nodeType.icon;
+
+  // Map trigger types to human-readable labels
+  const triggerLabels: Partial<Record<NodeType, string>> = {
+    [NodeType.MANUAL_TRIGGER]: "Manual Trigger",
+    [NodeType.YOUTUBE_LIVE_CHAT]: "YouTube Live Chat",
+    [NodeType.YOUTUBE_VIDEO_COMMENT]: "YouTube Video Comment",
+  };
+
+  // Generate helpful message based on existing trigger
+  const getDisabledMessage = () => {
+    if (!disabled || !existingTrigger) {
+      return nodeType.description;
+    }
+    const existingLabel = triggerLabels[existingTrigger] || "Another trigger";
+    return `Remove "${existingLabel}" first to add a different trigger`;
+  };
+
   return (
     <div
-      className={`w-full justify-start h-auto py-3 px-2 rounded-md border-l-2 border-transparent transition-colors ${
+      className={cn(
+        "group relative w-full h-auto py-3 px-3 rounded-lg transition-all duration-200",
         disabled
           ? "opacity-50 cursor-not-allowed"
-          : "cursor-pointer hover:border-l-primary hover:bg-accent"
-      }`}
+          : "cursor-pointer hover:bg-accent/50 hover:scale-[1.01] active:scale-[0.99]",
+      )}
       onClick={() => {
         if (disabled) {
-          toast.error("Only one trigger node is allowed per workflow.");
+          toast.error(
+            `Only one trigger node allowed. Remove the existing "${triggerLabels[existingTrigger!] || "trigger"}" first.`,
+          );
           return;
         }
         onSelect(nodeType);
       }}
     >
+      {/* Hover indicator bar */}
+      {!disabled && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-r-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      )}
+
       <div className="flex items-center gap-3 w-full overflow-hidden">
-        {typeof Icon === "string" ? (
-          <img src={Icon} alt={nodeType.label} className="size-5 object-contain rounded-sm" />
-        ) : (
-          <Icon className="size-5" />
-        )}
-        <div className="flex flex-col items-start text-left min-w-0">
-          <span className="text-sm font-medium truncate">{nodeType.label}</span>
+        <div className={cn(
+          "flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5",
+          iconColor
+        )}>
+          {typeof Icon === "string" ? (
+            <img src={Icon} alt={nodeType.label} className="size-5 object-contain" />
+          ) : (
+            <Icon className="size-5" />
+          )}
+        </div>
+        <div className="flex flex-col items-start text-left min-w-0 flex-1">
+          <span className="text-sm font-medium">{nodeType.label}</span>
           <span className="text-xs text-muted-foreground line-clamp-2">
-            {disabled ? "Trigger already exists in workflow" : nodeType.description}
+            {getDisabledMessage()}
           </span>
         </div>
+        {!disabled && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+        )}
+        {disabled && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-destructive/10 text-destructive border-destructive/20">
+            Used
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Node category component with gradient header
+function NodeCategory({
+  category,
+  config,
+  nodes,
+  onSelect,
+  disabled,
+  existingTrigger,
+}: {
+  category: keyof typeof CATEGORY_CONFIG;
+  config: typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG];
+  nodes: NodeTypeOption[];
+  onSelect: (selection: NodeTypeOption) => void;
+  disabled?: boolean;
+  existingTrigger?: NodeType;
+}) {
+  const CategoryIcon = config.icon;
+
+  return (
+    <div className={cn(
+      "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+      config.borderColor
+    )}>
+      {/* Category header */}
+      <div className={cn(
+        "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+        config.gradient
+      )}>
+        <CategoryIcon className={cn("size-4", config.iconColor)} />
+        <span className="text-sm font-semibold">{config.label}</span>
+        <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", config.badgeColor)}>
+          {config.description}
+        </Badge>
+      </div>
+
+      {/* Category items */}
+      <div className="p-2 space-y-1">
+        {nodes.map((nodeType) => (
+          <NodeItem
+            key={nodeType.type}
+            nodeType={nodeType}
+            onSelect={onSelect}
+            disabled={disabled}
+            existingTrigger={existingTrigger}
+            iconColor={config.iconColor}
+          />
+        ))}
       </div>
     </div>
   );

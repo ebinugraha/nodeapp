@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
 import { NodeStatus } from "./node-status-indicator";
-import { CheckIcon, Loader2, Loader2Icon, XIcon } from "lucide-react";
+import { CheckIcon, Loader2Icon, XIcon } from "lucide-react";
 
 interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
   status?: NodeStatus;
@@ -12,23 +12,41 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     <div
       ref={ref}
       className={cn(
-        "relative rounded-sm border border-muted-foreground hover:bg-accent bg-card text-card-foreground",
-        "hover:ring-1",
+        // Base styling
+        "relative rounded-xl border-2 border-border bg-card text-card-foreground shadow-sm",
+        // Hover effects
+        "hover:border-primary/40 hover:shadow-md hover:scale-[1.02]",
+        "transition-all duration-200 cursor-pointer",
+        // Focus styling
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
         className,
       )}
       tabIndex={0}
       {...props}
     >
       {props.children}
-      {status === "error" && (
-        <XIcon className="absolute right-0.5 bottom-0.5 size-2 text-red-500" />
-      )}
-      {status === "success" && (
-        <CheckIcon className="absolute right-0.5 bottom-0.5 size-2 text-green-700" />
-      )}
-      {status === "loading" && (
-        <Loader2Icon className="absolute -right-0.5 -bottom-0.5 size-2 text-blue-700 animate-spin" />
-      )}
+
+      {/* Status indicator badges */}
+      <div className="absolute -top-2 -right-2">
+        {status === "error" && (
+          <div className="size-5 rounded-full bg-red-500 flex items-center justify-center shadow-sm border-2 border-background">
+            <XIcon className="size-3 text-white" />
+          </div>
+        )}
+        {status === "success" && (
+          <div className="size-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm border-2 border-background">
+            <CheckIcon className="size-3 text-white" />
+          </div>
+        )}
+        {status === "loading" && (
+          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center shadow-sm border-2 border-background">
+            <Loader2Icon className="size-3 text-white animate-spin" />
+          </div>
+        )}
+      </div>
+
+      {/* Subtle gradient overlay on hover */}
+      <div className="absolute inset-0 rounded-xl bg-linear-to-br from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </div>
   ),
 );
@@ -46,7 +64,7 @@ export const BaseNodeHeader = forwardRef<
     ref={ref}
     {...props}
     className={cn(
-      "mx-0 my-0 -mb-1 flex flex-row items-center justify-between gap-2 px-3 py-2",
+      "mx-0 my-0 -mb-1 flex flex-row items-center justify-between gap-2 px-4 py-3",
       // Remove or modify these classes if you modify the padding in the
       // `<BaseNode />` component.
       className,
@@ -66,7 +84,7 @@ export const BaseNodeHeaderTitle = forwardRef<
   <h3
     ref={ref}
     data-slot="base-node-title"
-    className={cn("user-select-none flex-1 font-semibold", className)}
+    className={cn("user-select-none flex-1 font-semibold text-sm", className)}
     {...props}
   />
 ));
@@ -79,7 +97,7 @@ export const BaseNodeContent = forwardRef<
   <div
     ref={ref}
     data-slot="base-node-content"
-    className={cn("flex flex-col gap-y-2 p-3", className)}
+    className={cn("flex flex-col gap-y-3 p-4", className)}
     {...props}
   />
 ));
@@ -93,7 +111,7 @@ export const BaseNodeFooter = forwardRef<
     ref={ref}
     data-slot="base-node-footer"
     className={cn(
-      "flex flex-col items-center gap-y-2 border-t px-3 pb-3 pt-2",
+      "flex flex-col items-center gap-y-2 border-t border-border/50 bg-muted/20 px-4 pb-4 pt-3 rounded-b-xl",
       className,
     )}
     {...props}
