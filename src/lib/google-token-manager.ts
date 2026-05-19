@@ -40,7 +40,7 @@ export const getOrRefreshAccessToken = async (credentialId: string) => {
     !tokenData.clientSecret
   ) {
     throw new NonRetriableError(
-      "Credential incompleted. Please reconnect your account (Missing refresh_token/client_id)"
+      "Credential incompleted. Please reconnect your account (Missing refresh_token/client_id)",
     );
   }
 
@@ -59,7 +59,7 @@ export const getOrRefreshAccessToken = async (credentialId: string) => {
 
   // 4. Jika Expired, Lakukan Refresh
   console.log(
-    `[TokenManager] Refreshing token for credential ${credentialId}...`
+    `[TokenManager] Refreshing token for credential ${credentialId}...`,
   );
 
   try {
@@ -81,7 +81,7 @@ export const getOrRefreshAccessToken = async (credentialId: string) => {
       // Jika refresh token dicabut/invalid, user harus login ulang
       if (response.status === 400 || response.status === 401) {
         throw new NonRetriableError(
-          "Refresh token invalid. Please Reconnect Account."
+          "Refresh token invalid. Please Reconnect Account.",
         );
       }
       throw new Error(`Failed to refresh token: ${response.statusText}`);
@@ -107,7 +107,7 @@ export const getOrRefreshAccessToken = async (credentialId: string) => {
     });
 
     console.log(
-      `[TokenManager] Token refreshed successfully for ${credentialId}`
+      `[TokenManager] Token refreshed successfully for ${credentialId}`,
     );
     return updatedValue.access_token;
   } catch (error: any) {

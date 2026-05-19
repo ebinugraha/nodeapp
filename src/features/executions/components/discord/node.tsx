@@ -50,7 +50,7 @@ export const DiscordNode = memo((props: NodeProps<DiscordNodeType>) => {
           };
         }
         return node;
-      })
+      }),
     );
   };
 

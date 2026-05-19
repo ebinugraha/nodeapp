@@ -49,7 +49,7 @@ const formSchema = z.object({
       z.object({
         key: z.string(),
         value: z.string(),
-      })
+      }),
     )
     .optional(),
 });

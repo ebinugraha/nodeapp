@@ -3,7 +3,7 @@ import toposort from "toposort";
 
 export const topologicalSort = (
   nodes: Node[],
-  connections: Connection[]
+  connections: Connection[],
 ): Node[] => {
   //If there are no nodes, return an existing nodes
   if (nodes.length === 0) {

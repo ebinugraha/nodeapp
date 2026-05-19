@@ -32,7 +32,7 @@ export const KeyValueBuilder = ({
   const handleChange = (
     index: number,
     field: keyof KeyValuePair,
-    val: string
+    val: string,
   ) => {
     const newItems = [...items];
     newItems[index][field] = val;

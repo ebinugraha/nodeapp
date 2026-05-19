@@ -43,7 +43,7 @@ export const BaseTriggerNode = memo(
 
       setEdges((currentEdges) => {
         const updatedEdges = currentEdges.filter(
-          (edge) => edge.source !== id && edge.target !== id
+          (edge) => edge.source !== id && edge.target !== id,
         );
         return updatedEdges;
       });
@@ -83,7 +83,7 @@ export const BaseTriggerNode = memo(
         </NodeStatusIndicator>
       </WorkflowNode>
     );
-  }
+  },
 );
 
 BaseTriggerNode.displayName = "BaseTriggerNode";

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (!videoId || !nodeId) {
       return NextResponse.json(
         { success: false, error: "Missing data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!node) {
       return NextResponse.json(
         { success: false, error: "Node not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 

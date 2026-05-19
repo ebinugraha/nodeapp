@@ -45,7 +45,7 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
     ? Math.round(
         (new Date(execution.completedAt).getTime() -
           new Date(execution.startedAt).getTime()) /
-          1000
+          1000,
       )
     : null;
 

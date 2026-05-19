@@ -22,7 +22,7 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
       await step.realtime.publish(
         `yt-delete-${nodeId}-error-cred`,
         youtubeDeleteChannel.status,
-        { nodeId, status: "error" }
+        { nodeId, status: "error" },
       );
       throw new NonRetriableError("Credential is required");
     }
@@ -38,13 +38,13 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     } catch (e) {
       // Jika gagal parse, lempar error karena format baru wajib JSON OAuth
       throw new NonRetriableError(
-        "Invalid credential format. Please reconnect your YouTube account."
+        "Invalid credential format. Please reconnect your YouTube account.",
       );
     }
 
     if (!accessToken) {
       throw new NonRetriableError(
-        "Access token missing. Please reconnect your YouTube account."
+        "Access token missing. Please reconnect your YouTube account.",
       );
     }
     // --- [PERBAIKAN SELESAI] ---
@@ -74,13 +74,13 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
       // Handle 404 (Not Found) -> Anggap Sukses
       if (err instanceof HTTPError && err.response.status === 404) {
         console.log(
-          `Message ${messageId} already deleted or not found. Skipping.`
+          `Message ${messageId} already deleted or not found. Skipping.`,
         );
 
         await step.realtime.publish(
           `yt-delete-${nodeId}-success-404`,
           youtubeDeleteChannel.status,
-          { nodeId, status: "success" }
+          { nodeId, status: "success" },
         );
         return {
           ...context,
@@ -97,7 +97,7 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     await step.realtime.publish(
       `yt-delete-${nodeId}-success`,
       youtubeDeleteChannel.status,
-      { nodeId, status: "success" }
+      { nodeId, status: "success" },
     );
 
     return {
@@ -112,12 +112,12 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     await step.realtime.publish(
       `yt-delete-${nodeId}-error`,
       youtubeDeleteChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     if (error instanceof HTTPError && error.response.status === 401) {
       throw new NonRetriableError(
-        "YouTube Access Token Expired. Please reconnect your account in the Credentials menu."
+        "YouTube Access Token Expired. Please reconnect your account in the Credentials menu.",
       );
     }
 

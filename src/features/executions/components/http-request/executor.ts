@@ -26,7 +26,7 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
   await step.realtime.publish(
     `http-${nodeId}-loading`,
     httpRequestChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
 
   try {
@@ -37,7 +37,7 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
       }
       if (!data.variableName) {
         throw new NonRetriableError(
-          "No variable name provided for HTTP request"
+          "No variable name provided for HTTP request",
         );
       }
       if (!data.method) {
@@ -100,7 +100,7 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
     await step.realtime.publish(
       `http-${nodeId}-success`,
       httpRequestChannel.status,
-      { nodeId, status: "success" }
+      { nodeId, status: "success" },
     );
     return result;
   } catch (error: any) {
@@ -108,7 +108,7 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
     await step.realtime.publish(
       `http-${nodeId}-error`,
       httpRequestChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
     throw error;
   }

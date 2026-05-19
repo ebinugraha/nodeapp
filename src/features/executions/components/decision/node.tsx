@@ -45,7 +45,7 @@ export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
           };
         }
         return node;
-      })
+      }),
     );
   };
 

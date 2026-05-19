@@ -1,9 +1,19 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  outputFileTracingRoot: path.join(__dirname),
   /* config options here */
+  webpack: (config) => {
+    // Handle Handlebars require.extensions warning
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      handlebars: "handlebars/dist/cjs/handlebars.js",
+    };
+    return config;
+  },
   async redirects() {
     return [
       {
@@ -37,13 +47,4 @@ export default withSentryConfig(nextConfig, {
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
   tunnelRoute: "/monitoring",
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
 });

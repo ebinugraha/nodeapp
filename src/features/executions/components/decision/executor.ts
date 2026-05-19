@@ -5,7 +5,7 @@ import Handlebars from "handlebars";
 // Helper untuk Handlebars jika belum ada
 if (!Handlebars.helpers.json) {
   Handlebars.registerHelper("json", (context) =>
-    JSON.stringify(context, null, 2)
+    JSON.stringify(context, null, 2),
   );
 }
 
@@ -24,7 +24,7 @@ export const DecisionExecutor: NodeExecutor<DecisionData> = async ({
   // 1. Validasi
   if (!data.variableName) {
     throw new NonRetriableError(
-      "Decision node missing 'variableName' configuration"
+      "Decision node missing 'variableName' configuration",
     );
   }
 

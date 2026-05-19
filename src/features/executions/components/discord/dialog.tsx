@@ -89,7 +89,7 @@ export const DiscordDialog = ({
   const handleInsertVariable = (
     currentValue: string,
     newValue: string,
-    onChange: (val: string) => void
+    onChange: (val: string) => void,
   ) => {
     onChange((currentValue || "") + newValue);
   };
@@ -203,7 +203,7 @@ export const DiscordDialog = ({
                         handleInsertVariable(
                           field.value || "",
                           val,
-                          field.onChange
+                          field.onChange,
                         )
                       }
                     />

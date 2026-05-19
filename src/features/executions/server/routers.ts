@@ -1,7 +1,6 @@
 import { PAGINATION } from "@/config/constant";
 import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { truncateByDomain } from "recharts/types/util/ChartUtils";
 import z from "zod";
 
 export const exectutionRouter = createTRPCRouter({
@@ -35,7 +34,7 @@ export const exectutionRouter = createTRPCRouter({
           .min(PAGINATION.MIN_PAGE_SIZE)
           .max(PAGINATION.MAX_PAGE_SIZE)
           .default(PAGINATION.DEFAULT_PAGE_SIZE),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize } = input;

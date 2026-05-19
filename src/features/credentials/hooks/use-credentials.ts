@@ -34,16 +34,16 @@ export const useCreateCredentials = () => {
       onSuccess: async (data) => {
         toast.success(`credentials "${data.name}" created`);
         await queryClient.invalidateQueries(
-          trpc.credentials.getAll.queryOptions({})
+          trpc.credentials.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.credentials.getOne.queryFilter({ id: data.id })
+          trpc.credentials.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to create credential : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -59,16 +59,16 @@ export const useRemoveCredentials = () => {
       onSuccess: async (data) => {
         toast.success(`credentials "${data.name}" deleted`);
         await queryClient.invalidateQueries(
-          trpc.credentials.getAll.queryOptions({})
+          trpc.credentials.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.credentials.getOne.queryFilter({ id: data.id })
+          trpc.credentials.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to delete credential : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -86,16 +86,16 @@ export const useUpdateCredential = () => {
       onSuccess: async (data) => {
         toast.success(`Credential "${data.name}" saved`);
         await queryClient.invalidateQueries(
-          trpc.credentials.getAll.queryOptions({})
+          trpc.credentials.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.credentials.getOne.queryFilter({ id: data.id })
+          trpc.credentials.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to save credential : ${error.message}`);
       },
-    })
+    }),
   );
 };
 

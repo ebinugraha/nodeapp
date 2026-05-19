@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   if (!credential)
     return NextResponse.json(
       { error: "Credential not found" },
-      { status: 404 }
+      { status: 404 },
     );
 
   const { clientId, clientSecret } = JSON.parse(credential.value);
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   if (!tokens.access_token) {
     return NextResponse.json(
       { error: "Failed to get tokens", details: tokens },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -68,6 +68,6 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_APP_URL}/credentials?success=true`
+    `${process.env.NEXT_PUBLIC_APP_URL}/credentials?success=true`,
   );
 }

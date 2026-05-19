@@ -41,7 +41,7 @@ export const GoogleSheetsNode = memo(
             };
           }
           return node;
-        })
+        }),
       );
     };
 
@@ -64,7 +64,7 @@ export const GoogleSheetsNode = memo(
         />
       </>
     );
-  }
+  },
 );
 
 GoogleSheetsNode.displayName = "GoogleSheetsNode";

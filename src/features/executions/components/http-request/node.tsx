@@ -56,7 +56,7 @@ export const HttpRequestNode = memo(
             };
           }
           return node;
-        })
+        }),
       );
     };
 
@@ -81,7 +81,7 @@ export const HttpRequestNode = memo(
         />
       </>
     );
-  }
+  },
 );
 
 HttpRequestNode.displayName = "HttpRequetNode";

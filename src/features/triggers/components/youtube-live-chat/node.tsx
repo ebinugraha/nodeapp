@@ -47,7 +47,7 @@ export const YoutubeLiveChatNode = memo((props: NodeProps) => {
         newActiveState,
         data.videoId,
         data.pollingInterval,
-        data.credentialId
+        data.credentialId,
       );
 
       // 2. Update UI Optimistic
@@ -63,11 +63,11 @@ export const YoutubeLiveChatNode = memo((props: NodeProps) => {
             };
           }
           return node;
-        })
+        }),
       );
 
       toast.success(
-        newActiveState ? "Polling started in background" : "Polling paused"
+        newActiveState ? "Polling started in background" : "Polling paused",
       );
     } catch (error) {
       toast.error("Failed to update status");
@@ -95,7 +95,7 @@ export const YoutubeLiveChatNode = memo((props: NodeProps) => {
           };
         }
         return node;
-      })
+      }),
     );
   };
 

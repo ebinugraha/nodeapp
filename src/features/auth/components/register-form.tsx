@@ -65,7 +65,7 @@ export const RegisterForm = () => {
         onError: (error) => {
           toast.error("Gagal melakukan registrasi. Silakan coba lagi.");
         },
-      }
+      },
     );
   };
 

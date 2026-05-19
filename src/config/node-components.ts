@@ -10,6 +10,22 @@ import { YoutubeLiveChatNode } from "@/features/triggers/components/youtube-live
 import { YoutubeVideoCommentNode } from "@/features/triggers/components/youtube-video-comment/node";
 import { NodeType } from "@/generated/prisma";
 import { NodeTypes } from "@xyflow/react";
+import {
+  YouTubeReplyNode,
+  YouTubeHideNode,
+  YouTubePinNode,
+  YouTubeFlagNode,
+  YouTubeTimeoutNode,
+  YouTubeBanNode,
+  DiscordNotifyNode,
+  AIModerationNode,
+  SentimentAnalysisNode,
+  SpamDetectionNode,
+  FilterNode,
+  WaitDelayNode,
+  WebhookNode,
+  StoreDBNode,
+} from "@/features/executions/components/moderation-nodes";
 
 export const nodeComponents = {
   [NodeType.INTITAL]: InitialNode,
@@ -22,6 +38,21 @@ export const nodeComponents = {
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteNode,
   [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentNode,
   [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
+  // New Moderation Nodes
+  [NodeType.YOUTUBE_REPLY]: YouTubeReplyNode,
+  [NodeType.YOUTUBE_HIDE]: YouTubeHideNode,
+  [NodeType.YOUTUBE_PIN]: YouTubePinNode,
+  [NodeType.YOUTUBE_FLAG]: YouTubeFlagNode,
+  [NodeType.YOUTUBE_TIMEOUT]: YouTubeTimeoutNode,
+  [NodeType.YOUTUBE_BAN]: YouTubeBanNode,
+  [NodeType.DISCORD_NOTIFY]: DiscordNotifyNode,
+  [NodeType.AI_MODERATION]: AIModerationNode,
+  [NodeType.SENTIMENT_ANALYSIS]: SentimentAnalysisNode,
+  [NodeType.SPAM_DETECTION]: SpamDetectionNode,
+  [NodeType.FILTER]: FilterNode,
+  [NodeType.WAIT_DELAY]: WaitDelayNode,
+  [NodeType.WEBHOOK]: WebhookNode,
+  [NodeType.STORE_DB]: StoreDBNode,
 } as const satisfies NodeTypes;
 
 export type RegisteredNodeType = keyof typeof nodeComponents;

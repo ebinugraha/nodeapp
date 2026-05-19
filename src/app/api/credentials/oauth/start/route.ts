@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (!credentialId) {
     return NextResponse.json(
       { error: "Credential ID required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   if (!credential)
     return NextResponse.json(
       { error: "Credential not found" },
-      { status: 404 }
+      { status: 404 },
     );
 
   const { clientId } = JSON.parse(credential.value); // Ambil Client ID user
@@ -49,6 +49,6 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
   );
 }

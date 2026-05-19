@@ -33,16 +33,16 @@ export const useCreateWorkflow = () => {
       onSuccess: async (data) => {
         toast.success(`Workflow "${data.name}" created`);
         await queryClient.invalidateQueries(
-          trpc.workflows.getAll.queryOptions({})
+          trpc.workflows.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.workflows.getOne.queryFilter({ id: data.id })
+          trpc.workflows.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to create workflow : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -58,16 +58,16 @@ export const useRemoveWorkflow = () => {
       onSuccess: async (data) => {
         toast.success(`Workflow "${data.name}" removed`);
         await queryClient.invalidateQueries(
-          trpc.workflows.getAll.queryOptions({})
+          trpc.workflows.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.workflows.getOne.queryFilter({ id: data.id })
+          trpc.workflows.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to delete workflow : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -85,16 +85,16 @@ export const useUpdateWorkflow = () => {
       onSuccess: async (data) => {
         toast.success(`Workflow "${data.name}" saved`);
         await queryClient.invalidateQueries(
-          trpc.workflows.getAll.queryOptions({})
+          trpc.workflows.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.workflows.getOne.queryFilter({ id: data.id })
+          trpc.workflows.getOne.queryFilter({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to save workflow : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -117,16 +117,16 @@ export const useUpdateWorkflowName = () => {
       onSuccess: async (data) => {
         toast.success(`Workflow "${data.name}" updated`);
         await queryClient.invalidateQueries(
-          trpc.workflows.getAll.queryOptions({})
+          trpc.workflows.getAll.queryOptions({}),
         );
         await queryClient.invalidateQueries(
-          trpc.workflows.getOne.queryOptions({ id: data.id })
+          trpc.workflows.getOne.queryOptions({ id: data.id }),
         );
       },
       onError: (error) => {
         toast.error(`Failed to update workflow : ${error.message}`);
       },
-    })
+    }),
   );
 };
 
@@ -141,6 +141,6 @@ export const useExecuteWorkflow = () => {
       onError: (error) => {
         toast.error(`Failed to update workflow : ${error.message}`);
       },
-    })
+    }),
   );
 };

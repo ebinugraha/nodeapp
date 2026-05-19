@@ -57,7 +57,7 @@ export const GeminitNode = memo((props: NodeProps<GeminiNodeyType>) => {
           };
         }
         return node;
-      })
+      }),
     );
   };
 

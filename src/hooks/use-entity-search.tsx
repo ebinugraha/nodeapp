@@ -5,7 +5,7 @@ interface UseEntitySearchProps<
   T extends {
     search: string;
     page: number;
-  }
+  },
 > {
   params: T;
   setParams: (param: T) => void;

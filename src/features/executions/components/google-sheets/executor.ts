@@ -8,7 +8,7 @@ import ky, { HTTPError } from "ky";
 // Helper untuk Handlebars
 if (!Handlebars.helpers.json) {
   Handlebars.registerHelper("json", (context) =>
-    JSON.stringify(context, null, 2)
+    JSON.stringify(context, null, 2),
   );
 }
 
@@ -31,7 +31,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
   await step.realtime.publish(
     `gsheets-${nodeId}-loading`,
     googleSheetsChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
 
   try {
@@ -43,7 +43,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
       !data.variableName
     ) {
       throw new NonRetriableError(
-        "Missing required configuration (Credential, ID, Range, Variable)"
+        "Missing required configuration (Credential, ID, Range, Variable)",
       );
     }
 
@@ -110,7 +110,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     await step.realtime.publish(
       `gsheets-${nodeId}-success`,
       googleSheetsChannel.status,
-      { nodeId, status: "success" }
+      { nodeId, status: "success" },
     );
 
     // 5. Return Context
@@ -123,7 +123,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     await step.realtime.publish(
       `gsheets-${nodeId}-error`,
       googleSheetsChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     if (error instanceof HTTPError) {

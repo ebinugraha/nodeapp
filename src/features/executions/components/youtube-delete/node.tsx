@@ -35,7 +35,7 @@ export const YoutubeDeleteNode = memo(
             return { ...node, data: { ...node.data, ...values } };
           }
           return node;
-        })
+        }),
       );
     };
 
@@ -58,7 +58,7 @@ export const YoutubeDeleteNode = memo(
         />
       </>
     );
-  }
+  },
 );
 
 YoutubeDeleteNode.displayName = "YoutubeDeleteNode";

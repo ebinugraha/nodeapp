@@ -15,7 +15,7 @@ export const credentialsRouter = createTRPCRouter({
         name: z.string().min(1, "Name is required"),
         type: z.enum(CredentialType),
         value: z.string().min(1, "Value is required"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { name, type, value } = input;
@@ -48,7 +48,7 @@ export const credentialsRouter = createTRPCRouter({
         name: z.string().min(1, "Name is required"),
         type: z.enum(CredentialType),
         value: z.string().min(1, "Value is required"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { name, id, type, value } = input;
@@ -91,7 +91,7 @@ export const credentialsRouter = createTRPCRouter({
           .max(PAGINATION.MAX_PAGE_SIZE)
           .default(PAGINATION.DEFAULT_PAGE_SIZE),
         search: z.string().default(""),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize, search } = input;

@@ -7,14 +7,14 @@ export const YoutubeVideoCommentExecutor: NodeExecutor<
   await step.realtime.publish(
     `yt-video-${nodeId}-loading`,
     youtubeVideoCommentChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
   // Pass data dari trigger (Inngest) ke node berikutnya
   const result = await step.run("youtube-video-trigger", async () => context);
   await step.realtime.publish(
     `yt-video-${nodeId}-success`,
     youtubeVideoCommentChannel.status,
-    { nodeId, status: "success" }
+    { nodeId, status: "success" },
   );
   return result;
 };

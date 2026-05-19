@@ -20,7 +20,7 @@ export const trpc = createTRPCOptionsProxy({
 export const caller = appRouter.createCaller(createTRPCContext);
 
 export async function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptions: T
+  queryOptions: T,
 ) {
   const queryClient = getQueryClient();
   if (queryOptions.queryKey[1]?.type === "infinite") {

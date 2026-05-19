@@ -5,17 +5,54 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import superjson from "superjson";
 
+// Better Auth session type
+interface SessionWithUser {
+  session: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    expiresAt: Date;
+    token: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+
 export const createTRPCContext = cache(async () => {
   /**
    * @see: https://trpc.io/docs/server/context
    */
-  return { userId: "user_123" };
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  return {
+    userId: session?.user?.id,
+    session,
+  };
 });
+
+// Context type for type safety
+export type TRPCContext = {
+  userId: string | undefined;
+  session: SessionWithUser | null;
+};
+
 // Avoid exporting the entire t-object
 // since it's not very descriptive.
 // For instance, the use of a t variable
 // is common in i18n libraries.
-const t = initTRPC.create({
+const t = initTRPC.context<TRPCContext>().create({
   /**
    * @see https://trpc.io/docs/server/data-transformers
    */
@@ -26,9 +63,7 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = ctx.session;
 
   if (!session) {
     throw new TRPCError({
@@ -64,5 +99,5 @@ export const premiumProcedure = protectedProcedure.use(
     return next({
       ctx: { ...ctx, customer },
     });
-  }
+  },
 );

@@ -10,25 +10,71 @@ import { YoutubeDeleteExecutor } from "../components/youtube-delete/executor";
 import { YoutubeVideoCommentExecutor } from "@/features/triggers/components/youtube-video-comment/executor";
 import { GoogleSheetsExecutor } from "../components/google-sheets/executor";
 
-export const excetorRegister: Record<NodeType, NodeExecutor> = {
+// New Moderation Executors
+import { YouTubeReplyExecutor } from "../components/youtube-reply/executor";
+import { YouTubeHideExecutor } from "../components/youtube-hide/executor";
+import { YouTubePinExecutor } from "../components/youtube-pin/executor";
+import { YouTubeFlagExecutor } from "../components/youtube-flag/executor";
+import { YouTubeTimeoutExecutor } from "../components/youtube-timeout/executor";
+import { YouTubeBanExecutor } from "../components/youtube-ban/executor";
+import { DiscordNotifyExecutor } from "../components/discord-notify/executor";
+import { AIModerationExecutor } from "../components/ai-moderation/executor";
+import { SentimentAnalysisExecutor } from "../components/sentiment-analysis/executor";
+import { SpamDetectionExecutor } from "../components/spam-detection/executor";
+import { FilterConditionExecutor } from "../components/filter/executor";
+import { WaitDelayExecutor } from "../components/wait-delay/executor";
+import { WebhookExecutor } from "../components/webhook/executor";
+import { StoreDBExecutor } from "../components/store-db/executor";
+
+// Cast all executors to generic NodeExecutor type
+export const executorRegister: Record<NodeType, NodeExecutor> = {
+  // Existing executors
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
   [NodeType.INTITAL]: manualTriggerExecutor,
   [NodeType.HTTP_REQUEST]: httpRequestExecutor,
-  [NodeType.GEMINI]: GeminiExecutor,
-  [NodeType.ANTHROPIC]: GeminiExecutor,
-  [NodeType.DEEPSEEK]: GeminiExecutor,
-  [NodeType.OPENAI]: GeminiExecutor,
-  [NodeType.DISCORD]: DiscordExecutor,
-  [NodeType.SLACK]: DiscordExecutor,
+  [NodeType.GEMINI]: GeminiExecutor as NodeExecutor,
+  [NodeType.ANTHROPIC]: GeminiExecutor as NodeExecutor,
+  [NodeType.DEEPSEEK]: GeminiExecutor as NodeExecutor,
+  [NodeType.OPENAI]: GeminiExecutor as NodeExecutor,
+  [NodeType.DISCORD]: DiscordExecutor as NodeExecutor,
+  [NodeType.SLACK]: DiscordExecutor as NodeExecutor,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
-  [NodeType.DECISION]: DecisionExecutor,
+  [NodeType.DECISION]: DecisionExecutor as NodeExecutor,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteExecutor,
   [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentExecutor,
-  [NodeType.GOOGLE_SHEETS]: GoogleSheetsExecutor,
+  [NodeType.GOOGLE_SHEETS]: GoogleSheetsExecutor as NodeExecutor,
+
+  // New YouTube Moderation Actions
+  [NodeType.YOUTUBE_REPLY]: YouTubeReplyExecutor as NodeExecutor,
+  [NodeType.YOUTUBE_HIDE]: YouTubeHideExecutor as NodeExecutor,
+  [NodeType.YOUTUBE_PIN]: YouTubePinExecutor as NodeExecutor,
+  [NodeType.YOUTUBE_FLAG]: YouTubeFlagExecutor as NodeExecutor,
+  [NodeType.YOUTUBE_TIMEOUT]: YouTubeTimeoutExecutor as NodeExecutor,
+  [NodeType.YOUTUBE_BAN]: YouTubeBanExecutor as NodeExecutor,
+
+  // Notification Nodes
+  [NodeType.DISCORD_NOTIFY]: DiscordNotifyExecutor as NodeExecutor,
+  [NodeType.SLACK_NOTIFY]: DiscordNotifyExecutor as NodeExecutor,
+
+  // AI/Moderation Nodes
+  [NodeType.AI_MODERATION]: AIModerationExecutor as NodeExecutor,
+  [NodeType.SENTIMENT_ANALYSIS]: SentimentAnalysisExecutor as NodeExecutor,
+  [NodeType.SPAM_DETECTION]: SpamDetectionExecutor as NodeExecutor,
+
+  // Logic Nodes
+  [NodeType.FILTER]: FilterConditionExecutor as NodeExecutor,
+  [NodeType.WAIT_DELAY]: WaitDelayExecutor as NodeExecutor,
+  [NodeType.ROUTER]: FilterConditionExecutor as NodeExecutor,
+  [NodeType.LOOP]: FilterConditionExecutor as NodeExecutor,
+
+  // Integration Nodes
+  [NodeType.WEBHOOK]: WebhookExecutor as NodeExecutor,
+  [NodeType.STORE_DB]: StoreDBExecutor as NodeExecutor,
+  [NodeType.EMAIL_NOTIFY]: WebhookExecutor as NodeExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
-  const executor = excetorRegister[type];
+  const executor = executorRegister[type];
   if (!executor) {
     throw new Error(`No executor found for node type: ${type}`);
   }

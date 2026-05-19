@@ -114,7 +114,7 @@ export const ExecutionItem = ({
     ? Math.round(
         (new Date(data.completedAt).getTime() -
           new Date(data.startedAt).getTime()) /
-          1000
+          1000,
       )
     : null;
 

@@ -58,7 +58,7 @@ export const LoginForm = () => {
         onError: (error) => {
           toast.error("Gagal melakukan login. Silakan coba lagi.");
         },
-      }
+      },
     );
   };
 

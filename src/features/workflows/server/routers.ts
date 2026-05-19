@@ -69,7 +69,7 @@ export const workflowsRouter = createTRPCRouter({
               x: z.number(),
               y: z.number(),
             }),
-          })
+          }),
         ),
         edges: z.array(
           z.object({
@@ -77,9 +77,9 @@ export const workflowsRouter = createTRPCRouter({
             target: z.string(),
             sourceHandle: z.string().nullish(),
             targetHandle: z.string().nullish(),
-          })
+          }),
         ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { edges, id, nodes } = input;
@@ -195,7 +195,7 @@ export const workflowsRouter = createTRPCRouter({
           .max(PAGINATION.MAX_PAGE_SIZE)
           .default(PAGINATION.DEFAULT_PAGE_SIZE),
         search: z.string().default(""),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize, search } = input;

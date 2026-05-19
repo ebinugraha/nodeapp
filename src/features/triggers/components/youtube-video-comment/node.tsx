@@ -55,7 +55,7 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
         newActiveState,
         data.videoId,
         data.pollingInterval,
-        data.credentialId
+        data.credentialId,
       );
       setNodes((nodes) =>
         nodes.map((node) => {
@@ -66,7 +66,7 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
             };
           }
           return node;
-        })
+        }),
       );
       toast.success(newActiveState ? "Polling started" : "Polling paused");
     } catch (error) {
@@ -93,7 +93,7 @@ export const YoutubeVideoCommentNode = memo((props: NodeProps) => {
           };
         }
         return node;
-      })
+      }),
     );
   };
 

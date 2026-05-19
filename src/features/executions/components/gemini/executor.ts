@@ -29,14 +29,14 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   await step.realtime.publish(
     `gemini-${nodeId}-loading`,
     geminiExecutionChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
 
   if (!data.variableName) {
     await step.realtime.publish(
       `gemini-${nodeId}-error-var`,
       geminiExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     throw new NonRetriableError("Error: variable name is missing");
@@ -46,7 +46,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     await step.realtime.publish(
       `gemini-${nodeId}-error-prompt`,
       geminiExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     throw new NonRetriableError("Error: variable name is missing");
@@ -56,7 +56,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     await step.realtime.publish(
       `gemini-${nodeId}-error-cred`,
       geminiExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     throw new NonRetriableError("Error: Credential id required");
@@ -104,7 +104,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     await step.realtime.publish(
       `gemini-${nodeId}-success`,
       geminiExecutionChannel.status,
-      { nodeId, status: "success" }
+      { nodeId, status: "success" },
     );
 
     return {
@@ -117,7 +117,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     await step.realtime.publish(
       `gemini-${nodeId}-error-catch`,
       geminiExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     throw new Error();

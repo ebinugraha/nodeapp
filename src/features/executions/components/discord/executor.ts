@@ -26,14 +26,14 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
   await step.realtime.publish(
     `discord-${nodeId}-loading`,
     discordExecutionChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
 
   if (!data.variableName) {
     await step.realtime.publish(
       `discord-${nodeId}-error-var`,
       discordExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
     throw new NonRetriableError("Error: variable name is missing");
   }
@@ -42,7 +42,7 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     await step.realtime.publish(
       `discord-${nodeId}-error-content`,
       discordExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
     throw new NonRetriableError("Error: content is missing");
   }
@@ -51,7 +51,7 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     await step.realtime.publish(
       `discord-${nodeId}-error-webhook`,
       discordExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
     throw new NonRetriableError("Error: webhook is missing");
   }
@@ -85,7 +85,7 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     await step.realtime.publish(
       `discord-${nodeId}-success`,
       discordExecutionChannel.status,
-      { nodeId, status: "success" }
+      { nodeId, status: "success" },
     );
 
     return result;
@@ -93,7 +93,7 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     await step.realtime.publish(
       `discord-${nodeId}-error-catch`,
       discordExecutionChannel.status,
-      { nodeId, status: "error" }
+      { nodeId, status: "error" },
     );
 
     throw new Error();

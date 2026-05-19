@@ -12,7 +12,7 @@ export const YoutubeLiveChatExecutor: NodeExecutor<YoutubeData> = async ({
   await step.realtime.publish(
     `yt-live-${nodeId}-loading`,
     youtubeLiveChatChannel.status,
-    { nodeId, status: "loading" }
+    { nodeId, status: "loading" },
   );
 
   // 2. Pass data chat ke langkah berikutnya
@@ -22,7 +22,7 @@ export const YoutubeLiveChatExecutor: NodeExecutor<YoutubeData> = async ({
   await step.realtime.publish(
     `yt-live-${nodeId}-success`,
     youtubeLiveChatChannel.status,
-    { nodeId, status: "success" }
+    { nodeId, status: "success" },
   );
 
   return result;

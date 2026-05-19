@@ -1,8 +1,8 @@
 "use client";
 
-import { NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { LucideIcon } from "lucide-react";
 import { memo } from "react";
+import { Position, useReactFlow } from "@xyflow/react";
 import Image from "next/image";
 import { WorkflowNode } from "@/components/workflow-node";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
@@ -12,7 +12,7 @@ import {
   NodeStatusIndicator,
 } from "@/components/react-flow/node-status-indicator";
 
-interface BaseExecutionNodeProps extends NodeProps {
+interface BaseExecutionNodeProps {
   Icon: LucideIcon | string;
   name: string;
   description?: string;
@@ -20,6 +20,7 @@ interface BaseExecutionNodeProps extends NodeProps {
   status?: NodeStatus;
   onSettings?: () => void;
   onDoubleClick?: () => void;
+  id?: string;
 }
 
 export const BaseExecutionNode = memo(
@@ -43,7 +44,7 @@ export const BaseExecutionNode = memo(
 
       setEdges((currentEdges) => {
         const updatedEdges = currentEdges.filter(
-          (edge) => edge.source !== id && edge.target !== id
+          (edge) => edge.source !== id && edge.target !== id,
         );
         return updatedEdges;
       });
@@ -80,7 +81,7 @@ export const BaseExecutionNode = memo(
         </NodeStatusIndicator>
       </WorkflowNode>
     );
-  }
+  },
 );
 
 BaseExecutionNode.displayName = "BaseExecutionNode";

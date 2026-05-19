@@ -33,7 +33,7 @@ export const PlaceholderNode = forwardRef<HTMLDivElement, PlaceholderNodeProps>(
         />
       </BaseNode>
     );
-  }
+  },
 );
 
 PlaceholderNode.displayName = "PlaceholderNode";
