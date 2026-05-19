@@ -5,7 +5,6 @@ import { topologicalSort } from "@/lib/topologicalSort";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-register";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
-import { MaybePromise, Realtime } from "@inngest/realtime";
 
 const getDescendants = (
   nodes: any[],
@@ -117,11 +116,6 @@ export const executeWorkflow = inngest.createFunction(
         context,
         userId,
         step,
-        publish: function <
-          TMessage extends MaybePromise<Realtime.Message.Input>,
-        >(message: TMessage): Promise<Awaited<TMessage>["data"]> {
-          throw new Error("Function not implemented.");
-        },
       });
 
       // 2. LOGIKA DECISION NODE
