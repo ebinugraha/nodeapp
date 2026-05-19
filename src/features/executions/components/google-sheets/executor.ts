@@ -1,5 +1,4 @@
 import { NodeExecutor } from "@/features/executions/type";
-import { inngest } from "@/inngest/client";
 import { googleSheetsChannel } from "@/inngest/channels/google-sheets";
 import { NonRetriableError } from "inngest";
 import prisma from "@/lib/db";
@@ -27,11 +26,13 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
   nodeId,
   context,
   userId,
+  step,
 }) => {
-  await inngest.realtime.publish(googleSheetsChannel.status, {
-    nodeId,
-    status: "loading",
-  });
+  await step.realtime.publish(
+    `gsheets-${nodeId}-loading`,
+    googleSheetsChannel.status,
+    { nodeId, status: "loading" }
+  );
 
   try {
     // 1. Validasi Input
@@ -106,10 +107,11 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
       };
     }
 
-    await inngest.realtime.publish(googleSheetsChannel.status, {
-      nodeId,
-      status: "success",
-    });
+    await step.realtime.publish(
+      `gsheets-${nodeId}-success`,
+      googleSheetsChannel.status,
+      { nodeId, status: "success" }
+    );
 
     // 5. Return Context
     return {
@@ -118,10 +120,11 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     };
   } catch (error: any) {
     console.error("Google Sheets Error:", error);
-    await inngest.realtime.publish(googleSheetsChannel.status, {
-      nodeId,
-      status: "error",
-    });
+    await step.realtime.publish(
+      `gsheets-${nodeId}-error`,
+      googleSheetsChannel.status,
+      { nodeId, status: "error" }
+    );
 
     if (error instanceof HTTPError) {
       const errorBody = await error.response.json();
