@@ -218,6 +218,13 @@ interface NodeSelectorProps {
   children: React.ReactNode;
 }
 
+// All trigger node types - used to enforce single trigger per workflow
+const TRIGGER_NODE_TYPES: NodeType[] = [
+  NodeType.MANUAL_TRIGGER,
+  NodeType.YOUTUBE_LIVE_CHAT,
+  NodeType.YOUTUBE_VIDEO_COMMENT,
+];
+
 export function NodeSelector({
   open,
   onOpenChange,
@@ -225,16 +232,30 @@ export function NodeSelector({
 }: NodeSelectorProps) {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
 
+  // Check if any trigger node already exists in the workflow
+  const hasTriggerNode = useCallback(() => {
+    const nodes = getNodes();
+    return nodes.some(
+      (node) =>
+        TRIGGER_NODE_TYPES.includes(node.type as NodeType) ||
+        node.type === NodeType.INTITAL,
+    );
+  }, [getNodes]);
+
   const handleNodeSelect = useCallback(
     (selection: NodeTypeOption) => {
-      if (selection.type === NodeType.MANUAL_TRIGGER) {
+      // Validate: only one trigger node allowed per workflow
+      if (selection.category === "trigger") {
         const nodes = getNodes();
-        const hasManualTrigger = nodes.some(
-          (node) => node.type === NodeType.MANUAL_TRIGGER,
+        const existingTrigger = nodes.find(
+          (node) =>
+            TRIGGER_NODE_TYPES.includes(node.type as NodeType),
         );
 
-        if (hasManualTrigger) {
-          toast.error("Only one manual trigger is allowed per workflow");
+        if (existingTrigger) {
+          toast.error(
+            "Only one trigger node is allowed per workflow. Remove the existing trigger first.",
+          );
           return;
         }
       }
@@ -264,9 +285,9 @@ export function NodeSelector({
         }
 
         return [...nodes, newNode];
-
-        onOpenChange(false);
       });
+
+      onOpenChange(false);
     },
     [setNodes, getNodes, screenToFlowPosition, onOpenChange],
   );
@@ -286,7 +307,12 @@ export function NodeSelector({
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-2">TRIGGERS</h3>
           {triggerNodes.map((nodeType) => (
-            <NodeItem key={nodeType.type} nodeType={nodeType} onSelect={handleNodeSelect} />
+            <NodeItem
+              key={nodeType.type}
+              nodeType={nodeType}
+              onSelect={handleNodeSelect}
+              disabled={hasTriggerNode()}
+            />
           ))}
         </div>
         <Separator />
@@ -342,15 +368,27 @@ export function NodeSelector({
 function NodeItem({
   nodeType,
   onSelect,
+  disabled = false,
 }: {
   nodeType: NodeTypeOption;
   onSelect: (selection: NodeTypeOption) => void;
+  disabled?: boolean;
 }) {
   const Icon = nodeType.icon;
   return (
     <div
-      className="w-full justify-start h-auto py-3 px-2 rounded-md cursor-pointer border-l-2 border-transparent hover:border-l-primary hover:bg-accent transition-colors"
-      onClick={() => onSelect(nodeType)}
+      className={`w-full justify-start h-auto py-3 px-2 rounded-md border-l-2 border-transparent transition-colors ${
+        disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "cursor-pointer hover:border-l-primary hover:bg-accent"
+      }`}
+      onClick={() => {
+        if (disabled) {
+          toast.error("Only one trigger node is allowed per workflow.");
+          return;
+        }
+        onSelect(nodeType);
+      }}
     >
       <div className="flex items-center gap-3 w-full overflow-hidden">
         {typeof Icon === "string" ? (
@@ -360,7 +398,9 @@ function NodeItem({
         )}
         <div className="flex flex-col items-start text-left min-w-0">
           <span className="text-sm font-medium truncate">{nodeType.label}</span>
-          <span className="text-xs text-muted-foreground line-clamp-2">{nodeType.description}</span>
+          <span className="text-xs text-muted-foreground line-clamp-2">
+            {disabled ? "Trigger already exists in workflow" : nodeType.description}
+          </span>
         </div>
       </div>
     </div>
