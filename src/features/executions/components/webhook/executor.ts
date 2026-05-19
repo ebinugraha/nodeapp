@@ -1,5 +1,6 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
+import { compileTemplate } from "@/features/executions/lib/template";
 
 type WebhookData = {
   variableName?: string;
@@ -7,13 +8,6 @@ type WebhookData = {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   headers?: { key: string; value: string }[];
   bodyTemplate?: string;
-};
-
-type YouTubeCommentData = {
-  author?: string;
-  text?: string;
-  message?: string;
-  videoId?: string;
 };
 
 export const WebhookExecutor: NodeExecutor<WebhookData> = async ({
@@ -28,14 +22,8 @@ export const WebhookExecutor: NodeExecutor<WebhookData> = async ({
       throw new NonRetriableError("Webhook URL is required");
     }
 
-    const commentData = (context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
-
     // Compile body template
-    let body = data.bodyTemplate || JSON.stringify(context);
-    body = body
-      .replace(/\{\{author\}\}/g, commentData?.author || "")
-      .replace(/\{\{comment\}\}/g, commentData?.text || commentData?.message || "")
-      .replace(/\{\{videoId\}\}/g, commentData?.videoId || "");
+    const body = compileTemplate(data.bodyTemplate, context) || JSON.stringify(context);
 
     // Build headers
     const headers: Record<string, string> = {

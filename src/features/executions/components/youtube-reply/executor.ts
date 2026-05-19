@@ -1,6 +1,7 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { compileTemplate } from "@/features/executions/lib/template";
 
 type YouTubeReplyData = {
   credentialId?: string;
@@ -40,13 +41,7 @@ export const YouTubeReplyExecutor: NodeExecutor<YouTubeReplyData> = async ({
     }
 
     // Compile template with context variables
-    let replyText = data.replyTemplate || "Thank you for your comment!";
-
-    // Replace template variables
-    replyText = replyText
-      .replace(/\{\{author\}\}/g, commentData.author || "")
-      .replace(/\{\{comment\}\}/g, commentData.text || commentData.message || "")
-      .replace(/\{\{videoId\}\}/g, commentData.videoId || "");
+    const replyText = compileTemplate(data.replyTemplate, context) || "Thank you for your comment!";
 
     // Apply delay if configured
     if (data.delaySeconds && data.delaySeconds > 0) {

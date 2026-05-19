@@ -1,5 +1,6 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
+import { compileTemplate } from "@/features/executions/lib/template";
 
 type DiscordNotifyData = {
   webhookUrl?: string;
@@ -8,13 +9,6 @@ type DiscordNotifyData = {
   description?: string;
   color?: string;
   fields?: { name: string; value: string; inline?: boolean }[];
-};
-
-type YouTubeCommentData = {
-  author?: string;
-  text?: string;
-  message?: string;
-  videoId?: string;
 };
 
 export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
@@ -29,24 +23,13 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
       throw new NonRetriableError("Discord webhook URL is required");
     }
 
-    const commentData = (context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
-
-    // Compile template variables
-    const compileTemplate = (template: string | undefined) => {
-      if (!template) return "";
-      return template
-        .replace(/\{\{author\}\}/g, commentData?.author || "Unknown")
-        .replace(/\{\{comment\}\}/g, commentData?.text || commentData?.message || "")
-        .replace(/\{\{videoId\}\}/g, commentData?.videoId || "");
-    };
-
-    const title = compileTemplate(data.title) || "YouTube Comment Alert";
-    const description = compileTemplate(data.description) || "New comment detected";
+    const title = compileTemplate(data.title, context) || "YouTube Comment Alert";
+    const description = compileTemplate(data.description, context) || "New comment detected";
     const color = parseInt(data.color?.replace("#", "") || "15158332", 16); // Default red
 
     const fields = (data.fields || []).map((field) => ({
-      name: compileTemplate(field.name),
-      value: compileTemplate(field.value),
+      name: compileTemplate(field.name, context),
+      value: compileTemplate(field.value, context),
       inline: field.inline ?? false,
     }));
 
@@ -63,7 +46,8 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
     };
 
     // Add thumbnail for YouTube comments
-    if (commentData) {
+    const hasYouTubeData = context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT;
+    if (hasYouTubeData) {
       embed.thumbnail = {
         url: "https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/yt_social_square_rgb.png",
       };
