@@ -27,8 +27,8 @@ import {
   SheetTrigger,
 } from "./ui/sheet";
 import { Separator } from "./ui/separator";
-import { useReactFlow } from "@xyflow/react";
-import { useCallback } from "react";
+import { useReactFlow, useNodes } from "@xyflow/react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
 export type NodeTypeOption = {
@@ -231,16 +231,15 @@ export function NodeSelector({
   children,
 }: NodeSelectorProps) {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
+  const currentNodes = useNodes();
 
-  // Check if any trigger node already exists in the workflow
-  const hasTriggerNode = useCallback(() => {
-    const nodes = getNodes();
-    return nodes.some(
+  // Reactively check if any trigger node already exists in the workflow
+  const triggerAlreadyExists = useMemo(() => {
+    return currentNodes.some(
       (node) =>
-        TRIGGER_NODE_TYPES.includes(node.type as NodeType) ||
-        node.type === NodeType.INTITAL,
+        TRIGGER_NODE_TYPES.includes(node.type as NodeType),
     );
-  }, [getNodes]);
+  }, [currentNodes]);
 
   const handleNodeSelect = useCallback(
     (selection: NodeTypeOption) => {
@@ -254,7 +253,7 @@ export function NodeSelector({
 
         if (existingTrigger) {
           toast.error(
-            "Only one trigger node is allowed per workflow. Remove the existing trigger first.",
+            "Hanya boleh 1 trigger per workflow. Hapus trigger yang sudah ada terlebih dahulu.",
           );
           return;
         }
@@ -311,7 +310,7 @@ export function NodeSelector({
               key={nodeType.type}
               nodeType={nodeType}
               onSelect={handleNodeSelect}
-              disabled={hasTriggerNode()}
+              disabled={triggerAlreadyExists}
             />
           ))}
         </div>
