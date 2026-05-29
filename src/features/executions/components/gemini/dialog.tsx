@@ -26,12 +26,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
 
 export const AVAILABLE_MODELS = [
   "gemini-2.0-flash",
@@ -249,7 +250,11 @@ export const GeminiDialog = ({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.GEMINI}
+                currentConfig={form.getValues()}
+              />
               <Button className="w-full" type="submit">
                 Save
               </Button>

@@ -20,6 +20,9 @@ import {
   ZapIcon,
   SparklesIcon,
   WorkflowIcon,
+  BookmarkIcon,
+  MoreVerticalIcon,
+  TrashIcon,
 } from "lucide-react";
 import {
   Sheet,
@@ -29,11 +32,42 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 import { useReactFlow } from "@xyflow/react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import {
+  useTemplates,
+  useDeleteTemplate,
+} from "@/features/templates/hooks/use-templates";
+import { SaveTemplateDialog } from "./save-template-dialog";
+
+interface TemplateData {
+  id: string;
+  name: string;
+  description: string | null;
+  nodeType: NodeType;
+  config: Record<string, unknown>;
+}
 
 export type NodeTypeOption = {
   type: NodeType;
@@ -280,6 +314,17 @@ interface NodeSelectorProps {
   children: React.ReactNode;
 }
 
+// Template category config
+const TEMPLATE_CATEGORY_CONFIG = {
+  icon: BookmarkIcon,
+  label: "My Templates",
+  gradient: "from-cyan-500/10 to-blue-500/10",
+  borderColor: "border-cyan-500/30",
+  badgeColor: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+  iconColor: "text-cyan-500",
+  description: "Saved configurations",
+};
+
 // All trigger node types - used to enforce single trigger per workflow
 const TRIGGER_NODE_TYPES: NodeType[] = [
   NodeType.MANUAL_TRIGGER,
@@ -293,6 +338,7 @@ export function NodeSelector({
   children,
 }: NodeSelectorProps) {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
   // Check if any trigger node already exists in the workflow
   // Note: We don't include INTITAL here because it's a placeholder node
@@ -362,73 +408,295 @@ export function NodeSelector({
     [setNodes, getNodes, screenToFlowPosition, onOpenChange],
   );
 
+  const handleTemplateSelect = useCallback(
+    (template: TemplateData) => {
+      const nodes = getNodes();
+
+      // Check trigger constraint
+      const isTriggerTemplate = TRIGGER_NODE_TYPES.includes(template.nodeType);
+      const hasTrigger = nodes.some((node) =>
+        TRIGGER_NODE_TYPES.includes(node.type as NodeType),
+      );
+
+      if (isTriggerTemplate && hasTrigger) {
+        toast.error(
+          "Only one trigger node allowed per workflow. Remove the existing trigger first.",
+        );
+        return;
+      }
+
+      setNodes((nodes) => {
+        const hasInitialTrigger = nodes.some(
+          (node) => node.type === NodeType.INTITAL,
+        );
+
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        const flowPosition = screenToFlowPosition({
+          x: centerX + (Math.random() - 0.5) * 200,
+          y: centerY + (Math.random() - 0.5) * 200,
+        });
+
+        const newNode = {
+          id: createId(),
+          data: template.config,
+          position: flowPosition,
+          type: template.nodeType,
+        };
+
+        if (hasInitialTrigger) {
+          return [newNode];
+        }
+
+        return [...nodes, newNode];
+      });
+
+      onOpenChange(false);
+      toast.success(`Template "${template.name}" applied`);
+    },
+    [setNodes, getNodes, screenToFlowPosition, onOpenChange],
+  );
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-0">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <WorkflowIcon className="size-5 text-primary" />
-            Tambahkan Node
-          </SheetTitle>
-          <SheetDescription>
-            Pilih node untuk menambahkan ke workflow
-          </SheetDescription>
-        </SheetHeader>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetTrigger asChild>{children}</SheetTrigger>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-0">
+          <SheetHeader className="px-6 pt-6 pb-4 border-b">
+            <SheetTitle className="flex items-center gap-2">
+              <WorkflowIcon className="size-5 text-primary" />
+              Tambahkan Node
+            </SheetTitle>
+            <SheetDescription>
+              Pilih node untuk menambahkan ke workflow
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="py-4 space-y-4 px-4">
-          {/* Triggers - Special handling for single trigger limit */}
-          <NodeCategory
-            category="trigger"
-            config={CATEGORY_CONFIG.trigger}
-            nodes={triggerNodes}
-            onSelect={handleNodeSelect}
-            disabled={hasTriggerNode()}
-            existingTrigger={existingTrigger?.type as NodeType}
-          />
+          <div className="py-4 space-y-4 px-4">
+            {/* Templates Section */}
+            <TemplatesSection onSelect={handleTemplateSelect} />
 
-          {/* Moderation */}
-          <NodeCategory
-            category="moderation"
-            config={CATEGORY_CONFIG.moderation}
-            nodes={moderationNodes}
-            onSelect={handleNodeSelect}
-          />
+            {/* Triggers - Special handling for single trigger limit */}
+            <NodeCategory
+              category="trigger"
+              config={CATEGORY_CONFIG.trigger}
+              nodes={triggerNodes}
+              onSelect={handleNodeSelect}
+              disabled={hasTriggerNode()}
+              existingTrigger={existingTrigger?.type as NodeType}
+            />
 
-          {/* AI */}
-          <NodeCategory
-            category="ai"
-            config={CATEGORY_CONFIG.ai}
-            nodes={aiNodes}
-            onSelect={handleNodeSelect}
-          />
+            {/* Moderation */}
+            <NodeCategory
+              category="moderation"
+              config={CATEGORY_CONFIG.moderation}
+              nodes={moderationNodes}
+              onSelect={handleNodeSelect}
+            />
 
-          {/* Notification */}
-          <NodeCategory
-            category="notification"
-            config={CATEGORY_CONFIG.notification}
-            nodes={notificationNodes}
-            onSelect={handleNodeSelect}
-          />
+            {/* AI */}
+            <NodeCategory
+              category="ai"
+              config={CATEGORY_CONFIG.ai}
+              nodes={aiNodes}
+              onSelect={handleNodeSelect}
+            />
 
-          {/* Logic */}
-          <NodeCategory
-            category="logic"
-            config={CATEGORY_CONFIG.logic}
-            nodes={logicNodes}
-            onSelect={handleNodeSelect}
-          />
+            {/* Notification */}
+            <NodeCategory
+              category="notification"
+              config={CATEGORY_CONFIG.notification}
+              nodes={notificationNodes}
+              onSelect={handleNodeSelect}
+            />
 
-          {/* Actions */}
-          <NodeCategory
-            category="action"
-            config={CATEGORY_CONFIG.action}
-            nodes={actionNodes}
-            onSelect={handleNodeSelect}
-          />
+            {/* Logic */}
+            <NodeCategory
+              category="logic"
+              config={CATEGORY_CONFIG.logic}
+              nodes={logicNodes}
+              onSelect={handleNodeSelect}
+            />
+
+            {/* Actions */}
+            <NodeCategory
+              category="action"
+              config={CATEGORY_CONFIG.action}
+              nodes={actionNodes}
+              onSelect={handleNodeSelect}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+// Templates Section Component
+function TemplatesSection({
+  onSelect,
+}: {
+  onSelect: (template: TemplateData) => void;
+}) {
+  const { data: templates, isLoading } = useTemplates();
+  const deleteTemplate = useDeleteTemplate();
+  const TemplateIcon = TEMPLATE_CATEGORY_CONFIG.icon;
+  const [templateToDelete, setTemplateToDelete] = useState<TemplateData | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className={cn(
+        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+        TEMPLATE_CATEGORY_CONFIG.borderColor
+      )}>
+        <div className={cn(
+          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+          TEMPLATE_CATEGORY_CONFIG.gradient
+        )}>
+          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
+          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
         </div>
-      </SheetContent>
-    </Sheet>
+        <div className="p-4 text-center text-sm text-muted-foreground">
+          Loading templates...
+        </div>
+      </div>
+    );
+  }
+
+  if (!templates?.length) {
+    return (
+      <div className={cn(
+        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+        TEMPLATE_CATEGORY_CONFIG.borderColor
+      )}>
+        <div className={cn(
+          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+          TEMPLATE_CATEGORY_CONFIG.gradient
+        )}>
+          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
+          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
+          <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", TEMPLATE_CATEGORY_CONFIG.badgeColor)}>
+            Empty
+          </Badge>
+        </div>
+        <div className="p-4 text-center text-sm text-muted-foreground">
+          No templates yet. Save a node configuration to create one.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className={cn(
+        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+        TEMPLATE_CATEGORY_CONFIG.borderColor
+      )}>
+        <div className={cn(
+          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+          TEMPLATE_CATEGORY_CONFIG.gradient
+        )}>
+          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
+          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
+          <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", TEMPLATE_CATEGORY_CONFIG.badgeColor)}>
+            {templates.length}
+          </Badge>
+        </div>
+
+        <div className="p-2 space-y-1 max-h-[300px] overflow-y-auto">
+          {templates.map((template) => (
+            <TemplateItem
+              key={template.id}
+              template={template as TemplateData}
+              onSelect={() => onSelect(template as TemplateData)}
+              onDelete={() => setTemplateToDelete(template as TemplateData)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <AlertDialog
+        open={!!templateToDelete}
+        onOpenChange={(open) => !open && setTemplateToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete template{" "}
+              <span className="font-semibold text-foreground">
+                &quot;{templateToDelete?.name}&quot;
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (templateToDelete) {
+                  deleteTemplate.mutate({ id: templateToDelete.id });
+                }
+                setTemplateToDelete(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function TemplateItem({
+  template,
+  onSelect,
+  onDelete,
+}: {
+  template: TemplateData;
+  onSelect: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className="group relative w-full h-auto py-3 px-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50"
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-3 w-full">
+        <div className="flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-cyan-500/10 to-cyan-500/5">
+          <BookmarkIcon className="size-5 text-cyan-500" />
+        </div>
+        <div className="flex flex-col items-start text-left min-w-0 flex-1">
+          <span className="text-sm font-medium">{template.name}</span>
+          <span className="text-xs text-muted-foreground">
+            {template.description || template.nodeType}
+          </span>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100">
+              <MoreVerticalIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="text-destructive focus:text-destructive"
+            >
+              <TrashIcon className="size-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }
 

@@ -27,6 +27,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
+import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   logicOperator: z.enum(["AND", "OR"]),
@@ -220,7 +222,11 @@ export const FilterDialog = ({
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.FILTER}
+                currentConfig={form.getValues()}
+              />
               <Button type="submit">Save</Button>
             </DialogFooter>
           </form>

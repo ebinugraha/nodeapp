@@ -31,6 +31,8 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { HttpRequestNode } from "./node";
 import { KeyValueBuilder } from "@/components/key-value-builder";
+import { SaveTemplateButton } from "@/components/save-template-button";
+import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   variableName: z
@@ -207,7 +209,11 @@ export const HTTPRequestDialog = ({
                 )}
               />
             )}
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.HTTP_REQUEST}
+                currentConfig={form.getValues()}
+              />
               <Button className="w-full" type="submit">
                 Save
               </Button>

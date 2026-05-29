@@ -21,6 +21,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
+import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   webhookUrl: z.string().url("Invalid webhook URL"),
@@ -150,7 +152,11 @@ export const DiscordNotifyDialog = ({
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.DISCORD_NOTIFY}
+                currentConfig={form.getValues()}
+              />
               <Button type="submit">Save</Button>
             </DialogFooter>
           </form>

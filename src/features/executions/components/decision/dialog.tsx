@@ -28,6 +28,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
+import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   variableName: z.string().min(1, "Variable Name is required (e.g. isBadWord)"),
@@ -179,7 +181,11 @@ export const DecisionDialog = ({
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.DECISION}
+                currentConfig={form.getValues()}
+              />
               <Button type="submit">Save Logic</Button>
             </DialogFooter>
           </form>

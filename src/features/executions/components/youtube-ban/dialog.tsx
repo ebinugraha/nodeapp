@@ -25,12 +25,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import z from "zod";
 import Image from "next/image";
+import { SaveTemplateButton } from "@/components/save-template-button";
 
 const formSchema = z.object({
   credentialId: z.string().min(1, "Credential is required"),
@@ -192,7 +193,11 @@ export const YouTubeBanDialog = ({
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.YOUTUBE_BAN}
+                currentConfig={form.getValues()}
+              />
               <Button type="submit" variant="destructive">Save</Button>
             </DialogFooter>
           </form>

@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon, Trash2Icon, Link2Icon, TableIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,6 +36,7 @@ import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import z from "zod";
 import { toast } from "sonner";
+import { SaveTemplateButton } from "@/components/save-template-button";
 
 // ============================================
 // TYPES
@@ -688,7 +689,11 @@ export const GoogleSheetsDialog = ({
               {...form.register("appendData")}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <SaveTemplateButton
+                nodeType={NodeType.GOOGLE_SHEETS}
+                currentConfig={form.getValues()}
+              />
               <Button type="submit" disabled={!form.formState.isValid}>
                 💾 Simpan
               </Button>
