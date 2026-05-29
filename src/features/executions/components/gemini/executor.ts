@@ -19,6 +19,20 @@ type GeminiData = {
   userPrompt?: string;
 };
 
+// Helper function to publish error with detailed error info
+const publishError = async (
+  step: any,
+  nodeId: string,
+  topicSuffix: string,
+  error: { message: string; code?: string; field?: string }
+) => {
+  await step.realtime.publish(
+    `gemini-${nodeId}-${topicSuffix}`,
+    geminiExecutionChannel.status,
+    { nodeId, status: "error", error },
+  );
+};
+
 export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   data,
   nodeId,
@@ -33,36 +47,34 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   );
 
   if (!data.variableName) {
-    await step.realtime.publish(
-      `gemini-${nodeId}-error-var`,
-      geminiExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+    await publishError(step, nodeId, "error-var", {
+      message: "Variable name is required to store the output",
+      code: "missing",
+      field: "Variable Name",
+    });
 
     throw new NonRetriableError("Error: variable name is missing");
   }
 
   if (!data.userPrompt) {
-    await step.realtime.publish(
-      `gemini-${nodeId}-error-prompt`,
-      geminiExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+    await publishError(step, nodeId, "error-prompt", {
+      message: "User prompt is required for the AI to generate text",
+      code: "missing",
+      field: "User Prompt",
+    });
 
-    throw new NonRetriableError("Error: variable name is missing");
+    throw new NonRetriableError("Error: user prompt is missing");
   }
 
   if (!data.credentialId) {
-    await step.realtime.publish(
-      `gemini-${nodeId}-error-cred`,
-      geminiExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+    await publishError(step, nodeId, "error-cred", {
+      message: "Please configure your Google AI API credential",
+      code: "missing",
+      field: "Credential",
+    });
 
     throw new NonRetriableError("Error: Credential id required");
   }
-
-  // TODO when credentials is missingt
 
   const systemPrompt = data.systemPrompt
     ? Handlebars.compile(data.systemPrompt)(context)
@@ -79,6 +91,12 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   });
 
   if (!credential) {
+    await publishError(step, nodeId, "error-cred-not-found", {
+      message: "The configured credential was not found or has been deleted",
+      code: "not_found",
+      field: "Credential",
+    });
+
     throw new NonRetriableError("Credential not found");
   }
 
@@ -113,13 +131,12 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
         text: text,
       },
     };
-  } catch {
-    await step.realtime.publish(
-      `gemini-${nodeId}-error-catch`,
-      geminiExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+  } catch (err: any) {
+    await publishError(step, nodeId, "error-generate", {
+      message: err?.message || "Failed to generate text from Gemini",
+      code: "api_error",
+    });
 
-    throw new Error();
+    throw new Error(err?.message || "Gemini generation failed");
   }
 };

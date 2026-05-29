@@ -1,6 +1,7 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
 
 type YouTubeFlagData = {
   credentialId?: string;
@@ -20,6 +21,7 @@ export const YouTubeFlagExecutor: NodeExecutor<YouTubeFlagData> = async ({
   data,
   context,
   step,
+  userId,
 }) => {
   return step.run("youtube-flag-comment", async () => {
     if (!data.credentialId) {
@@ -58,6 +60,9 @@ export const YouTubeFlagExecutor: NodeExecutor<YouTubeFlagData> = async ({
         `Failed to flag comment: ${error.error?.message || response.statusText}`
       );
     }
+
+    // Track quota for flagging operation
+    await trackYoutubeQuota(data.credentialId!, "comments.markAsSpam", userId);
 
     return {
       ...context,

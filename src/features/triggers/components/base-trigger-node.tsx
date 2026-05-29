@@ -7,13 +7,15 @@ import Image from "next/image";
 import { WorkflowNode } from "@/components/workflow-node";
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
 import { BaseHandle } from "@/components/react-flow/base-handle";
+import { NodeStatusIndicator } from "@/components/react-flow/node-status-indicator";
+import { NodeErrorPanel } from "@/features/executions/components/node-error";
+import { useNodeError } from "@/features/executions/hooks/use-node-error";
 import {
-  NodeStatus,
-  NodeStatusIndicator,
-} from "@/components/react-flow/node-status-indicator";
+  categoryConfig,
+  type NodeCategory,
+  type NodeStatus,
+} from "@/types/node";
 import { cn } from "@/lib/utils";
-
-type NodeCategory = "trigger" | "action" | "ai" | "logic" | "moderation" | "notification";
 
 interface BaseTriggerNodeProps extends NodeProps {
   Icon: LucideIcon | string;
@@ -24,79 +26,60 @@ interface BaseTriggerNodeProps extends NodeProps {
   onSettings?: () => void;
   onDoubleClick?: () => void;
   category?: NodeCategory;
+  errorChannel?: string;
+  errorTopic?: string;
+  errorRefreshToken?: () => Promise<any>;
+  onRetry?: () => void;
 }
-
-// Category color configurations
-const categoryConfig: Record<NodeCategory, {
-  gradient: string;
-  border: string;
-  iconBg: string;
-  iconColor: string;
-}> = {
-  trigger: {
-    gradient: "from-amber-500/20 to-orange-500/10",
-    border: "border-amber-500/40",
-    iconBg: "bg-amber-500/20",
-    iconColor: "text-amber-600",
-  },
-  action: {
-    gradient: "from-slate-500/20 to-gray-500/10",
-    border: "border-slate-500/40",
-    iconBg: "bg-slate-500/20",
-    iconColor: "text-slate-600",
-  },
-  ai: {
-    gradient: "from-violet-500/20 to-purple-500/10",
-    border: "border-violet-500/40",
-    iconBg: "bg-violet-500/20",
-    iconColor: "text-violet-600",
-  },
-  logic: {
-    gradient: "from-emerald-500/20 to-teal-500/10",
-    border: "border-emerald-500/40",
-    iconBg: "bg-emerald-500/20",
-    iconColor: "text-emerald-600",
-  },
-  moderation: {
-    gradient: "from-red-500/20 to-pink-500/10",
-    border: "border-red-500/40",
-    iconBg: "bg-red-500/20",
-    iconColor: "text-red-600",
-  },
-  notification: {
-    gradient: "from-blue-500/20 to-cyan-500/10",
-    border: "border-blue-500/40",
-    iconBg: "bg-blue-500/20",
-    iconColor: "text-blue-600",
-  },
-};
 
 export const BaseTriggerNode = memo(
   ({
     id,
     Icon,
     name,
-    status,
+    status: propStatus,
     description,
     children,
     onSettings,
     onDoubleClick,
     category = "trigger",
+    errorChannel,
+    errorTopic,
+    errorRefreshToken,
+    onRetry,
   }: BaseTriggerNodeProps) => {
     const { setNodes, setEdges } = useReactFlow();
     const config = categoryConfig[category];
 
+    const hasErrorTracking = !!(errorChannel && errorTopic && errorRefreshToken);
+
+    const errorState = hasErrorTracking
+      ? useNodeError({
+          nodeId: id || "",
+          channel: errorChannel,
+          topic: errorTopic,
+          refreshToken: errorRefreshToken,
+        })
+      : {
+          error: null,
+          clearError: () => {},
+          status: "initial" as NodeStatus,
+          hasError: false,
+        };
+
+    const { error: nodeError, clearError } = errorState;
+
+    const status = nodeError ? "error" : propStatus;
+
     const handleDelete = () => {
       setNodes((currentNodes) => {
-        const updatedNodes = currentNodes.filter((node) => node.id !== id);
-        return updatedNodes;
+        return currentNodes.filter((node) => node.id !== id);
       });
 
       setEdges((currentEdges) => {
-        const updatedEdges = currentEdges.filter(
+        return currentEdges.filter(
           (edge) => edge.source !== id && edge.target !== id,
         );
-        return updatedEdges;
       });
     };
 
@@ -108,49 +91,84 @@ export const BaseTriggerNode = memo(
         onSettings={onSettings}
         category={category}
       >
-        <NodeStatusIndicator
-          status={status}
-          variant="badge"
-        >
+        <NodeStatusIndicator variant="badge" status={status}>
           <BaseNode
             onDoubleClick={onDoubleClick}
             className={cn(
               "rounded-xl min-w-[180px]",
-              config.border,
+              nodeError && "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
+              !nodeError && config.border,
               "bg-linear-to-br from-card to-card/80",
               "group-hover:shadow-lg group-hover:scale-[1.02]",
+              "transition-all duration-200",
             )}
-            status={status}
           >
             {/* Icon header */}
             <div className="flex items-center justify-center gap-3 p-4 border-b border-border/50 bg-linear-to-r from-transparent via-muted/30 to-transparent">
-              <div className={cn(
-                "flex items-center justify-center size-10 rounded-lg",
-                config.iconBg
-              )}>
+              <div
+                className={cn(
+                  "flex items-center justify-center size-10 rounded-lg",
+                  nodeError ? "bg-red-100" : config.iconBg,
+                )}
+              >
                 {typeof Icon === "string" ? (
-                  <Image src={Icon} alt={name} width={20} height={20} className="object-contain" />
+                  <Image
+                    src={Icon}
+                    alt={name}
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                  />
                 ) : (
-                  <Icon className={cn("size-5", config.iconColor)} />
+                  <Icon
+                    className={cn(
+                      "size-5",
+                      nodeError ? "text-red-600" : config.iconColor,
+                    )}
+                  />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{name}</p>
                 {description && (
-                  <p className="text-xs text-muted-foreground truncate">{description}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {description}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Content area */}
             <BaseNodeContent className="gap-y-2">
-              {children}
+              {/* Error panel */}
+              {nodeError && (
+                <NodeErrorPanel
+                  error={nodeError}
+                  onDismiss={clearError}
+                  onRetry={onRetry}
+                />
+              )}
+
+              {/* Children content */}
+              {!nodeError && children}
 
               {/* Trigger indicator badge */}
               <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/30">
-                <div className={cn("size-1.5 rounded-full", config.iconColor.replace("text-", "bg-"))} />
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                  Trigger
+                <div
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    nodeError
+                      ? "bg-red-500 animate-pulse"
+                      : config.iconColor.replace("text-", "bg-"),
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider font-medium",
+                    nodeError ? "text-red-600" : "text-muted-foreground",
+                  )}
+                >
+                  {nodeError ? "Failed" : "Trigger"}
                 </span>
               </div>
             </BaseNodeContent>

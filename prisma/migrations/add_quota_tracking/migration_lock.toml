@@ -1,0 +1,2 @@
+# This is your Prisma migration file, named: add_quota_tracking
+provider = "postgresql"

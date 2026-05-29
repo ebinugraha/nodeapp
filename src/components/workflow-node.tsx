@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { cn } from "@/lib/utils";
+import { categoryConfig, type NodeCategory } from "@/types/node";
 
 interface WorkflowNodeProps {
   children: React.ReactNode;
@@ -30,42 +31,8 @@ interface WorkflowNodeProps {
   onSettings?: () => void;
   name?: string;
   description?: string;
-  category?: "trigger" | "action" | "ai" | "logic" | "moderation" | "notification";
-  status?: "success" | "error" | "loading" | "initial";
+  category?: NodeCategory;
 }
-
-const categoryColors = {
-  trigger: {
-    bg: "from-amber-500/10 to-orange-500/10",
-    border: "border-amber-500/30",
-    icon: "text-amber-500",
-  },
-  action: {
-    bg: "from-slate-500/10 to-gray-500/10",
-    border: "border-slate-500/30",
-    icon: "text-slate-500",
-  },
-  ai: {
-    bg: "from-violet-500/10 to-purple-500/10",
-    border: "border-violet-500/30",
-    icon: "text-violet-500",
-  },
-  logic: {
-    bg: "from-emerald-500/10 to-teal-500/10",
-    border: "border-emerald-500/30",
-    icon: "text-emerald-500",
-  },
-  moderation: {
-    bg: "from-red-500/10 to-pink-500/10",
-    border: "border-red-500/30",
-    icon: "text-red-500",
-  },
-  notification: {
-    bg: "from-blue-500/10 to-cyan-500/10",
-    border: "border-blue-500/30",
-    icon: "text-blue-500",
-  },
-};
 
 export function WorkflowNode({
   children,
@@ -77,7 +44,7 @@ export function WorkflowNode({
   category = "action",
 }: WorkflowNodeProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const colors = categoryColors[category];
+  const config = categoryConfig[category];
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -106,7 +73,12 @@ export function WorkflowNode({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="icon" variant="ghost" className="size-7" onClick={onSettings}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={onSettings}
+                >
                   <Settings2Icon className="size-3.5" />
                 </Button>
               </TooltipTrigger>
@@ -146,10 +118,12 @@ export function WorkflowNode({
             isVisible
             className="bg-transparent shadow-none border-0 p-0"
           >
-            <div className={cn(
-              "flex flex-col items-center text-center transform -translate-x-1/2 translate-y-2",
-              "bg-background/95 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm"
-            )}>
+            <div
+              className={cn(
+                "flex flex-col items-center text-center transform -translate-x-1/2 translate-y-2",
+                "bg-background/95 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm",
+              )}
+            >
               <p className="text-xs font-semibold">{name}</p>
               {description && (
                 <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">

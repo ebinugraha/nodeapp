@@ -1,15 +1,16 @@
 import { PAGINATION } from "@/config/constant";
-import { CredentialType } from "@/generated/prisma";
+import { CredentialType } from "@prisma/client";
 import prisma from "@/lib/db";
 import {
   createTRPCRouter,
-  premiumProcedure,
   protectedProcedure,
 } from "@/trpc/init";
+import { TRPCError } from "@trpc/server";
 import z from "zod";
+import { getYoutubeQuotaUsage, resetYoutubeQuota, updateQuotaLimits, testYoutubeConnection } from "../lib/quota-tracking";
 
 export const credentialsRouter = createTRPCRouter({
-  create: premiumProcedure
+  create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, "Name is required"),
@@ -150,5 +151,143 @@ export const credentialsRouter = createTRPCRouter({
           updatedAt: "desc",
         },
       });
+    }),
+
+  search: protectedProcedure
+    .input(z.object({ query: z.string().min(0).optional() }))
+    .query(async ({ input, ctx }) => {
+      return prisma.credential.findMany({
+        where: {
+          userId: ctx.auth.user.id,
+          ...(input.query
+            ? {
+                name: {
+                  contains: input.query,
+                  mode: "insensitive",
+                },
+              }
+            : {}),
+        },
+        take: 8,
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          updatedAt: true,
+        },
+      });
+    }),
+
+  // ========================
+  // Quota Procedures
+  // ========================
+
+  getQuota: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const credential = await prisma.credential.findFirst({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+          type: CredentialType.YOUTUBE,
+        },
+      });
+
+      if (!credential) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "YouTube credential not found",
+        });
+      }
+
+      return getYoutubeQuotaUsage(credential.id, ctx.auth.user.id);
+    }),
+
+  resetQuota: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        type: z.enum(["daily", "monthly", "both"]).default("both"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const credential = await prisma.credential.findFirst({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+          type: CredentialType.YOUTUBE,
+        },
+      });
+
+      if (!credential) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "YouTube credential not found",
+        });
+      }
+
+      const success = await resetYoutubeQuota(credential.id, ctx.auth.user.id, input.type);
+
+      if (!success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to reset quota",
+        });
+      }
+
+      return { success: true, type: input.type };
+    }),
+
+  updateQuotaLimits: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        dailyLimit: z.number().min(1).max(10000000),
+        monthlyLimit: z.number().min(1).max(100000000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const credential = await prisma.credential.findFirst({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+          type: CredentialType.YOUTUBE,
+        },
+      });
+
+      if (!credential) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "YouTube credential not found",
+        });
+      }
+
+      await updateQuotaLimits(credential.id, input.dailyLimit, input.monthlyLimit);
+
+      return { success: true };
+    }),
+
+  testConnection: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const credential = await prisma.credential.findFirst({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+          type: CredentialType.YOUTUBE,
+        },
+      });
+
+      if (!credential) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "YouTube credential not found",
+        });
+      }
+
+      return testYoutubeConnection(credential.id);
     }),
 });

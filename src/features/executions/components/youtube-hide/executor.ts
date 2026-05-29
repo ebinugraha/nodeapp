@@ -1,6 +1,7 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
 
 type YouTubeHideData = {
   credentialId?: string;
@@ -20,6 +21,7 @@ export const YouTubeHideExecutor: NodeExecutor<YouTubeHideData> = async ({
   data,
   context,
   step,
+  userId,
 }) => {
   return step.run("youtube-hide-comment", async () => {
     if (!data.credentialId) {
@@ -58,6 +60,9 @@ export const YouTubeHideExecutor: NodeExecutor<YouTubeHideData> = async ({
         `Failed to hide comment: ${error.error?.message || response.statusText}`
       );
     }
+
+    // Track quota for markAsSpam operation
+    await trackYoutubeQuota(data.credentialId!, "comments.markAsSpam", userId);
 
     return {
       ...context,

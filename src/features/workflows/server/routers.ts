@@ -1,11 +1,10 @@
 import { PAGINATION } from "@/config/constant";
-import { NodeType } from "@/generated/prisma";
+import { NodeType } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
 import { sendWorkflowExecution } from "@/lib/send-workflow-execution";
 import {
   createTRPCRouter,
-  premiumProcedure,
   protectedProcedure,
 } from "@/trpc/init";
 import type { Node, Edge } from "@xyflow/react";
@@ -30,7 +29,7 @@ export const workflowsRouter = createTRPCRouter({
       return workflow;
     }),
 
-  create: premiumProcedure.mutation(async ({ ctx, input }) => {
+  create: protectedProcedure.mutation(async ({ ctx, input }) => {
     return prisma.workflow.create({
       data: {
         name: generateSlug(3),
@@ -239,5 +238,32 @@ export const workflowsRouter = createTRPCRouter({
         hasNextPage,
         hasPreviousPage,
       };
+    }),
+
+  search: protectedProcedure
+    .input(z.object({ query: z.string().min(0).optional() }))
+    .query(async ({ input, ctx }) => {
+      return prisma.workflow.findMany({
+        where: {
+          userId: ctx.auth.user.id,
+          ...(input.query
+            ? {
+                name: {
+                  contains: input.query,
+                  mode: "insensitive",
+                },
+              }
+            : {}),
+        },
+        take: 8,
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          id: true,
+          name: true,
+          updatedAt: true,
+        },
+      });
     }),
 });

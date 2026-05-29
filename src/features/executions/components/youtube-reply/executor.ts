@@ -2,6 +2,7 @@ import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 import { compileTemplate } from "@/features/executions/lib/template";
+import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
 
 type YouTubeReplyData = {
   credentialId?: string;
@@ -23,6 +24,7 @@ export const YouTubeReplyExecutor: NodeExecutor<YouTubeReplyData> = async ({
   data,
   context,
   step,
+  userId,
 }) => {
   return step.run("youtube-reply-comment", async () => {
     if (!data.credentialId) {
@@ -71,6 +73,9 @@ export const YouTubeReplyExecutor: NodeExecutor<YouTubeReplyData> = async ({
         `Failed to reply to comment: ${error.error?.message || response.statusText}`
       );
     }
+
+    // Track quota for comment insertion
+    await trackYoutubeQuota(data.credentialId!, "comments.insert", userId);
 
     const result = await response.json();
 

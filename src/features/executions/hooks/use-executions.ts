@@ -8,7 +8,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CredentialType } from "@/generated/prisma";
+import { CredentialType } from "@prisma/client";
 import { useExecutionsParams } from "./use-executions-params";
 
 /**

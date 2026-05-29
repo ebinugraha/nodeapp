@@ -2,7 +2,7 @@
 
 import {
   NodeType,
-} from "@/generated/prisma";
+} from "@prisma/client";
 import { createId } from "@paralleldrive/cuid2";
 import {
   GlobeIcon,
@@ -295,12 +295,12 @@ export function NodeSelector({
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
 
   // Check if any trigger node already exists in the workflow
+  // Note: We don't include INTITAL here because it's a placeholder node
+  // that should be replaced when adding a real trigger
   const hasTriggerNode = useCallback(() => {
     const nodes = getNodes();
     return nodes.some(
-      (node) =>
-        TRIGGER_NODE_TYPES.includes(node.type as NodeType) ||
-        node.type === NodeType.INTITAL,
+      (node) => TRIGGER_NODE_TYPES.includes(node.type as NodeType),
     );
   }, [getNodes]);
 

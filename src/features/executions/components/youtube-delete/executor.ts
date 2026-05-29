@@ -4,6 +4,7 @@ import { NonRetriableError } from "inngest";
 import Handlebars from "handlebars";
 import ky, { HTTPError } from "ky";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
 
 type YoutubeDeleteData = {
   credentialId?: string;
@@ -16,6 +17,7 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
   nodeId,
   context,
   step,
+  userId,
 }) => {
   try {
     if (!data.credentialId) {
@@ -53,10 +55,13 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     const targetType = data.targetType || "live-chat";
 
     let endpoint = "";
+    let endpointType: "comments.delete" | "liveChatMessages.insert" = "comments.delete";
     if (targetType === "comment") {
       endpoint = "https://www.googleapis.com/youtube/v3/comments";
+      endpointType = "comments.delete";
     } else {
       endpoint = "https://www.googleapis.com/youtube/v3/liveChat/messages";
+      endpointType = "liveChatMessages.insert";
     }
 
     try {
@@ -70,6 +75,9 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
           Accept: "application/json",
         },
       });
+
+      // Track quota for delete operation
+      await trackYoutubeQuota(data.credentialId!, endpointType, userId);
     } catch (err) {
       // Handle 404 (Not Found) -> Anggap Sukses
       if (err instanceof HTTPError && err.response.status === 404) {

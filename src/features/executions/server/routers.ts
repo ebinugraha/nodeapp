@@ -83,4 +83,36 @@ export const exectutionRouter = createTRPCRouter({
         hasPreviousPage,
       };
     }),
+
+  search: protectedProcedure
+    .input(z.object({ query: z.string().min(0).optional() }))
+    .query(async ({ input, ctx }) => {
+      return prisma.execution.findMany({
+        where: {
+          workflow: {
+            userId: ctx.auth.user.id,
+            ...(input.query
+              ? {
+                  name: {
+                    contains: input.query,
+                    mode: "insensitive",
+                  },
+                }
+              : {}),
+          },
+        },
+        take: 8,
+        orderBy: {
+          startedAt: "desc",
+        },
+        include: {
+          workflow: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+    }),
 });

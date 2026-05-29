@@ -47,13 +47,63 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
       );
     }
 
-    // 2. Ambil Credential (Access Token)
+    // 2. Ambil Credential dan Parse OAuth Token
     const credential = await prisma.credential.findUnique({
       where: { id: data.credentialId, userId },
     });
 
     if (!credential) {
       throw new NonRetriableError("Credential not found");
+    }
+
+    // Parse credential value (JSON dengan OAuth tokens)
+    let tokenData: any;
+    try {
+      tokenData = JSON.parse(credential.value);
+    } catch (e) {
+      throw new NonRetriableError("Invalid credential format");
+    }
+
+    if (!tokenData.access_token) {
+      throw new NonRetriableError("No access token found in credential. Please reconnect your Google account.");
+    }
+
+    // Check if token is expired and needs refresh
+    let accessToken = tokenData.access_token;
+    if (tokenData.expires_at && Date.now() > tokenData.expires_at - 60000) {
+      // Token expired, try to refresh
+      try {
+        const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: tokenData.clientId,
+            client_secret: tokenData.clientSecret,
+            refresh_token: tokenData.refresh_token,
+            grant_type: "refresh_token",
+          }),
+        });
+
+        if (refreshResponse.ok) {
+          const newTokens = await refreshResponse.json();
+          accessToken = newTokens.access_token;
+
+          // Update credential with new token
+          await prisma.credential.update({
+            where: { id: data.credentialId },
+            data: {
+              value: JSON.stringify({
+                ...tokenData,
+                access_token: newTokens.access_token,
+                expires_at: Date.now() + (newTokens.expires_in * 1000),
+              }),
+            },
+          });
+        }
+      } catch (refreshError) {
+        console.error("Failed to refresh token:", refreshError);
+        // Continue with old token, might still work
+      }
     }
 
     // 3. Parse Handlebars Variables
@@ -68,7 +118,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
       const response = await ky
         .get(url, {
-          headers: { Authorization: `Bearer ${credential.value}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         })
         .json<any>();
 
@@ -91,7 +141,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
 
       const response = await ky
         .post(url, {
-          headers: { Authorization: `Bearer ${credential.value}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
           searchParams: { valueInputOption: "USER_ENTERED" },
           json: {
             range: range,

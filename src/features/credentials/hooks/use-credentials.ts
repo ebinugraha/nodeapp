@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useCredentialsParams } from "./use-credentials-params";
-import { CredentialType } from "@/generated/prisma";
+import { CredentialType } from "@prisma/client";
 
 /**
  * Hook to fetch all credentials with suspense
@@ -112,4 +112,78 @@ export const useCredentialsByType = (type: CredentialType) => {
   const trpc = useTRPC();
 
   return useQuery(trpc.credentials.getByType.queryOptions({ type }));
+};
+
+// Hook to fetch YouTube API quota usage (via API route)
+export const useYoutubeQuotaUsage = (credentialId: string) => {
+  return useQuery({
+    queryKey: ["youtube-quota", credentialId],
+    queryFn: async () => {
+      const response = await fetch(`/api/credentials/${credentialId}/quota`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch quota usage");
+      }
+      const data = await response.json();
+      return data.data;
+    },
+    refetchInterval: 60000, // Refetch every minute
+  });
+};
+
+// Hook to fetch YouTube API quota usage (via tRPC - recommended)
+export const useYoutubeQuota = (credentialId: string) => {
+  const trpc = useTRPC();
+
+  return useQuery(trpc.credentials.getQuota.queryOptions({ id: credentialId }));
+};
+
+// Hook to reset YouTube quota
+export const useResetYoutubeQuota = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.credentials.resetQuota.mutationOptions({
+      onSuccess: async (data) => {
+        toast.success(`Quota reset successfully (${data.type})`);
+        await queryClient.invalidateQueries(
+          trpc.credentials.getQuota.queryFilter({ id: "" }),
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to reset quota: ${error.message}`);
+      },
+    }),
+  );
+};
+
+// Hook to update quota limits
+export const useUpdateQuotaLimits = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.credentials.updateQuotaLimits.mutationOptions({
+      onSuccess: async () => {
+        toast.success("Quota limits updated");
+        await queryClient.invalidateQueries(
+          trpc.credentials.getQuota.queryFilter({ id: "" }),
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to update quota limits: ${error.message}`);
+      },
+    }),
+  );
+};
+
+// Hook to test YouTube connection
+export const useTestYoutubeConnection = () => {
+  const trpc = useTRPC();
+
+  return useMutation(trpc.credentials.testConnection.mutationOptions({
+    onError: (error) => {
+      toast.error(`Connection test failed: ${error.message}`);
+    },
+  }));
 };

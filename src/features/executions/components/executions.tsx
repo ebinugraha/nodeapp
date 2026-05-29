@@ -17,7 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Execution,
   ExecutionStatus,
-} from "@/generated/prisma";
+} from "@prisma/client";
 import {
   CheckIcon,
   ClockIcon,

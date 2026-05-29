@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  CreditCardIcon,
   FolderOpenIcon,
   HistoryIcon,
   KeyIcon,
   LogOutIcon,
-  StarIcon,
+  SettingsIcon,
+  PlusIcon,
+  Loader2Icon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,7 +24,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { useHasActiveSubscription } from "@/features/subscriptions/hooks/use-subscription";
+import { useCreateWorkflow } from "@/features/workflows/hooks/use-workflows";
+import { Button } from "./ui/button";
 
 const menuItems = [
   {
@@ -46,16 +48,34 @@ const menuItems = [
       },
     ],
   },
+  {
+    title: "Settings",
+    items: [
+      {
+        title: "Settings",
+        icon: SettingsIcon,
+        url: "/settings",
+      },
+    ],
+  },
 ];
 
 export const AppSidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { hasActiveSubscription, isLoading } = useHasActiveSubscription();
+  const createWorkflow = useCreateWorkflow();
+
+  const handleCreateWorkflow = () => {
+    createWorkflow.mutate(undefined, {
+      onSuccess: (data) => {
+        router.push(`/workflows/${data.id}`);
+      },
+    });
+  };
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="flex flex-col gap-3 p-3">
         <SidebarMenuItem>
           <SidebarMenuButton asChild className="gap-x-4 h-10 px-4">
             <Link href="/workflows" prefetch>
@@ -69,6 +89,22 @@ export const AppSidebar = () => {
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
+
+        {/* Create Workflow Button */}
+        <Button
+          onClick={handleCreateWorkflow}
+          disabled={createWorkflow.isPending}
+          className="w-full gap-x-2 h-8"
+          size="sm"
+          variant="outline"
+        >
+          {createWorkflow.isPending ? (
+            <Loader2Icon className="size-4 animate-spin" />
+          ) : (
+            <PlusIcon className="size-4" />
+          )}
+          <span>Create Workflow</span>
+        </Button>
       </SidebarHeader>
       <SidebarContent>
         {menuItems.map((group) => (
@@ -100,28 +136,6 @@ export const AppSidebar = () => {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {!isLoading && !hasActiveSubscription && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={"Updrade to pro"}
-                className="gap-x-4 h-10 px-4"
-                onClick={() => authClient.checkout({ slug: "pro" })}
-              >
-                <StarIcon className="size-4" />
-                <span>Upgrade to Pro</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={"Billing Portal"}
-              className="gap-x-4 h-10 px-4"
-              onClick={() => authClient.customer.portal()}
-            >
-              <CreditCardIcon className="size-4" />
-              <span>Billing Portal</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={"Logout"}

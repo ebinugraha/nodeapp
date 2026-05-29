@@ -1,4 +1,4 @@
-import { Connection, Node } from "@/generated/prisma";
+import { Connection, Node } from "@prisma/client";
 import toposort from "toposort";
 
 export const topologicalSort = (

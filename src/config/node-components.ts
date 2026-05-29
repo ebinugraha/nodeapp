@@ -8,7 +8,7 @@ import { YoutubeDeleteNode } from "@/features/executions/components/youtube-dele
 import { ManualTriggerNode } from "@/features/triggers/components/manual-trigger/node";
 import { YoutubeLiveChatNode } from "@/features/triggers/components/youtube-live-chat/node";
 import { YoutubeVideoCommentNode } from "@/features/triggers/components/youtube-video-comment/node";
-import { NodeType } from "@/generated/prisma";
+import { NodeType } from "@prisma/client";
 import { NodeTypes } from "@xyflow/react";
 import {
   YouTubeReplyNode,

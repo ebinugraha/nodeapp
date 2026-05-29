@@ -4,7 +4,6 @@ import {
   EmptyView,
   EntityContainer,
   EntityHeader,
-  EntityItem,
   EntityList,
   EntityPagination,
   EntitySearch,
@@ -15,16 +14,38 @@ import {
 import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import { useRouter } from "next/navigation";
 import { useEntitySearch } from "@/hooks/use-entity-search";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { useCredentialsParams } from "../hooks/use-credentials-params";
 import {
   useCreateCredentials,
   useRemoveCredentials,
   useSuspenseCredentials,
 } from "../hooks/use-credentials";
-import { Credential, CredentialType } from "@/generated/prisma";
-import { KeyIcon } from "lucide-react";
+import { Credential, CredentialType } from "@prisma/client";
+import {
+  KeyIcon,
+  PlusIcon,
+  CalendarIcon,
+  ShieldCheckIcon,
+  Trash2Icon,
+  ExternalLinkIcon,
+  AlertCircleIcon,
+} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useState } from "react";
+import { QuotaBadge } from "./quota-display";
 
 export const CredentialSearch = () => {
   const [params, setParams] = useCredentialsParams();
@@ -37,7 +58,7 @@ export const CredentialSearch = () => {
     <EntitySearch
       value={searchValue}
       onChange={(value) => onSearchChange(value)}
-      placeholder="Search credentials"
+      placeholder="Search credentials..."
     />
   );
 };
@@ -49,32 +70,22 @@ export const CredentialsList = () => {
     <EntityList
       items={credentials.data.items}
       getKey={(credential) => credential.id}
-      renderItem={(credential) => <CredentialItem data={credential} />}
+      renderItem={(credential) => <CredentialCard data={credential} />}
       emptyView={<CredentialEmpty />}
+      className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     />
   );
 };
 
 export const CredentialsHeader = ({ disabled }: { disabled?: boolean }) => {
-  const createCredential = useCreateCredentials();
-  const { handleError, modal } = useUpgradeModal();
-  const router = useRouter();
-
-  const handleCreate = () => {
-    router.push(`/credentials/new`);
-  };
-
   return (
-    <>
-      {modal}
-      <EntityHeader
-        title="Credentials"
-        description="add and manage your credentials"
-        newButtonLabel="New Credential"
-        newButtonHref={"/credentials/new"}
-        disabled={disabled}
-      />
-    </>
+    <EntityHeader
+      title="Credentials"
+      description="Securely manage your API keys and OAuth connections"
+      newButtonLabel="New Credential"
+      newButtonHref={"/credentials/new"}
+      disabled={disabled}
+    />
   );
 };
 
@@ -97,12 +108,10 @@ export const CredentialsLoading = () => {
 };
 
 export const CredentialsError = () => {
-  return <ErrorView message="Credential Error..." />;
+  return <ErrorView message="Failed to load credentials" />;
 };
 
 export const CredentialEmpty = () => {
-  const createCredential = useCreateCredentials();
-  const { handleError, modal } = useUpgradeModal();
   const router = useRouter();
 
   const handleCreate = () => {
@@ -110,52 +119,257 @@ export const CredentialEmpty = () => {
   };
 
   return (
-    <>
-      {modal}
-      <EmptyView
-        onNew={handleCreate}
-        message="You haven't created any credentials"
-      />
-    </>
+    <EmptyView
+      onNew={handleCreate}
+      message="No credentials yet. Add your first API key or OAuth connection to get started."
+    />
   );
 };
 
-const credentialLogos: Record<CredentialType, string> = {
-  [CredentialType.OPENAI]: "/logos/openai.svg",
-  [CredentialType.ANTHROPIC]: "/logos/anthropic.svg",
-  [CredentialType.GEMINI]: "/logos/gemini.svg",
-  [CredentialType.YOUTUBE]: "/logos/youtube.svg",
-  [CredentialType.GOOGLE]: "/logos/google.svg",
+// Credential type configurations
+const credentialTypeConfig: Record<CredentialType, {
+  label: string;
+  logo: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  description: string;
+}> = {
+  [CredentialType.OPENAI]: {
+    label: "OpenAI",
+    logo: "/logos/openai.svg",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/30",
+    description: "GPT models & AI services",
+  },
+  [CredentialType.ANTHROPIC]: {
+    label: "Anthropic",
+    logo: "/logos/anthropic.svg",
+    color: "text-orange-600",
+    bgColor: "bg-orange-500/10",
+    borderColor: "border-orange-500/30",
+    description: "Claude & AI models",
+  },
+  [CredentialType.GEMINI]: {
+    label: "Google Gemini",
+    logo: "/logos/gemini.svg",
+    color: "text-violet-600",
+    bgColor: "bg-violet-500/10",
+    borderColor: "border-violet-500/30",
+    description: "Google's AI models",
+  },
+  [CredentialType.YOUTUBE]: {
+    label: "YouTube",
+    logo: "/logos/youtube.svg",
+    color: "text-red-600",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/30",
+    description: "YouTube API & Live Chat",
+  },
+  [CredentialType.GOOGLE]: {
+    label: "Google Sheets",
+    logo: "/logos/google.svg",
+    color: "text-blue-600",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/30",
+    description: "Google Sheets API",
+  },
 };
 
-export const CredentialItem = ({ data }: { data: Credential }) => {
+export const CredentialCard = ({ data }: { data: Credential }) => {
   const removeCredential = useRemoveCredentials();
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleRemove = () => {
-    removeCredential.mutate({ id: data.id });
+  const config = credentialTypeConfig[data.type] || credentialTypeConfig[CredentialType.OPENAI];
+
+  // Check if credential is an OAuth type (stored as JSON)
+  const isOAuth = data.value.startsWith("{");
+  let isConnected = false;
+
+  if (isOAuth) {
+    try {
+      const json = JSON.parse(data.value);
+      isConnected = !!json.access_token;
+    } catch {
+      isConnected = false;
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsRemoving(true);
+    try {
+      await removeCredential.mutateAsync({ id: data.id });
+      toast.success("Credential deleted");
+    } catch {
+      toast.error("Failed to delete credential");
+    } finally {
+      setIsRemoving(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
-  const logo = credentialLogos[data.type] || "/logos/openai.svg";
-
   return (
-    <EntityItem
-      href={`/credentials/${data.id}`}
-      title={data.name}
-      subtitle={
-        <>
-          Update {formatDistanceToNow(data.updatedAt, { addSuffix: true })}{" "}
-          &bull; Created{" "}
-          {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
-        </>
-      }
-      image={
-        <div className="size-8 flex items-center justify-center">
-          <Image src={logo} alt={data.type} width={20} height={20} />
+    <Card
+      className={cn(
+        "group relative overflow-hidden rounded-xl border transition-all duration-200",
+        "hover:shadow-md hover:scale-[1.01]",
+        config.borderColor,
+        isRemoving && "opacity-50"
+      )}
+    >
+      {/* Status indicator bar */}
+      <div className={cn(
+        "absolute top-0 left-0 right-0 h-1",
+        isConnected ? "bg-linear-to-r from-emerald-500 to-teal-500" : "bg-linear-to-r from-slate-400 to-slate-500"
+      )} />
+
+      <div className="p-5 pt-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            {/* Logo */}
+            <div className={cn(
+              "flex items-center justify-center size-12 rounded-xl",
+              config.bgColor
+            )}>
+              <Image
+                src={config.logo}
+                alt={config.label}
+                width={24}
+                height={24}
+                className="object-contain"
+              />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                  {data.name}
+                </h3>
+                {isConnected ? (
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200">
+                    Connected
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-slate-50 text-slate-600 border-slate-200">
+                    API Key
+                  </Badge>
+                )}
+                {/* Quota badge for YouTube credentials */}
+                {data.type === CredentialType.YOUTUBE && (
+                  <QuotaBadge credentialId={data.id} />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {config.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8"
+                    asChild
+                  >
+                    <Link href={`/credentials/${data.id}`}>
+                      <ExternalLinkIcon className="size-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit credential</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
-      }
-      onRemove={handleRemove}
-      isRemoving={removeCredential.isPending}
-    />
+
+        {/* Metadata */}
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 cursor-help">
+                    <CalendarIcon className="size-3.5" />
+                    <span>Created {formatDistanceToNow(data.createdAt, { addSuffix: true })}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {format(data.createdAt, "PPpp")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 cursor-help">
+                    <ShieldCheckIcon className="size-3.5" />
+                    <span>{isOAuth ? "OAuth 2.0" : "API Key"}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isOAuth ? "Uses OAuth 2.0 authentication" : "Uses API key authentication"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        {/* Delete confirmation */}
+        {showDeleteConfirm && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/30">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircleIcon className="size-4 text-red-600" />
+              <p className="text-xs font-medium text-red-900 dark:text-red-300">
+                Delete this credential?
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 text-xs"
+                onClick={handleDelete}
+                disabled={isRemoving}
+              >
+                {isRemoving ? "Deleting..." : "Delete"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Delete button (shown on hover) */}
+        {!showDeleteConfirm && (
+          <div className="mt-4 pt-4 border-t border-border/50 flex justify-end">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 opacity-0 group-hover:opacity-100 transition-all"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2Icon className="size-3.5" />
+              Delete
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 };
 

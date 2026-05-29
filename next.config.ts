@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  serverExternalPackages: ["@prisma/client", "prisma"],
   async redirects() {
     return [
       {

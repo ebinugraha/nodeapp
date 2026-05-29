@@ -1,20 +1,22 @@
-import { prefetch, trpc } from "@/trpc/server";
-import type { inferInput } from "@trpc/tanstack-react-query";
+import { caller } from "@/trpc/server";
+import type { inferAsyncReturnType } from "@trpc/server";
 
-type Input = inferInput<typeof trpc.workflows.getAll>;
+type Workflow = inferAsyncReturnType<typeof caller.workflows.getOne>;
+
+/**
+ * Prefetch workflow data for server components
+ */
+export const prefetchWorkflow = async (id: string): Promise<Workflow> => {
+  return await caller.workflows.getOne({ id });
+};
 
 /**
  * Prefetch all workflows
  */
-
-export const prefetchWorkflows = async (params: Input) => {
-  return await prefetch(trpc.workflows.getAll.queryOptions(params));
-};
-
-export const prefetchWorkflow = async (id: string) => {
-  return await prefetch(
-    trpc.workflows.getOne.queryOptions({
-      id,
-    }),
-  );
+export const prefetchWorkflows = async (params: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}) => {
+  return await caller.workflows.getAll(params);
 };

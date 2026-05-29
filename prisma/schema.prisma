@@ -1,7 +1,5 @@
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -10,26 +8,47 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String       @id
   name          String
-  email         String
-  emailVerified Boolean   @default(false)
+  email         String       @unique
+  emailVerified Boolean      @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  workflows     Workflow[]
+  bio           String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
   credentials   Credential[]
+  accounts      Account[]
+  sessions      Session[]
+  workflows     Workflow[]
+  settings      Settings?
 
-  @@unique([email])
   @@map("user")
+}
+
+model Settings {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme             String   @default("system")
+  showLineNumbers   Boolean  @default(true)
+  snapToGrid        Boolean  @default(true)
+  compactMode       Boolean  @default(false)
+  showMiniMap       Boolean  @default(true)
+  emailExecution    Boolean  @default(false)
+  emailError        Boolean  @default(true)
+  emailCredential   Boolean  @default(true)
+  browserNotif     Boolean  @default(true)
+  browserSound     Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@map("settings")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -37,7 +56,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
@@ -46,7 +64,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -56,6 +73,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -71,37 +89,82 @@ model Verification {
   @@map("verification")
 }
 
-
 model Workflow {
-  id String @id @default(cuid())
-  name String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  nodes Node[]
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  userId      String
+  executions  Execution[]
   connections Connection[]
-  executions Execution[]
+  nodes       Node[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("workflow")
 }
 
 model Credential {
-  id String @id @default(cuid())
-  name String
-  value String
-  createdAt DateTime @default(now())  
-  updatedAt DateTime @updatedAt
+  id                String         @id @default(cuid())
+  name              String
+  value             String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  type              CredentialType
+  userId            String
+  dailyQuotaLimit   Int?
+  monthlyQuotaLimit Int?
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Node              Node[]
 
-  type CredentialType
+  @@map("Credential")
+}
 
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Node {
+  id                String       @id @default(cuid())
+  workflowId        String
+  name              String
+  type              NodeType
+  position          Json
+  data              Json         @default("{}")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @default(now()) @updatedAt
+  credentialId      String?
+  outputConnections Connection[] @relation("FromNode")
+  inputConnections  Connection[] @relation("ToNode")
+  credential        Credential?  @relation(fields: [credentialId], references: [id])
+  workflow          Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
-  Node Node[]
+  @@map("node")
+}
 
+model Connection {
+  id         String   @id @default(cuid())
+  workflowId String
+  fromNodeId String
+  toNodeId   String
+  fromOutput String   @default("main")
+  toInput    String   @default("main")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  fromNode   Node     @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode     Node     @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([fromNodeId, toNodeId, fromOutput, toInput])
+  @@map("connection")
+}
+
+model Execution {
+  id             String          @id @default(cuid())
+  workflowId     String
+  status         ExecutionStatus @default(RUNNING)
+  error          String?
+  errorStack     String?
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+  inngestEventId String          @unique
+  output         Json?
+  workflow       Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 }
 
 enum CredentialType {
@@ -121,94 +184,34 @@ enum NodeType {
   OPENAI
   DEEPSEEK
   DISCORD
+  DISCORD_NOTIFY
   SLACK
+  SLACK_NOTIFY
   YOUTUBE_LIVE_CHAT
   YOUTUBE_DELETE_CHAT
   YOUTUBE_VIDEO_COMMENT
-  GOOGLE_SHEETS
-  DECISION
   YOUTUBE_REPLY
   YOUTUBE_HIDE
-  YOUTUBE_PIN
   YOUTUBE_FLAG
   YOUTUBE_TIMEOUT
   YOUTUBE_BAN
-  DISCORD_NOTIFY
-  SLACK_NOTIFY
-  EMAIL_NOTIFY
-  AI_MODERATION
-  SENTIMENT_ANALYSIS
-  SPAM_DETECTION
+  YOUTUBE_PIN
+  GOOGLE_SHEETS
+  DECISION
   FILTER
-  ROUTER
-  LOOP
   WAIT_DELAY
   WEBHOOK
+  SENTIMENT_ANALYSIS
+  SPAM_DETECTION
+  AI_MODERATION
   STORE_DB
-}
-model Node {
-  id String @id @default(cuid())
-  workflowId String
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-
-  name String
-  type NodeType
-  position Json
-  data Json @default("{}")
-
-  credentialId String?
-  credential Credential? @relation(fields: [credentialId], references: [id])
-
-  outputConnections Connection[] @relation("FromNode")
-  inputConnections Connection[] @relation("ToNode")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@map("node")
-}
-
-model Connection {
-  id String @id @default(cuid())
-  workflowId String
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-
-  fromNodeId String
-  fromNode Node @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
-  
-  toNodeId String
-  toNode Node @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
-
-  fromOutput String @default("main")
-  toInput String @default("main")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@unique([fromNodeId, toNodeId, fromOutput, toInput])
-  @@map("connection")
+  EMAIL_NOTIFY
+  LOOP
+  ROUTER
 }
 
 enum ExecutionStatus {
   RUNNING
   SUCCESS
   FAILED
-}
-
-model Execution {
-  id String @id @default(cuid())
-
-  workflowId String
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-
-  status ExecutionStatus @default(RUNNING)
-  error String? @db.Text
-  errorStack String? @db.Text
-
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-
-  inngestEventId String @unique
-
-  output Json?
 }

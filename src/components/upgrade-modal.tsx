@@ -1,13 +1,9 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
@@ -17,23 +13,17 @@ interface UpgradeModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Payment system disabled - this modal is no longer used
+// Kept for backwards compatibility in case other code references it
 export const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Upgrade to Pro</AlertDialogTitle>
+          <AlertDialogTitle>Feature Unavailable</AlertDialogTitle>
           <AlertDialogDescription>
-            To create more workflows, please upgrade to the Pro plan.
+            This feature is currently unavailable. Please contact support if you believe this is an error.
           </AlertDialogDescription>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => authClient.checkout({ slug: "pro" })}
-            >
-              Upgrade Now
-            </AlertDialogAction>
-          </AlertDialogFooter>
         </AlertDialogHeader>
       </AlertDialogContent>
     </AlertDialog>

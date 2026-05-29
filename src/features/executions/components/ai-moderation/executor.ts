@@ -1,6 +1,6 @@
 import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
-import { NodeType } from "@/generated/prisma";
+import { NodeType } from "@prisma/client";
 import { getExecutor } from "@/features/executions/lib/executor-register";
 
 type AIModerationData = {

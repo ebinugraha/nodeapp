@@ -1,4 +1,4 @@
-import { NodeType } from "@/generated/prisma";
+import { NodeType } from "@prisma/client";
 
 export type VariableDefinition = {
   key: string;

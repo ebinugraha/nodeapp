@@ -5,7 +5,7 @@ import { discordExecutionChannel } from "@/inngest/channels/discord";
 import { decode } from "html-entities";
 import ky from "ky";
 
-Handlebars.registerHelper("json", (context) => {
+Handlebars.registerHelper("json", (context: any) => {
   const stringified = JSON.stringify(context, null, 2);
   return new Handlebars.SafeString(stringified);
 });
@@ -15,6 +15,20 @@ type DiscordData = {
   webhookUrl?: string;
   content?: string;
   username?: string;
+};
+
+// Helper function to publish error with detailed error info
+const publishError = async (
+  step: any,
+  nodeId: string,
+  topicSuffix: string,
+  error: { message: string; code?: string; field?: string }
+) => {
+  await step.realtime.publish(
+    `discord-${nodeId}-${topicSuffix}`,
+    discordExecutionChannel.status,
+    { nodeId, status: "error", error },
+  );
 };
 
 export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
@@ -30,30 +44,30 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
   );
 
   if (!data.variableName) {
-    await step.realtime.publish(
-      `discord-${nodeId}-error-var`,
-      discordExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+    await publishError(step, nodeId, "error-var", {
+      message: "Variable name is required to store the response",
+      code: "missing",
+      field: "Variable Name",
+    });
     throw new NonRetriableError("Error: variable name is missing");
   }
 
   if (!data.content) {
-    await step.realtime.publish(
-      `discord-${nodeId}-error-content`,
-      discordExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
+    await publishError(step, nodeId, "error-content", {
+      message: "Message content is required to send to Discord",
+      code: "missing",
+      field: "Content",
+    });
     throw new NonRetriableError("Error: content is missing");
   }
 
   if (!data.webhookUrl) {
-    await step.realtime.publish(
-      `discord-${nodeId}-error-webhook`,
-      discordExecutionChannel.status,
-      { nodeId, status: "error" },
-    );
-    throw new NonRetriableError("Error: webhook is missing");
+    await publishError(step, nodeId, "error-webhook", {
+      message: "Discord webhook URL is required to send messages",
+      code: "missing",
+      field: "Webhook URL",
+    });
+    throw new NonRetriableError("Error: webhook URL is missing");
   }
 
   const rawContent = Handlebars.compile(data.content)(context);
@@ -66,17 +80,14 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     const result = await step.run("discord-webhook", async () => {
       await ky.post(data.webhookUrl!, {
         json: {
-          content: content.slice(0, 2000), // discord max lentgh,
+          content: content.slice(0, 2000),
           username,
         },
       });
 
-      if (!data.variableName) {
-        throw new NonRetriableError("Error: variable name is missing");
-      }
       return {
         ...context,
-        [data.variableName]: {
+        [data.variableName!]: {
           messageContent: content.slice(0, 2000),
         },
       };
@@ -89,13 +100,32 @@ export const DiscordExecutor: NodeExecutor<DiscordData> = async ({
     );
 
     return result;
-  } catch {
+  } catch (err: any) {
+    const errorMessage =
+      err?.response?.statusText ||
+      err?.message ||
+      "Failed to send message to Discord";
+
     await step.realtime.publish(
-      `discord-${nodeId}-error-catch`,
+      `discord-${nodeId}-error-send`,
       discordExecutionChannel.status,
-      { nodeId, status: "error" },
+      {
+        nodeId,
+        status: "error",
+        error: {
+          message: errorMessage,
+          code:
+            err?.response?.status === 404
+              ? "not_found"
+              : err?.response?.status === 403
+                ? "permission"
+                : err?.response?.status === 429
+                  ? "rate_limit"
+                  : "api_error",
+        },
+      },
     );
 
-    throw new Error();
+    throw new Error(errorMessage);
   }
 };

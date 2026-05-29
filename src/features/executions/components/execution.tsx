@@ -1,6 +1,6 @@
 "use client";
 
-import { ExecutionStatus } from "@/generated/prisma";
+import { ExecutionStatus } from "@prisma/client";
 import {
   CheckIcon,
   ClockIcon,
