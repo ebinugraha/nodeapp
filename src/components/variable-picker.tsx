@@ -24,15 +24,15 @@ export const VariablePicker = ({ nodeId, onSelect }: VariablePickerProps) => {
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="h-8 w-8"
+          className="shrink-0"
           title="Insert Variable"
         >
-          <Braces className="size-4 text-muted-foreground" />
+          <Braces className="size-4 text-foreground" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start">
+      <PopoverContent className="w-72 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search variable..." />
           <CommandList>

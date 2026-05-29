@@ -26,7 +26,7 @@ export function SaveTemplateButton({
         variant={variant}
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2"
+        className="gap-2 shrink-0 w-full sm:w-auto"
       >
         <BookmarkIcon className="size-4" />
         Save as Template

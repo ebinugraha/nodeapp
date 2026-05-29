@@ -183,11 +183,41 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     return nodes.some((node) => node.type === NodeType.MANUAL_TRIGGER);
   }, [nodes]);
 
+  const enhancedEdges = useMemo(() => {
+    return edges.map((edge) => {
+      if (edge.sourceHandle === "true") {
+        return {
+          ...edge,
+          label: "True",
+          animated: true,
+          style: { ...edge.style, stroke: "#10b981", strokeWidth: 2 },
+          labelStyle: { fill: "#10b981", fontWeight: 700, fontSize: 12 },
+          labelBgStyle: { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", strokeWidth: 1, fillOpacity: 0.9 },
+          labelBgPadding: [8, 4] as [number, number],
+          labelBgBorderRadius: 4,
+        };
+      }
+      if (edge.sourceHandle === "false") {
+        return {
+          ...edge,
+          label: "False",
+          animated: true,
+          style: { ...edge.style, stroke: "#ef4444", strokeWidth: 2 },
+          labelStyle: { fill: "#ef4444", fontWeight: 700, fontSize: 12 },
+          labelBgStyle: { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", strokeWidth: 1, fillOpacity: 0.9 },
+          labelBgPadding: [8, 4] as [number, number],
+          labelBgBorderRadius: 4,
+        };
+      }
+      return edge;
+    });
+  }, [edges]);
+
   return (
     <div className="size-full">
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={enhancedEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

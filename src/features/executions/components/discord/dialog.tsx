@@ -223,7 +223,7 @@ export const DiscordDialog = ({
                 nodeType={NodeType.DISCORD}
                 currentConfig={form.getValues()}
               />
-              <Button className="w-full" type="submit">
+              <Button className="w-full sm:w-auto" type="submit">
                 Save
               </Button>
             </DialogFooter>

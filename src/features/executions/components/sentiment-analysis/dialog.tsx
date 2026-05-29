@@ -16,6 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { VariablePicker } from "@/components/variable-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
@@ -26,6 +28,7 @@ import { NodeType } from "@prisma/client";
 const formSchema = z.object({
   minConfidence: z.number().min(0).max(1),
   variableName: z.string(),
+  textToAnalyze: z.string().min(1, "Text to analyze is required"),
 });
 
 export type SentimentFormValues = z.infer<typeof formSchema>;
@@ -35,6 +38,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: SentimentFormValues) => void;
   defaultValues?: Partial<SentimentFormValues>;
+  nodeId: string;
 }
 
 export const SentimentDialog = ({
@@ -42,12 +46,14 @@ export const SentimentDialog = ({
   onOpenChange,
   onSubmit,
   defaultValues = {},
+  nodeId,
 }: Props) => {
   const form = useForm<SentimentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       minConfidence: defaultValues.minConfidence || 0.5,
       variableName: defaultValues.variableName || "sentimentResult",
+      textToAnalyze: defaultValues.textToAnalyze || "",
     },
   });
 
@@ -56,6 +62,7 @@ export const SentimentDialog = ({
       form.reset({
         minConfidence: defaultValues.minConfidence || 0.5,
         variableName: defaultValues.variableName || "sentimentResult",
+        textToAnalyze: defaultValues.textToAnalyze || "",
       });
     }
   }, [open, form, defaultValues]);
@@ -63,6 +70,14 @@ export const SentimentDialog = ({
   const handleSubmit = (values: SentimentFormValues) => {
     onSubmit(values);
     onOpenChange(false);
+  };
+
+  const handleInsertVariable = (
+    currentValue: string,
+    newValue: string,
+    onChange: (val: string) => void,
+  ) => {
+    onChange((currentValue || "") + newValue);
   };
 
   return (
@@ -76,6 +91,35 @@ export const SentimentDialog = ({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4 w-full"
           >
+            <FormField
+              control={form.control}
+              name="textToAnalyze"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Text to Analyze</FormLabel>
+                  <div className="flex gap-2 items-start">
+                    <FormControl className="flex-1">
+                      <Textarea
+                        placeholder="Text or {{variable}} to analyze"
+                        className="min-h-[100px] font-mono text-sm"
+                        {...field}
+                      />
+                    </FormControl>
+                    <VariablePicker
+                      nodeId={nodeId}
+                      onSelect={(val) =>
+                        handleInsertVariable(field.value, val, field.onChange)
+                      }
+                    />
+                  </div>
+                  <FormDescription>
+                    Enter static text or insert variables using the {`{}`} button
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="minConfidence"

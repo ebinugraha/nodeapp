@@ -6,6 +6,7 @@ import { ExecutionStatus, NodeType } from "@prisma/client";
 import { getExecutor } from "@/features/executions/lib/executor-register";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
+import { createId } from "@paralleldrive/cuid2";
 
 const getDescendants = (
   nodes: any[],
@@ -42,6 +43,13 @@ export const executeWorkflow = inngest.createFunction(
     id: "execute-workflow",
     retries: 0,
     triggers: [{ event: "workflows/execute.workflow" }],
+    cancelOn: [
+      {
+        event: "workflows/cancel.execution",
+        match: "data.executionId",
+        timeout: "24h",
+      },
+    ],
     onFailure: async ({ event, step }) => {
       return prisma.execution.update({
         where: { inngestEventId: event.data.event.id },
@@ -56,6 +64,7 @@ export const executeWorkflow = inngest.createFunction(
   async ({ event, step }) => {
     const inngestEventId = event.id;
     const workflowId = event.data.workflowId;
+    const executionId = event.data.executionId;
 
     if (!workflowId || !inngestEventId) {
       throw new NonRetriableError("N o workflow ID provided");
@@ -64,6 +73,7 @@ export const executeWorkflow = inngest.createFunction(
     await step.run("create-execution", async () => {
       return prisma.execution.create({
         data: {
+          id: executionId || undefined,
           workflowId,
           inngestEventId,
         },
@@ -361,21 +371,26 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
       // OPTIMASI 3: Batch events jadi SATU event dengan array of messages
       if (newMessages.length > 0) {
-        const events = newMessages.map((msg: any) => ({
-          name: "workflows/execute.workflow",
-          data: {
-            workflowId,
-            initialData: {
-              YOUTUBE_LIVE_CHAT: {
-                messageId: msg.id,
-                message: msg.snippet.displayMessage,
-                author: msg.authorDetails.displayName,
-                publishedAt: msg.snippet.publishedAt,
-                raw: msg,
+        const events = newMessages.map((msg: any) => {
+          const executionId = createId();
+          return {
+            name: "workflows/execute.workflow",
+            data: {
+              workflowId,
+              executionId,
+              initialData: {
+                YOUTUBE_LIVE_CHAT: {
+                  messageId: msg.id,
+                  message: msg.snippet.displayMessage,
+                  author: msg.authorDetails.displayName,
+                  publishedAt: msg.snippet.publishedAt,
+                  raw: msg,
+                },
               },
             },
-          },
-        }));
+            id: executionId,
+          };
+        });
 
         await step.sendEvent("trigger-workflow-execution", events);
 
@@ -529,10 +544,12 @@ export const pollYoutubeVideoComments = inngest.createFunction(
 
       for (const comment of sortedNewComments) {
         const snippet = comment.snippet.topLevelComment.snippet;
+        const executionId = createId();
         await step.sendEvent("trigger-workflow", {
           name: "workflows/execute.workflow",
           data: {
             workflowId,
+            executionId,
             initialData: {
               YOUTUBE_VIDEO_COMMENT: {
                 commentId: comment.id,
@@ -543,6 +560,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
               },
             },
           },
+          id: executionId,
         });
       }
     }

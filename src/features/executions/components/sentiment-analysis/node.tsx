@@ -38,6 +38,7 @@ export const SentimentAnalysisNode = memo((props: NodeProps<Node<Record<string, 
         onOpenChange={setIsDialogOpen}
         onSubmit={onSubmit}
         defaultValues={props.data}
+        nodeId={props.id}
       />
       <BaseExecutionNode
         Icon={ThumbsUp}

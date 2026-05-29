@@ -14,6 +14,7 @@ import {
   ChevronUpIcon,
   AlertTriangleIcon,
   ArrowRightIcon,
+  SquareIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useSuspenseExecution } from "../hooks/use-executions";
@@ -28,6 +29,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const getStatusConfig = (status: ExecutionStatus) => {
   switch (status) {
@@ -61,6 +64,24 @@ const getStatusConfig = (status: ExecutionStatus) => {
 export const ExecutionView = ({ executionId }: { executionId: string }) => {
   const { data: execution } = useSuspenseExecution(executionId);
   const [showStackTrace, setShowStackTrace] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const router = useRouter();
+
+  const handleStop = async () => {
+    try {
+      setIsStopping(true);
+      const res = await fetch(`/api/executions/${executionId}/stop`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to stop execution");
+      toast.success("Execution stopped successfully");
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to stop execution");
+    } finally {
+      setIsStopping(false);
+    }
+  };
 
   const statusConfig = getStatusConfig(execution.status);
   const StatusIcon = statusConfig.icon;
@@ -114,16 +135,34 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
               </div>
             </div>
 
-            {/* Workflow Link */}
-            <Badge variant="outline" className="gap-1.5">
-              <WorkflowIcon className="size-3.5" />
-              <Link
-                href={`/workflows/${execution.workflow.id}`}
-                className="hover:underline"
-              >
-                View Workflow
-              </Link>
-            </Badge>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+              {execution.status === ExecutionStatus.RUNNING && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleStop}
+                  disabled={isStopping}
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  {isStopping ? (
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                  ) : (
+                    <SquareIcon className="size-3.5 fill-current" />
+                  )}
+                  Stop
+                </Button>
+              )}
+              <Badge variant="outline" className="gap-1.5">
+                <WorkflowIcon className="size-3.5" />
+                <Link
+                  href={`/workflows/${execution.workflow.id}`}
+                  className="hover:underline"
+                >
+                  View Workflow
+                </Link>
+              </Badge>
+            </div>
           </div>
 
           {/* Metadata Grid */}

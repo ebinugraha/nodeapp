@@ -2,10 +2,12 @@ import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { NodeType } from "@prisma/client";
 import { getExecutor } from "@/features/executions/lib/executor-register";
+import Handlebars from "handlebars";
 
 type SentimentData = {
   variableName?: string;
   minConfidence?: number;
+  textToAnalyze?: string;
 };
 
 type SentimentResult = {
@@ -26,20 +28,14 @@ export const SentimentAnalysisExecutor: NodeExecutor<SentimentData> = async ({
   step,
 }) => {
   return step.run("sentiment-analysis", async () => {
-    const commentData = (context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT) as {
-      text?: string;
-      message?: string;
-      author?: string;
-    } | undefined;
-
-    if (!commentData) {
-      throw new NonRetriableError("No YouTube comment data in context");
+    if (!data.textToAnalyze) {
+      throw new NonRetriableError("Error: Text to analyze is missing in node configuration");
     }
 
-    const commentText = commentData.text || commentData.message || "";
+    const commentText = Handlebars.compile(data.textToAnalyze)(context);
 
-    if (!commentText) {
-      throw new NonRetriableError("No comment text to analyze");
+    if (!commentText || commentText.trim() === "") {
+      throw new NonRetriableError("Compiled text to analyze is empty");
     }
 
     // Use Gemini for sentiment analysis

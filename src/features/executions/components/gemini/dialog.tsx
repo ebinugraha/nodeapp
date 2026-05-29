@@ -255,7 +255,7 @@ export const GeminiDialog = ({
                 nodeType={NodeType.GEMINI}
                 currentConfig={form.getValues()}
               />
-              <Button className="w-full" type="submit">
+              <Button className="w-full sm:w-auto" type="submit">
                 Save
               </Button>
             </DialogFooter>
