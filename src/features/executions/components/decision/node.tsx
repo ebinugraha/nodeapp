@@ -6,6 +6,8 @@ import { BaseExecutionNode } from "../base-execution-node"; //
 import { BaseHandle } from "@/components/react-flow/base-handle"; //
 import { GitForkIcon } from "lucide-react";
 import { DecisionDialog, DecisionFormValues } from "./dialog"; // (Kita buat di langkah 4)
+import { WorkflowNode } from "@/components/workflow-node";
+import { cn } from "@/lib/utils";
 
 // Kita memodifikasi BaseExecutionNode sedikit atau membuat custom render
 // karena BaseExecutionNode di project Anda hanya punya 1 output handle fix.
@@ -61,47 +63,64 @@ export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
         defaultValues={nodeData}
       />
 
-      <div className="relative rounded-md border-[0.5px] bg-card text-card-foreground border-black min-w-[120px]">
-        {/* Input Handle (Kiri) */}
-        <BaseHandle type="target" position={Position.Left} id="main" />
+      <WorkflowNode
+        name="Decision"
+        description={description}
+        onDelete={() => {
+          setNodes((nodes) => nodes.filter((n) => n.id !== props.id));
+        }}
+        onSettings={() => setIsDialogOpen(true)}
+        category="logic"
+      >
+        <div className={cn(
+            "relative rounded-xl border border-border/70 bg-card text-card-foreground shadow-sm",
+            "hover:border-primary/40 hover:shadow-md",
+            "transition-all duration-200 cursor-pointer overflow-hidden min-w-[140px] max-w-[200px]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
+        )} onDoubleClick={() => setIsDialogOpen(true)}>
+          <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          
+          <div className="relative flex items-center gap-2 px-2 py-1.5 border-b border-border bg-card rounded-t-xl overflow-hidden">
+            
+            <div className="flex items-center justify-center size-6 rounded-md shrink-0 bg-purple-100 dark:bg-purple-500/20">
+              <GitForkIcon className="size-3.5 text-purple-600 dark:text-purple-400" />
+            </div>
+            
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <p className="text-[11px] font-semibold truncate leading-none">Decision</p>
+              <p className="text-[10px] text-muted-foreground truncate mt-1 leading-none">
+                {description}
+              </p>
+            </div>
+          </div>
 
-        <div
-          className="p-3 border-b flex items-center gap-2"
-          onDoubleClick={() => setIsDialogOpen(true)}
-        >
-          <GitForkIcon className="size-4" />
-          <div className="flex flex-col">
-            <span className="font-medium text-sm">Condition</span>
-            <span className="text-[10px] text-muted-foreground">
-              {description}
-            </span>
+          <BaseHandle type="target" position={Position.Left} id="main" />
+
+          {/* Output Handles (Kanan) */}
+          <div className="flex flex-col gap-1.5 py-2 px-1">
+            <div className="relative flex items-center justify-end">
+              <span className="text-[9px] mr-3 text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+                True
+              </span>
+              <BaseHandle
+                type="source"
+                position={Position.Right}
+                id="true"
+                className="bg-emerald-500 border-emerald-600 dark:bg-emerald-500/20 dark:border-emerald-500 !top-1/2"
+              />
+            </div>
+            <div className="relative flex items-center justify-end">
+              <span className="text-[9px] mr-3 text-red-600 dark:text-red-400 font-semibold uppercase tracking-wider">False</span>
+              <BaseHandle
+                type="source"
+                position={Position.Right}
+                id="false"
+                className="bg-red-500 border-red-600 dark:bg-red-500/20 dark:border-red-500 !top-1/2"
+              />
+            </div>
           </div>
         </div>
-
-        {/* Output Handles (Kanan) */}
-        <div className="flex flex-col gap-2 py-2">
-          <div className="relative flex items-center justify-end">
-            <span className="text-xs mr-2 text-green-600 font-medium">
-              True
-            </span>
-            <BaseHandle
-              type="source"
-              position={Position.Right}
-              id="true" // ID ini penting untuk engine
-              className="bg-green-500 border-green-600 !top-1/2"
-            />
-          </div>
-          <div className="relative flex items-center justify-end">
-            <span className="text-xs mr-2 text-red-600 font-medium">False</span>
-            <BaseHandle
-              type="source"
-              position={Position.Right}
-              id="false" // ID ini penting untuk engine
-              className="bg-red-500 border-red-600 !top-1/2"
-            />
-          </div>
-        </div>
-      </div>
+      </WorkflowNode>
     </>
   );
 });

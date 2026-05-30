@@ -213,32 +213,34 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden rounded-xl border transition-all duration-200",
-        "hover:shadow-md hover:scale-[1.01]",
-        config.borderColor,
+        "group relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+        "hover:shadow-md hover:border-primary/40",
         isRemoving && "opacity-50"
       )}
     >
-      {/* Status indicator bar */}
+      {/* Subtle glow/shadow overlay on hover */}
+      <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+      {/* Left accent bar */}
       <div className={cn(
-        "absolute top-0 left-0 right-0 h-1",
-        isConnected ? "bg-linear-to-r from-emerald-500 to-teal-500" : "bg-linear-to-r from-slate-400 to-slate-500"
+        "absolute top-0 left-0 bottom-0 w-1",
+        isConnected ? "bg-emerald-500" : "bg-slate-400"
       )} />
 
-      <div className="p-5 pt-4">
+      <div className="px-4 py-1.5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             {/* Logo */}
             <div className={cn(
-              "flex items-center justify-center size-12 rounded-xl",
+              "flex items-center justify-center size-10 rounded-xl",
               config.bgColor
             )}>
               <Image
                 src={config.logo}
                 alt={config.label}
-                width={24}
-                height={24}
+                width={20}
+                height={20}
                 className="object-contain"
               />
             </div>
@@ -262,14 +264,14 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
                   <QuotaBadge credentialId={data.id} />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {config.description}
               </p>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 text-muted-foreground transition-opacity">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -291,8 +293,8 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
         </div>
 
         {/* Metadata */}
-        <div className="mt-4 pt-4 border-t border-border/50">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-2 pt-2 border-t border-border/50">
+          <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -325,7 +327,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
 
         {/* Delete confirmation */}
         {showDeleteConfirm && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/30">
+          <div className="mt-3 p-2.5 rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/30">
             <div className="flex items-center gap-2 mb-2">
               <AlertCircleIcon className="size-4 text-red-600" />
               <p className="text-xs font-medium text-red-900 dark:text-red-300">
@@ -354,13 +356,13 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
           </div>
         )}
 
-        {/* Delete button (shown on hover) */}
+        {/* Delete button */}
         {!showDeleteConfirm && (
-          <div className="mt-4 pt-4 border-t border-border/50 flex justify-end">
+          <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 opacity-0 group-hover:opacity-100 transition-all"
+              className="h-8 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 transition-all"
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2Icon className="size-3.5" />

@@ -94,7 +94,6 @@ const getStatusConfig = (status: ExecutionStatus) => {
         className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
         iconClassName: "text-emerald-500",
         dotClassName: "bg-emerald-500",
-        bgClassName: "from-emerald-500/5 to-transparent",
       };
     case ExecutionStatus.FAILED:
       return {
@@ -103,7 +102,6 @@ const getStatusConfig = (status: ExecutionStatus) => {
         className: "bg-red-500/10 text-red-600 border-red-500/20",
         iconClassName: "text-red-500",
         dotClassName: "bg-red-500",
-        bgClassName: "from-red-500/5 to-transparent",
       };
     case ExecutionStatus.RUNNING:
       return {
@@ -112,7 +110,6 @@ const getStatusConfig = (status: ExecutionStatus) => {
         className: "bg-blue-500/10 text-blue-600 border-blue-500/20",
         iconClassName: "text-blue-500 animate-spin",
         dotClassName: "bg-blue-500 animate-pulse",
-        bgClassName: "from-blue-500/5 to-transparent",
       };
     default:
       return {
@@ -121,7 +118,6 @@ const getStatusConfig = (status: ExecutionStatus) => {
         className: "bg-slate-500/10 text-slate-600 border-slate-500/20",
         iconClassName: "text-slate-500",
         dotClassName: "bg-slate-500",
-        bgClassName: "from-slate-500/5 to-transparent",
       };
   }
 };
@@ -158,67 +154,73 @@ export const ExecutionItem = ({
       prefetch
     >
       <div className={cn(
-        "relative overflow-hidden rounded-xl border bg-linear-to-l transition-all duration-200",
-        statusConfig.bgClassName,
-        "hover:border-primary/30 hover:shadow-md hover:scale-[1.01]",
-        "cursor-pointer"
+        "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+        "bg-card",
+        "hover:border-primary/40 hover:shadow-md cursor-pointer"
       )}>
+        {/* Subtle glow/shadow overlay on hover */}
+        <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
         {/* Status indicator line */}
         <div className={cn(
           "absolute left-0 top-0 bottom-0 w-1",
           statusConfig.dotClassName
         )} />
 
-        <div className="p-5 pl-6">
+        <div className="px-4 py-3">
           <div className="flex items-start justify-between gap-4">
             {/* Left side - Status and info */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-3 min-w-0">
               {/* Status Badge */}
               <div className={cn(
-                "flex items-center justify-center size-12 rounded-xl border",
+                "flex items-center justify-center size-10 rounded-lg shrink-0",
                 statusConfig.className
               )}>
                 <StatusIcon className={cn("size-5", statusConfig.iconClassName)} />
               </div>
 
-              <div className="space-y-1">
+              <div className="flex flex-col justify-center min-w-0 space-y-0.5">
                 {/* Workflow name */}
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold group-hover:text-primary transition-colors">
+                  <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                     {data.workflow.name}
                   </h3>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-background uppercase tracking-wider">
                     {statusConfig.label}
                   </Badge>
                 </div>
 
+                {/* Error Preview (if failed) */}
+                {data.status === ExecutionStatus.FAILED && data.error && (
+                  <p className="text-[11px] text-red-600/90 dark:text-red-400/90 truncate max-w-[200px] sm:max-w-md">
+                    {data.error}
+                  </p>
+                )}
+
                 {/* Meta info */}
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <ClockIcon className="size-3.5" />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    <ClockIcon className="size-3" />
                     {formatDistanceToNow(data.startedAt, { addSuffix: true })}
                   </span>
                   {duration !== null && (
-                    <span className="flex items-center gap-1">
-                      <TimerIcon className="size-3.5" />
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <TimerIcon className="size-3" />
                       {formatDuration(duration)}
                     </span>
                   )}
+                  <span className="flex items-center gap-1.5 text-muted-foreground/60 font-mono shrink-0">
+                    <WorkflowIcon className="size-3" />
+                    {data.id.slice(0, 8)}...
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Right side - Arrow */}
-            <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-              <ArrowRightIcon className="size-5" />
+            <div className="flex items-center gap-2 h-10 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1 shrink-0">
+              <ArrowRightIcon className="size-4" />
             </div>
-          </div>
-
-          {/* Event ID (subtle) */}
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <p className="text-xs text-muted-foreground/60 font-mono">
-              Event: {data.inngestEventId.slice(0, 24)}...
-            </p>
           </div>
         </div>
       </div>

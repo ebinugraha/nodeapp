@@ -10,9 +10,9 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     <div
       ref={ref}
       className={cn(
-        "relative rounded-xl border-2 border-border bg-card text-card-foreground shadow-sm",
-        "hover:border-primary/40 hover:shadow-md hover:scale-[1.02]",
-        "transition-all duration-200 cursor-pointer",
+        "relative rounded-xl border border-border/70 bg-card text-card-foreground shadow-sm",
+        "hover:border-primary/40 hover:shadow-md",
+        "transition-all duration-200 cursor-pointer overflow-hidden",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
         className,
       )}
@@ -21,8 +21,8 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     >
       {props.children}
 
-      {/* Subtle gradient overlay on hover */}
-      <div className="absolute inset-0 rounded-xl bg-linear-to-br from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      {/* Subtle glow/shadow overlay on hover */}
+      <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </div>
   ),
 );

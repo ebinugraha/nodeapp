@@ -98,7 +98,7 @@ export const BaseExecutionNode = memo(
           <BaseNode
             onDoubleClick={onDoubleClick}
             className={cn(
-              "rounded-xl min-w-[180px]",
+              "rounded-xl min-w-[140px] max-w-[200px]",
               nodeError && "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
               !nodeError && config.border,
               "bg-linear-to-br from-card to-card/80",
@@ -106,87 +106,75 @@ export const BaseExecutionNode = memo(
               "transition-all duration-200",
             )}
           >
-            {/* Category label */}
-            <div className="relative">
-              <div className="absolute -top-3 left-3 z-10">
-                <span
-                  className={cn(
-                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider",
-                    nodeError
-                      ? "bg-red-500/20 text-red-700"
-                      : config.iconBg,
-                    !nodeError && config.iconColor,
-                  )}
-                >
-                  {nodeError ? "Error" : config.label}
-                </span>
-              </div>
-
-              {/* Header */}
-              <div className="flex items-center gap-3 p-4 pt-5 border-b border-border/50 bg-linear-to-r from-transparent via-muted/30 to-transparent">
-                <div
-                  className={cn(
-                    "flex items-center justify-center size-10 rounded-lg",
-                    nodeError ? "bg-red-100" : config.iconBg,
-                  )}
-                >
+            {/* Header */}
+            <div className={cn(
+              "relative flex items-center gap-2 px-2 py-1.5 bg-card rounded-t-xl overflow-hidden",
+              (children || description || nodeError) && "border-b border-border"
+            )}>
+              {/* Left Accent Bar */}
+              <div className={cn(
+                "absolute left-0 top-0 bottom-0 w-1",
+                nodeError ? "bg-red-500" : config.iconColor.replace("text-", "bg-")
+              )} />
+              
+              <div
+                className={cn(
+                  "flex items-center justify-center size-6 rounded-md shrink-0 ml-1",
+                  nodeError ? "bg-red-500/10" : config.iconBg,
+                )}
+              >
                   {typeof Icon === "string" ? (
                     <Image
                       src={Icon}
                       alt={name}
-                      width={20}
-                      height={20}
+                      width={14}
+                      height={14}
                       className="object-contain"
                     />
                   ) : (
                     <Icon
                       className={cn(
-                        "size-5",
+                        "size-3.5",
                         nodeError ? "text-red-600" : config.iconColor,
                       )}
                     />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{name}</p>
-                  {description && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {description}
-                    </p>
-                  )}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] font-semibold truncate leading-none">{name}</p>
+                    {nodeError && (
+                      <span className="text-[8px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 py-0.5 rounded-sm">
+                        Error
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
             {/* Content */}
-            <BaseNodeContent className="gap-y-3">
-              {/* Error panel */}
-              {nodeError && (
-                <NodeErrorPanel
-                  error={nodeError}
-                  onDismiss={clearError}
-                  onRetry={onRetry}
-                />
-              )}
+            {(children || description || nodeError) && (
+              <BaseNodeContent className="gap-y-2 pb-2.5 px-2 pt-2">
+                {/* Error panel */}
+                {nodeError && (
+                  <NodeErrorPanel
+                    error={nodeError}
+                    onDismiss={clearError}
+                    onRetry={onRetry}
+                  />
+                )}
 
-              {/* Children content */}
-              {!nodeError && children}
+                {/* Configuration / Description */}
+                {!nodeError && description && !children && (
+                  <div className="text-[10px] text-muted-foreground bg-muted/20 px-2 py-1.5 rounded-md border border-border/50 truncate">
+                    {description}
+                  </div>
+                )}
 
-              {/* Category indicator */}
-              <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/30">
-                <div
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    nodeError
-                      ? "bg-red-500 animate-pulse"
-                      : config.iconColor.replace("text-", "bg-"),
-                  )}
-                />
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                  {nodeError ? "Failed" : config.label}
-                </span>
-              </div>
-            </BaseNodeContent>
+                {/* Children content */}
+                {!nodeError && children}
+              </BaseNodeContent>
+            )}
 
             {/* Handles */}
             <BaseHandle id="target-1" type="target" position={Position.Left} />

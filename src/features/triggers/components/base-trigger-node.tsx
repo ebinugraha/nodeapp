@@ -95,83 +95,82 @@ export const BaseTriggerNode = memo(
           <BaseNode
             onDoubleClick={onDoubleClick}
             className={cn(
-              "rounded-xl min-w-[180px]",
+              "rounded-xl min-w-[140px] max-w-[200px]",
               nodeError && "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
               !nodeError && config.border,
               "bg-linear-to-br from-card to-card/80",
-              "group-hover:shadow-lg group-hover:scale-[1.02]",
               "transition-all duration-200",
             )}
           >
             {/* Icon header */}
-            <div className="flex items-center justify-center gap-3 p-4 border-b border-border/50 bg-linear-to-r from-transparent via-muted/30 to-transparent">
+            <div className={cn(
+              "relative flex items-center gap-2 px-2 py-1.5 bg-card rounded-t-xl overflow-hidden",
+              (children || description || nodeError) && "border-b border-border"
+            )}>
+              {/* Left Accent Bar */}
+              <div className={cn(
+                "absolute left-0 top-0 bottom-0 w-1",
+                nodeError ? "bg-red-500" : config.iconColor.replace("text-", "bg-")
+              )} />
+              
               <div
                 className={cn(
-                  "flex items-center justify-center size-10 rounded-lg",
-                  nodeError ? "bg-red-100" : config.iconBg,
+                  "flex items-center justify-center size-6 rounded-md shrink-0 ml-1",
+                  nodeError ? "bg-red-500/10" : config.iconBg,
                 )}
               >
                 {typeof Icon === "string" ? (
                   <Image
                     src={Icon}
                     alt={name}
-                    width={20}
-                    height={20}
+                    width={14}
+                    height={14}
                     className="object-contain"
                   />
                 ) : (
                   <Icon
                     className={cn(
-                      "size-5",
+                      "size-3.5",
                       nodeError ? "text-red-600" : config.iconColor,
                     )}
                   />
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{name}</p>
-                {description && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {description}
-                  </p>
-                )}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[11px] font-semibold truncate leading-none">{name}</p>
+                  {nodeError && (
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 py-0.5 rounded-sm">
+                      Error
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Content area */}
-            <BaseNodeContent className="gap-y-2">
-              {/* Error panel */}
-              {nodeError && (
-                <NodeErrorPanel
-                  error={nodeError}
-                  onDismiss={clearError}
-                  onRetry={onRetry}
-                />
-              )}
+            {(children || description || nodeError) && (
+              <BaseNodeContent className="gap-y-2 pb-2.5 px-2 pt-2">
+                {/* Error panel */}
+                {nodeError && (
+                  <NodeErrorPanel
+                    error={nodeError}
+                    onDismiss={clearError}
+                    onRetry={onRetry}
+                  />
+                )}
 
-              {/* Children content */}
-              {!nodeError && children}
+                {/* Configuration / Description */}
+                {!nodeError && description && !children && (
+                  <div className="text-[10px] text-muted-foreground bg-muted/20 px-2 py-1.5 rounded-md border border-border/50 truncate">
+                    {description}
+                  </div>
+                )}
 
-              {/* Trigger indicator badge */}
-              <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/30">
-                <div
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    nodeError
-                      ? "bg-red-500 animate-pulse"
-                      : config.iconColor.replace("text-", "bg-"),
-                  )}
-                />
-                <span
-                  className={cn(
-                    "text-[10px] uppercase tracking-wider font-medium",
-                    nodeError ? "text-red-600" : "text-muted-foreground",
-                  )}
-                >
-                  {nodeError ? "Failed" : "Trigger"}
-                </span>
-              </div>
-            </BaseNodeContent>
+                {/* Children content */}
+                {!nodeError && children}
+              </BaseNodeContent>
+            )}
 
             <BaseHandle
               id="source-1"

@@ -182,13 +182,7 @@ const moderationNodes: NodeTypeOption[] = [
     icon: ShieldIcon,
     category: "moderation",
   },
-  {
-    type: NodeType.YOUTUBE_FLAG,
-    label: "Flag Comment",
-    description: "Flag comment for YouTube review",
-    icon: AlertTriangleIcon,
-    category: "moderation",
-  },
+
   {
     type: NodeType.YOUTUBE_TIMEOUT,
     label: "Timeout User",
@@ -196,13 +190,7 @@ const moderationNodes: NodeTypeOption[] = [
     icon: ClockIcon,
     category: "moderation",
   },
-  {
-    type: NodeType.YOUTUBE_BAN,
-    label: "Ban User",
-    description: "Permanently ban a user from the channel",
-    icon: ShieldIcon,
-    category: "moderation",
-  },
+
 ];
 
 const aiNodes: NodeTypeOption[] = [

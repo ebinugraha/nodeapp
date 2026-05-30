@@ -277,21 +277,21 @@ export const CredentialForm = ({
 
     return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <div className="flex-1 px-6 py-8 md:px-12 md:py-10 overflow-auto">
+      <div className="flex-1 px-4 py-6 md:px-8 md:py-8 overflow-auto flex justify-center">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10 max-w-5xl">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl w-full">
             {/* Header */}
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" asChild className="size-10 shrink-0">
+              <Button variant="ghost" size="icon" asChild className="size-8 shrink-0">
                 <Link href="/credentials">
-                  <ArrowLeftIcon className="size-5" />
+                  <ArrowLeftIcon className="size-4" />
                 </Link>
               </Button>
               <div>
-                <h1 className="text-3xl font-bold">
+                <h1 className="text-xl font-bold">
                   {isEdit ? "Edit Kredensial" : "Kredensial Baru"}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1">
                   {isEdit
                     ? "Perbarui pengaturan koneksi Anda"
                     : "Hubungkan akun Anda untuk mulai menggunakan aplikasi"}
@@ -300,38 +300,38 @@ export const CredentialForm = ({
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid gap-10 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3 items-start">
               {/* Left Column - Form */}
-              <div className="lg:col-span-2 space-y-8">
+              <div className="lg:col-span-2 space-y-5">
                 {/* Service Type Card */}
-                <Card className="p-8">
-                  <CardHeader className="px-0 pt-0 pb-6 mb-6">
-                    <div className="flex items-center gap-5">
+                <Card className="p-5 border border-border/70 shadow-sm">
+                  <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
+                    <div className="flex items-center gap-3">
                       <div
                         className={cn(
-                          "flex items-center justify-center size-16 rounded-xl p-3",
+                          "flex items-center justify-center size-10 rounded-lg p-2",
                           selectedTypeConfig.color.split(" ")[0],
                           selectedTypeConfig.color.split(" ")[1],
                         )}
                       >
                         <KeyIcon
                           className={cn(
-                            "size-8",
+                            "size-5",
                             selectedTypeConfig.color.split(" ")[2],
                           )}
                         />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">
+                        <CardTitle className="text-base">
                           Pilih Layanan
                         </CardTitle>
-                        <CardDescription className="mt-2 text-base">
+                        <CardDescription className="mt-0.5 text-xs">
                           Pilih layanan yang ingin Anda hubungkan
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-0 space-y-5">
+                  <CardContent className="px-0 space-y-4">
                     {/* Service Type Selector */}
                     <FormField
                       control={form.control}
@@ -346,43 +346,33 @@ export const CredentialForm = ({
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="h-14 text-base">
-                                <div className="flex items-center gap-4">
+                              <SelectTrigger className="h-10 text-sm">
+                                <div className="flex items-center gap-3">
                                   <Image
                                     src={selectedTypeConfig.logo}
                                     alt=""
-                                    width={28}
-                                    height={28}
+                                    width={18}
+                                    height={18}
                                   />
-                                  <div className="flex flex-col items-start">
-                                    <span className="text-sm font-medium">
-                                      {selectedTypeConfig.label}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {selectedTypeConfig.description}
-                                    </span>
-                                  </div>
+                                  <span className="font-medium">
+                                    {selectedTypeConfig.label}
+                                  </span>
                                 </div>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {credentialTypeOptions.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
-                                  <div className="flex items-center gap-4 py-3">
+                                  <div className="flex items-center gap-3 py-1">
                                     <Image
                                       src={option.logo}
                                       alt={option.label}
-                                      width={28}
-                                      height={28}
+                                      width={18}
+                                      height={18}
                                     />
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-medium">
-                                        {option.label}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {option.description}
-                                      </span>
-                                    </div>
+                                    <span className="font-medium">
+                                      {option.label}
+                                    </span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -396,34 +386,33 @@ export const CredentialForm = ({
                 </Card>
 
                 {/* Credential Name Card */}
-                <Card className="p-8">
-                  <CardHeader className="px-0 pt-0 pb-6 mb-6">
-                    <div className="flex items-center gap-4">
-                      <KeyIcon className="size-6 text-primary" />
-                      <CardTitle className="text-lg">Detail Kredensial</CardTitle>
+                <Card className="p-5 border border-border/70 shadow-sm">
+                  <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <BookOpenIcon className="size-5 text-primary" />
+                      <CardTitle className="text-base">Detail Kredensial</CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-0 space-y-6">
+                  <CardContent className="px-0 space-y-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium flex items-center gap-2">
-                            <BookOpenIcon className="size-4 text-muted-foreground" />
-                            Nama
+                          <FormLabel className="text-xs font-semibold">
+                            Nama Kredensial
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Contoh: Channel YouTube Saya"
-                              className="h-12 text-base"
+                              placeholder="Contoh: Channel YouTube Utama"
+                              className="h-10 text-sm"
                               {...field}
                             />
                           </FormControl>
-                          <p className="text-xs text-muted-foreground mt-2">
+                          <p className="text-[10px] text-muted-foreground mt-1">
                             Beri nama credential ini untuk mudah mengidentifikasinya
                           </p>
-                          <FormMessage />
+                          <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
@@ -432,40 +421,36 @@ export const CredentialForm = ({
 
                 {/* API Key or OAuth Card */}
                 {isOAuth ? (
-                  <Card className="p-8 border-primary/20">
-                    <CardHeader className="px-0 pt-0 pb-6 mb-6">
-                      <div className="flex items-center gap-4">
-                        <LockIcon className="size-6 text-primary" />
-                        <CardTitle className="text-lg">Konfigurasi OAuth</CardTitle>
-                        <Badge variant="outline" className="ml-auto text-xs bg-primary/10 text-primary border-primary/30">
+                  <Card className="p-5 border border-primary/20 shadow-sm">
+                    <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        <LockIcon className="size-5 text-primary" />
+                        <CardTitle className="text-base">Konfigurasi OAuth</CardTitle>
+                        <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-primary/10 text-primary border-primary/30">
                           Koneksi Aman
                         </Badge>
                       </div>
-                      <CardDescription className="mt-4">
+                      <CardDescription className="mt-1 text-xs">
                         Masukkan kredensial OAuth Google Anda untuk menghubungkan akun
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="px-0 space-y-6">
+                    <CardContent className="px-0 space-y-4">
                       <FormField
                         control={form.control}
                         name="clientId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-medium flex items-center gap-2">
-                              <KeyIcon className="size-4 text-muted-foreground" />
+                            <FormLabel className="text-xs font-semibold">
                               Client ID
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Masukkan Client ID OAuth Google Anda"
-                                className="h-12 text-base font-mono"
+                                placeholder="Masukkan Client ID"
+                                className="h-10 text-sm font-mono bg-muted/50"
                                 {...field}
                               />
                             </FormControl>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Didapatkan dari Google Cloud Console → APIs & Services → Credentials
-                            </p>
-                            <FormMessage />
+                            <FormMessage className="text-[10px]" />
                           </FormItem>
                         )}
                       />
@@ -475,36 +460,29 @@ export const CredentialForm = ({
                         name="clientSecret"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-medium flex items-center gap-2">
-                              <KeyIcon className="size-4 text-muted-foreground" />
+                            <FormLabel className="text-xs font-semibold">
                               Client Secret
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
-                                placeholder="Masukkan Client Secret OAuth Google Anda"
-                                className="h-12 text-base font-mono"
+                                placeholder="Masukkan Client Secret"
+                                className="h-10 text-sm font-mono bg-muted/50"
                                 {...field}
                               />
                             </FormControl>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Jaga kerahasiaan ini! Jangan dibagikan kepada siapapun.
-                            </p>
-                            <FormMessage />
+                            <FormMessage className="text-[10px]" />
                           </FormItem>
                         )}
                       />
 
                       {/* Connected status */}
                       {isConnected && (
-                        <div className="flex items-center gap-4 p-5 rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50">
-                          <CheckCircle2Icon className="size-7 text-emerald-600 shrink-0" />
+                        <div className="flex items-center gap-3 p-3 mt-4 rounded-md bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50">
+                          <CheckCircle2Icon className="size-5 text-emerald-600 shrink-0" />
                           <div>
-                            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                               Akun Terhubung
-                            </p>
-                            <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">
-                              Akun Google Anda berhasil terhubung
                             </p>
                           </div>
                         </div>
@@ -513,52 +491,46 @@ export const CredentialForm = ({
                       <Button
                         type="button"
                         variant={isConnected ? "outline" : "default"}
-                        className="w-full h-14 text-base gap-3 mt-8"
+                        className="w-full h-10 text-sm gap-2 mt-4"
                         onClick={handleConnect}
                         disabled={isPending}
                       >
                         {isPending ? (
-                          <Loader2Icon className="size-5 animate-spin" />
+                          <Loader2Icon className="size-4 animate-spin" />
                         ) : (
-                          <ExternalLinkIcon className="size-5" />
+                          <ExternalLinkIcon className="size-4" />
                         )}
                         {isConnected ? "Sambungkan Kembali" : "Sambungkan dengan Google"}
                       </Button>
                     </CardContent>
                   </Card>
                 ) : (
-                <Card className="p-8 border-primary/20">
-                    <CardHeader className="px-0 pt-0 pb-6 mb-6">
-                      <div className="flex items-center gap-4">
-                        <KeyIcon className="size-6 text-primary" />
-                        <CardTitle className="text-lg">API Key</CardTitle>
+                  <Card className="p-5 border border-border/70 shadow-sm">
+                    <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        <KeyIcon className="size-5 text-primary" />
+                        <CardTitle className="text-base">Kredensial Autentikasi</CardTitle>
                       </div>
-                      <CardDescription className="mt-4">
-                        Masukkan API key dari {selectedTypeConfig.label}
-                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="px-0 space-y-6">
+                    <CardContent className="px-0 space-y-4">
                       <FormField
                         control={form.control}
                         name="value"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-medium flex items-center gap-2">
-                              <KeyIcon className="size-4 text-muted-foreground" />
-                              API Key
+                            <FormLabel className="text-xs font-semibold flex items-center justify-between">
+                              <span>API Key</span>
+                              <span className="text-[9px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Terenkripsi</span>
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
                                 placeholder="sk-..."
-                                className="h-12 text-base font-mono"
+                                className="h-10 text-sm font-mono bg-muted/50"
                                 {...field}
                               />
                             </FormControl>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              API key Anda disimpan dengan aman dan terenkripsi
-                            </p>
-                            <FormMessage />
+                            <FormMessage className="text-[10px]" />
                           </FormItem>
                         )}
                       />
@@ -566,10 +538,10 @@ export const CredentialForm = ({
                       <Button
                         type="submit"
                         disabled={isPending}
-                        className="w-full h-14 text-base gap-3 mt-8"
+                        className="w-full h-10 text-sm gap-2 mt-4"
                       >
-                        {isPending && <Loader2Icon className="size-5 animate-spin" />}
-                        {isEdit ? "Perbarui Kredensial" : "Buat Kredensial"}
+                        {isPending && <Loader2Icon className="size-4 animate-spin" />}
+                        {isEdit ? "Simpan Perubahan" : "Simpan Kredensial"}
                       </Button>
                     </CardContent>
                   </Card>
@@ -587,28 +559,23 @@ export const CredentialForm = ({
               </div>
 
               {/* Right Column - Guide & Quota */}
-              <div className="lg:col-span-1 space-y-8">
+              <div className="lg:col-span-1 space-y-5">
                 {/* Quota Display for YouTube - Show at top for YouTube */}
                 {isEdit && initialData?.id && selectedType === CredentialType.YOUTUBE && (
                   <QuotaDisplay credentialId={initialData.id} />
                 )}
 
                 {/* Guide Card */}
-                <Card className="p-8 overflow-hidden">
-                  <CardHeader className="px-0 pt-0 pb-6 mb-6">
-                    <div className="flex items-center gap-4">
-                      <BookOpenIcon className="size-6 text-primary" />
-                      <CardTitle className="text-lg">
+                <Card className="p-5 overflow-hidden border border-border/70 shadow-sm">
+                  <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <BookOpenIcon className="size-4 text-primary" />
+                      <CardTitle className="text-sm">
                         {guideType === "api_key" ? "Cara Mendapatkan API Key" : "Panduan Setup"}
                       </CardTitle>
                     </div>
-                    <CardDescription className="mt-2">
-                      {guideType === "api_key"
-                        ? `Ikuti langkah-langkah berikut untuk mendapatkan API key ${selectedTypeConfig.label}`
-                        : "Ikuti langkah-langkah berikut untuk setup Google OAuth"}
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="px-0 space-y-5">
+                  <CardContent className="px-0 space-y-4">
                     {guideType === "api_key" ? (
                       <ApiKeyGuide service={selectedTypeConfig.label} />
                     ) : guideType === "youtube" ? (
@@ -628,28 +595,17 @@ export const CredentialForm = ({
                 </Card>
 
                 {/* Security Info */}
-                <Card className="p-6 bg-muted/30">
+                <Card className="p-4 bg-muted/30 border border-border/50 shadow-sm">
                   <CardContent className="px-0 pt-0">
-                    <div className="flex items-start gap-4">
-                      <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <ShieldCheckIcon className="size-6 text-primary" />
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <ShieldCheckIcon className="size-4 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-base font-semibold">Data Anda aman</p>
-                        <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2Icon className="size-4 text-emerald-500" />
-                            Credential terenkripsi
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2Icon className="size-4 text-emerald-500" />
-                            Terisolasi per akun pengguna
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2Icon className="size-4 text-emerald-500" />
-                            Tidak pernah dibagikan ke pihak ketiga
-                          </li>
-                        </ul>
+                        <p className="text-xs font-semibold">Terenkripsi Aman</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Kredensial Anda dienkripsi AES-256
+                        </p>
                       </div>
                     </div>
                   </CardContent>

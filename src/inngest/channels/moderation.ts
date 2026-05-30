@@ -23,20 +23,12 @@ export const youtubeHideChannel = channel({
   topics: { status: { schema: statusSchema } },
 });
 
-export const youtubeFlagChannel = channel({
-  name: "youtube-flag-execution",
-  topics: { status: { schema: statusSchema } },
-});
 
 export const youtubeTimeoutChannel = channel({
   name: "youtube-timeout-execution",
   topics: { status: { schema: statusSchema } },
 });
 
-export const youtubeBanChannel = channel({
-  name: "youtube-ban-execution",
-  topics: { status: { schema: statusSchema } },
-});
 
 export const discordNotifyChannel = channel({
   name: "discord-notify-execution",

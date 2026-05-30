@@ -14,9 +14,7 @@ import { GoogleSheetsExecutor } from "../components/google-sheets/executor";
 import { YouTubeReplyExecutor } from "../components/youtube-reply/executor";
 import { YouTubeHideExecutor } from "../components/youtube-hide/executor";
 import { YouTubePinExecutor } from "../components/youtube-pin/executor";
-import { YouTubeFlagExecutor } from "../components/youtube-flag/executor";
 import { YouTubeTimeoutExecutor } from "../components/youtube-timeout/executor";
-import { YouTubeBanExecutor } from "../components/youtube-ban/executor";
 import { DiscordNotifyExecutor } from "../components/discord-notify/executor";
 import { AIModerationExecutor } from "../components/ai-moderation/executor";
 import { SentimentAnalysisExecutor } from "../components/sentiment-analysis/executor";
@@ -48,9 +46,7 @@ export const executorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.YOUTUBE_REPLY]: YouTubeReplyExecutor as NodeExecutor,
   [NodeType.YOUTUBE_HIDE]: YouTubeHideExecutor as NodeExecutor,
   [NodeType.YOUTUBE_PIN]: YouTubePinExecutor as NodeExecutor,
-  [NodeType.YOUTUBE_FLAG]: YouTubeFlagExecutor as NodeExecutor,
   [NodeType.YOUTUBE_TIMEOUT]: YouTubeTimeoutExecutor as NodeExecutor,
-  [NodeType.YOUTUBE_BAN]: YouTubeBanExecutor as NodeExecutor,
 
   // Notification Nodes
   [NodeType.DISCORD_NOTIFY]: DiscordNotifyExecutor as NodeExecutor,
