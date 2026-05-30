@@ -59,7 +59,7 @@ export const AppHeader = () => {
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="size-8">
                   <AvatarImage src={user?.image ?? ""} alt={user?.name ?? "User"} />
-                  <AvatarFallback>
+                  <AvatarFallback suppressHydrationWarning>
                     {user?.name?.charAt(0).toUpperCase() ?? "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -68,8 +68,8 @@ export const AppHeader = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col">
-                  <span>{user?.name ?? "User"}</span>
-                  <span className="text-xs text-muted-foreground font-normal">
+                  <span suppressHydrationWarning>{user?.name ?? "User"}</span>
+                  <span suppressHydrationWarning className="text-xs text-muted-foreground font-normal">
                     {user?.email}
                   </span>
                 </div>

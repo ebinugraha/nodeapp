@@ -318,7 +318,7 @@ function MetaItem({
           {label}
         </span>
       </div>
-      <p className="text-sm font-medium truncate" title={fullValue || value}>
+      <p suppressHydrationWarning className="text-sm font-medium truncate" title={fullValue || value}>
         {value}
       </p>
     </div>

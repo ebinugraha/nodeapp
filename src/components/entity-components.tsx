@@ -34,10 +34,10 @@ type EntityHeaderProps = {
   disabled?: boolean;
   isCreating?: boolean;
 } & (
-  | { onNew: () => void; newButtonHref?: never }
-  | { newButtonHref: string; onNew?: never }
-  | { onNew?: never; newButtonHref?: never }
-);
+    | { onNew: () => void; newButtonHref?: never }
+    | { newButtonHref: string; onNew?: never }
+    | { onNew?: never; newButtonHref?: never }
+  );
 
 export const EntityHeader = ({
   title,
@@ -284,12 +284,12 @@ export const EntityItem = ({
     <Link href={href} prefetch>
       <Card
         className={cn(
-          "p-4 shadow-none hover:shadow cursor-pointer",
+          "shadow-none hover:shadow cursor-pointer",
           isRemoving && "opacity-50 cursor-not-allowed",
           className,
         )}
       >
-        <CardContent className="flex flex-row items-center justify-between p-0">
+        <CardContent className="flex flex-row items-center justify-between ">
           <div className="flex items-center gap-3">
             {image}
             <div>

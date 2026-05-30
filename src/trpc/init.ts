@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { cache } from "react";
 import superjson from "superjson";
+import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 
 // Better Auth session type
 interface SessionWithUser {
@@ -27,12 +28,19 @@ interface SessionWithUser {
   };
 }
 
-export const createTRPCContext = cache(async () => {
+export const createTRPCContext = cache(async (opts?: FetchCreateContextFnOptions) => {
   /**
    * @see: https://trpc.io/docs/server/context
    */
+  let sessionHeaders;
+  if (opts?.req) {
+    sessionHeaders = opts.req.headers;
+  } else {
+    sessionHeaders = await headers();
+  }
+
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: sessionHeaders,
   });
 
   return {

@@ -151,7 +151,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                     <WorkflowIcon className="mr-2 size-4" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="truncate font-medium">{workflow.name}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span suppressHydrationWarning className="text-xs text-muted-foreground">
                         Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
                       </span>
                     </div>
@@ -205,7 +205,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                     <HistoryIcon className="mr-2 size-4" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="truncate font-medium">{execution.workflow.name}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span suppressHydrationWarning className="text-xs text-muted-foreground">
                         ID: {execution.id.slice(-8)} • {formatDistanceToNow(new Date(execution.startedAt), { addSuffix: true })}
                       </span>
                     </div>

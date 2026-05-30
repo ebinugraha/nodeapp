@@ -180,11 +180,11 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
 
                 {/* Meta info */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-0.5">
-                  <span className="flex items-center gap-1.5 shrink-0" title={format(data.updatedAt, "PPpp")}>
+                  <span suppressHydrationWarning className="flex items-center gap-1.5 shrink-0" title={format(data.updatedAt, "PPpp")}>
                     <ClockIcon className="size-3" />
                     Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
                   </span>
-                  <span className="flex items-center gap-1.5 shrink-0" title={format(data.createdAt, "PPpp")}>
+                  <span suppressHydrationWarning className="flex items-center gap-1.5 shrink-0" title={format(data.createdAt, "PPpp")}>
                     <CalendarIcon className="size-3" />
                     Created {format(data.createdAt, "MMM d, yyyy")}
                   </span>

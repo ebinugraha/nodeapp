@@ -12,7 +12,7 @@ import {
 } from "@/components/entity-components";
 
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 import {
   Execution,
@@ -201,7 +201,9 @@ export const ExecutionItem = ({
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-1">
                   <span className="flex items-center gap-1.5 shrink-0">
                     <ClockIcon className="size-3" />
-                    {formatDistanceToNow(data.startedAt, { addSuffix: true })}
+                    <span suppressHydrationWarning className="truncate" title={format(data.startedAt, "PPpp")}>
+                      {formatDistanceToNow(data.startedAt, { addSuffix: true })}
+                    </span>
                   </span>
                   {duration !== null && (
                     <span className="flex items-center gap-1.5 shrink-0">

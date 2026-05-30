@@ -213,7 +213,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+        "group relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200 py-3 px-4",
         "hover:shadow-md hover:border-primary/40",
         isRemoving && "opacity-50"
       )}
@@ -299,8 +299,10 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 cursor-help">
-                    <CalendarIcon className="size-3.5" />
-                    <span>Created {formatDistanceToNow(data.createdAt, { addSuffix: true })}</span>
+                    <div suppressHydrationWarning className="flex items-center gap-1.5">
+                      <CalendarIcon className="size-3.5" />
+                      <span>Created {formatDistanceToNow(data.createdAt, { addSuffix: true })}</span>
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>

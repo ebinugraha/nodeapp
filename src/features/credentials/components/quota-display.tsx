@@ -264,7 +264,7 @@ export const QuotaDisplay = ({
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                   Daily Reset
                 </p>
-                <p className="text-xs font-medium">
+                <p suppressHydrationWarning className="text-xs font-medium">
                   {formatDistanceToNow(quota.resetInfo.dailyResetsAt, { addSuffix: true })}
                 </p>
               </div>
@@ -275,7 +275,7 @@ export const QuotaDisplay = ({
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                   Monthly Reset
                 </p>
-                <p className="text-xs font-medium">
+                <p suppressHydrationWarning className="text-xs font-medium">
                   {formatDistanceToNow(quota.resetInfo.monthlyResetsAt, { addSuffix: true })}
                 </p>
               </div>

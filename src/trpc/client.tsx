@@ -34,6 +34,7 @@ function getUrl() {
 export function TRPCReactProvider(
   props: Readonly<{
     children: React.ReactNode;
+    cookieString?: string;
   }>,
 ) {
   // NOTE: Avoid useState when initializing the query client if you don't
@@ -48,8 +49,13 @@ export function TRPCReactProvider(
           transformer: superjson,
           url: getUrl(),
           fetch: (input, init) => {
+            const headers = new Headers(init?.headers);
+            if (typeof window === "undefined" && props.cookieString) {
+              headers.set("cookie", props.cookieString);
+            }
             return fetch(input, {
               ...init,
+              headers,
               credentials: "include",
             });
           },
