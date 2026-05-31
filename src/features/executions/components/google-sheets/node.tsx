@@ -1,15 +1,14 @@
 "use client";
 
-import { Node, NodeProps, useReactFlow } from "@xyflow/react";
-import { memo, useState } from "react";
-import { BaseExecutionNode } from "../base-execution-node";
-import { GoogleSheetsDialog, GoogleSheetsFormValues } from "./dialog";
-import { useNodeStatus } from "../../hooks/use-node-status";
-import { googleSheetsChannel } from "@/inngest/channels/google-sheets";
-import { fetchGoogleSheetsToken } from "./actions";
-
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 // Reuse icon file.svg or add new sheets.svg
 import { FileSpreadsheetIcon } from "lucide-react";
+import { memo, useState } from "react";
+import { googleSheetsChannel } from "@/inngest/channels/google-sheets";
+import { useNodeStatus } from "../../hooks/use-node-status";
+import { BaseExecutionNode } from "../base-execution-node";
+import { fetchGoogleSheetsToken } from "./actions";
+import { GoogleSheetsDialog, type GoogleSheetsFormValues } from "./dialog";
 
 type GoogleSheetsNodeData = GoogleSheetsFormValues;
 type GoogleSheetsNodeType = Node<GoogleSheetsNodeData>;

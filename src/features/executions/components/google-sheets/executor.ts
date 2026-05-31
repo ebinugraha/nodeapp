@@ -1,9 +1,9 @@
-import { NodeExecutor } from "@/features/executions/type";
-import { googleSheetsChannel } from "@/inngest/channels/google-sheets";
-import { NonRetriableError } from "inngest";
-import prisma from "@/lib/db";
 import Handlebars from "handlebars";
+import { NonRetriableError } from "inngest";
 import ky, { HTTPError } from "ky";
+import type { NodeExecutor } from "@/features/executions/type";
+import { googleSheetsChannel } from "@/inngest/channels/google-sheets";
+import prisma from "@/lib/db";
 
 // Helper untuk Handlebars
 if (!Handlebars.helpers.json) {
@@ -65,7 +65,9 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     }
 
     if (!tokenData.access_token) {
-      throw new NonRetriableError("No access token found in credential. Please reconnect your Google account.");
+      throw new NonRetriableError(
+        "No access token found in credential. Please reconnect your Google account.",
+      );
     }
 
     // Check if token is expired and needs refresh
@@ -73,16 +75,19 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     if (tokenData.expires_at && Date.now() > tokenData.expires_at - 60000) {
       // Token expired, try to refresh
       try {
-        const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: tokenData.clientId,
-            client_secret: tokenData.clientSecret,
-            refresh_token: tokenData.refresh_token,
-            grant_type: "refresh_token",
-          }),
-        });
+        const refreshResponse = await fetch(
+          "https://oauth2.googleapis.com/token",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: tokenData.clientId,
+              client_secret: tokenData.clientSecret,
+              refresh_token: tokenData.refresh_token,
+              grant_type: "refresh_token",
+            }),
+          },
+        );
 
         if (refreshResponse.ok) {
           const newTokens = await refreshResponse.json();
@@ -95,7 +100,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
               value: JSON.stringify({
                 ...tokenData,
                 access_token: newTokens.access_token,
-                expires_at: Date.now() + (newTokens.expires_in * 1000),
+                expires_at: Date.now() + newTokens.expires_in * 1000,
               }),
             },
           });

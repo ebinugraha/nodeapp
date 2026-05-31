@@ -129,7 +129,11 @@ model Credential {
   type              CredentialType
   userId            String
   dailyQuotaLimit   Int?
+  dailyQuotaUsed    Int      @default(0)
+  lastQuotaReset    DateTime @default(now())
   monthlyQuotaLimit Int?
+  monthlyQuotaUsed  Int      @default(0)
+  lastMonthlyReset  DateTime @default(now())
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Node              Node[]
 
@@ -185,8 +189,6 @@ model Execution {
 }
 
 enum CredentialType {
-  OPENAI
-  ANTHROPIC
   GEMINI
   YOUTUBE
   GOOGLE
@@ -200,29 +202,24 @@ enum NodeType {
   GEMINI
   OPENAI
   DEEPSEEK
-  DISCORD
   DISCORD_NOTIFY
   SLACK
-  SLACK_NOTIFY
   YOUTUBE_LIVE_CHAT
   YOUTUBE_DELETE_CHAT
   YOUTUBE_VIDEO_COMMENT
   YOUTUBE_REPLY
-  YOUTUBE_HIDE
   YOUTUBE_TIMEOUT
   YOUTUBE_PIN
   GOOGLE_SHEETS
   DECISION
-  FILTER
   WAIT_DELAY
   WEBHOOK
   SENTIMENT_ANALYSIS
   SPAM_DETECTION
-  AI_MODERATION
-  STORE_DB
   EMAIL_NOTIFY
   LOOP
   ROUTER
+  GAMBLING_CHECKER
 }
 
 enum ExecutionStatus {

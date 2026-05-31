@@ -1,8 +1,8 @@
 "use client";
 
 import { type ClientSubscriptionToken, useRealtime } from "inngest/react";
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import type { NodeStatus, NodeErrorData } from "@/types/node";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { NodeErrorData, NodeStatus } from "@/types/node";
 
 interface UseNodeErrorOptions {
   nodeId: string;
@@ -49,7 +49,11 @@ export function useNodeError({
 
   const enabled = !!channel && !!topic;
 
-  const { messages, connectionStatus, error: connectionError } = useRealtime({
+  const {
+    messages,
+    connectionStatus,
+    error: connectionError,
+  } = useRealtime({
     channel,
     topics,
     token: refreshToken,
@@ -59,7 +63,9 @@ export function useNodeError({
   useEffect(() => {
     if (!messages.all.length) return;
 
-    const latestMsg = messages.all[messages.all.length - 1] as NodeStatusMessage;
+    const latestMsg = messages.all[
+      messages.all.length - 1
+    ] as NodeStatusMessage;
 
     if (latestMessageRef.current?.createdAt === latestMsg?.createdAt) {
       return;

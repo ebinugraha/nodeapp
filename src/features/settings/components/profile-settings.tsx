@@ -1,10 +1,10 @@
 "use client";
 
+import { CameraIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -12,20 +12,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CameraIcon, Loader2Icon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { authClient } from "@/lib/auth-client";
 import { useSettings } from "../hooks/use-settings";
 
 export const ProfileSettings = () => {
   const { data: session } = authClient.useSession();
-  const { updateProfile, changePassword, isUpdatingProfile, isChangingPassword } =
-    useSettings();
+  const {
+    updateProfile,
+    changePassword,
+    isUpdatingProfile,
+    isChangingPassword,
+  } = useSettings();
 
   const user = session?.user;
 
+  const getDicebearUrl = (style: string) => {
+    return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=transparent`;
+  };
+
+  const avatarSrc = user?.image || getDicebearUrl("micah");
+
   const [name, setName] = useState(user?.name || "");
-  const [bio, setBio] = useState("");
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,13 +51,28 @@ export const ProfileSettings = () => {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(
-      { name, bio },
+      { name },
       {
         onSuccess: () => {
           toast.success("Profile updated successfully");
         },
         onError: (error) => {
           toast.error(`Failed to update profile: ${error.message}`);
+        },
+      },
+    );
+  };
+
+  const handleUpdateAvatarStyle = (style: string) => {
+    const newImage = getDicebearUrl(style);
+    updateProfile(
+      { image: newImage },
+      {
+        onSuccess: () => {
+          toast.success("Avatar style updated!");
+        },
+        onError: (error) => {
+          toast.error(`Failed to update avatar: ${error.message}`);
         },
       },
     );
@@ -82,21 +113,33 @@ export const ProfileSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Profile Picture</CardTitle>
-          <CardDescription>
-            Update your profile picture
-          </CardDescription>
+          <CardDescription>Update your profile picture</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Avatar className="size-20">
-            <AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
-            <AvatarFallback className="text-lg">
+            <AvatarImage src={avatarSrc} alt={user?.name || "User"} />
+            <AvatarFallback suppressHydrationWarning className="text-lg">
               {user?.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-          <Button variant="outline" size="sm" className="gap-2">
-            <CameraIcon className="size-4" />
-            Change Photo
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Label className="text-muted-foreground text-xs">
+              Avatar Style
+            </Label>
+            <Select onValueChange={handleUpdateAvatarStyle}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Choose style..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="micah">Micah (Default)</SelectItem>
+                <SelectItem value="bottts">Robot (Bottts)</SelectItem>
+                <SelectItem value="thumbs">Thumbs</SelectItem>
+                <SelectItem value="notionists">Notionists</SelectItem>
+                <SelectItem value="lorelei">Lorelei</SelectItem>
+                <SelectItem value="initials">Initials</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
@@ -104,9 +147,7 @@ export const ProfileSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
-          <CardDescription>
-            Update your account information
-          </CardDescription>
+          <CardDescription>Update your account information</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -135,17 +176,6 @@ export const ProfileSettings = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <textarea
-                id="bio"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Tell us about yourself..."
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-              />
-            </div>
-
             <Button type="submit" disabled={isUpdatingProfile}>
               {isUpdatingProfile ? (
                 <>
@@ -164,9 +194,7 @@ export const ProfileSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Password</CardTitle>
-          <CardDescription>
-            Change your password
-          </CardDescription>
+          <CardDescription>Change your password</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4">

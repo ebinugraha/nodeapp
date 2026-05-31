@@ -1,6 +1,6 @@
-import { useReactFlow, getIncomers } from "@xyflow/react";
-import { NODE_OUTPUTS } from "@/config/node-outputs";
+import { getIncomers, useReactFlow } from "@xyflow/react";
 import { useMemo } from "react";
+import { NODE_OUTPUTS } from "@/config/node-outputs";
 
 export const useAvailableVariables = (currentNodeId: string) => {
   const { getNodes, getEdges } = useReactFlow();

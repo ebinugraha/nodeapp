@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 
 interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
   status?: string;

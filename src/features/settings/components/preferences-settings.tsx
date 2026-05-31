@@ -1,8 +1,10 @@
 "use client";
 
+import { Loader2Icon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -10,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,17 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Loader2Icon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useSettings } from "../hooks/use-settings";
 
 export const PreferencesSettings = () => {
-  const {
-    settings,
-    isLoading,
-    updateSettings,
-    isUpdating,
-  } = useSettings();
+  const { setTheme } = useTheme();
+  const { settings, isLoading, updateSettings, isUpdating } = useSettings();
 
   const handleUpdate = (key: string, value: string | boolean) => {
     updateSettings(
@@ -73,7 +70,10 @@ export const PreferencesSettings = () => {
             </div>
             <Select
               value={settings?.theme || "system"}
-              onValueChange={(value) => handleUpdate("theme", value)}
+              onValueChange={(value) => {
+                handleUpdate("theme", value);
+                setTheme(value);
+              }}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
@@ -96,7 +96,9 @@ export const PreferencesSettings = () => {
             </div>
             <Switch
               checked={settings?.showLineNumbers || false}
-              onCheckedChange={(checked) => handleUpdate("showLineNumbers", checked)}
+              onCheckedChange={(checked) =>
+                handleUpdate("showLineNumbers", checked)
+              }
             />
           </div>
 
@@ -124,7 +126,9 @@ export const PreferencesSettings = () => {
             </div>
             <Switch
               checked={settings?.compactMode || false}
-              onCheckedChange={(checked) => handleUpdate("compactMode", checked)}
+              onCheckedChange={(checked) =>
+                handleUpdate("compactMode", checked)
+              }
             />
           </div>
 
@@ -138,13 +142,13 @@ export const PreferencesSettings = () => {
             </div>
             <Switch
               checked={settings?.showMiniMap || false}
-              onCheckedChange={(checked) => handleUpdate("showMiniMap", checked)}
+              onCheckedChange={(checked) =>
+                handleUpdate("showMiniMap", checked)
+              }
             />
           </div>
         </CardContent>
       </Card>
-
-      
-          </div>
+    </div>
   );
 };

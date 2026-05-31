@@ -1,12 +1,12 @@
 "use client";
 
-import { Node, NodeProps, useReactFlow } from "@xyflow/react";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { memo, useState } from "react";
-import { BaseExecutionNode } from "../base-execution-node";
-import { YoutubeDeleteDialog, YoutubeDeleteFormValues } from "./dialog";
-import { useNodeStatus } from "../../hooks/use-node-status";
 import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
+import { useNodeStatus } from "../../hooks/use-node-status";
+import { BaseExecutionNode } from "../base-execution-node";
 import { fetchYoutubeDeleteToken } from "./actions";
+import { YoutubeDeleteDialog, type YoutubeDeleteFormValues } from "./dialog";
 
 type YoutubeDeleteNodeData = YoutubeDeleteFormValues;
 type YoutubeDeleteNodeType = Node<YoutubeDeleteNodeData>;

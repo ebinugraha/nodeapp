@@ -1,10 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,12 +23,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   checkLinks: z.boolean(),
@@ -165,7 +166,9 @@ export const SpamDetectionDialog = ({
               name="capsLockThreshold"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Caps Threshold ({Math.round(field.value * 100)}%)</FormLabel>
+                  <FormLabel>
+                    Caps Threshold ({Math.round(field.value * 100)}%)
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="range"
@@ -173,7 +176,9 @@ export const SpamDetectionDialog = ({
                       max={100}
                       step={5}
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) / 100)}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) / 100)
+                      }
                     />
                   </FormControl>
                   <FormDescription>
@@ -197,6 +202,8 @@ export const SpamDetectionDialog = ({
                 </FormItem>
               )}
             />
+
+            <NodeOutputHint nodeType={NodeType.SPAM_DETECTION} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

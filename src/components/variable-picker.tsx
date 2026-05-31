@@ -1,14 +1,14 @@
 import { Braces } from "lucide-react";
+import { useAvailableVariables } from "@/hooks/use-avaible-variables";
 import { Button } from "./ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import {
   Command,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
-  CommandInput,
 } from "./ui/command";
-import { useAvailableVariables } from "@/hooks/use-avaible-variables";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface VariablePickerProps {
   nodeId: string;

@@ -1,3 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { KeyValueBuilder } from "@/components/key-value-builder";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,14 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import z from "zod";
 import { HttpRequestNode } from "./node";
-import { KeyValueBuilder } from "@/components/key-value-builder";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   variableName: z
@@ -209,6 +210,9 @@ export const HTTPRequestDialog = ({
                 )}
               />
             )}
+
+            <NodeOutputHint nodeType={NodeType.HTTP_REQUEST} />
+
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton
                 nodeType={NodeType.HTTP_REQUEST}

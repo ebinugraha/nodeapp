@@ -1,5 +1,5 @@
-import { caller } from "@/trpc/server";
 import type { inferAsyncReturnType } from "@trpc/server";
+import { caller } from "@/trpc/server";
 
 type Workflow = inferAsyncReturnType<typeof caller.workflows.getOne>;
 

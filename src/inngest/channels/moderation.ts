@@ -11,6 +11,7 @@ const statusSchema = z.object({
   nodeId: z.string(),
   status: z.enum(["loading", "success", "error"]),
   error: errorSchema.optional(),
+  expiresAt: z.string().optional(),
 });
 
 export const youtubeReplyChannel = channel({
@@ -23,12 +24,10 @@ export const youtubeHideChannel = channel({
   topics: { status: { schema: statusSchema } },
 });
 
-
 export const youtubeTimeoutChannel = channel({
   name: "youtube-timeout-execution",
   topics: { status: { schema: statusSchema } },
 });
-
 
 export const discordNotifyChannel = channel({
   name: "discord-notify-execution",
@@ -72,5 +71,10 @@ export const storeDBChannel = channel({
 
 export const youtubePinChannel = channel({
   name: "youtube-pin-execution",
+  topics: { status: { schema: statusSchema } },
+});
+
+export const gamblingCheckerChannel = channel({
+  name: "gambling-checker-execution",
   topics: { status: { schema: statusSchema } },
 });

@@ -1,5 +1,21 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CredentialType, NodeType } from "@prisma/client";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Link2Icon,
+  Loader2Icon,
+  PlusIcon,
+  TableIcon,
+  Trash2Icon,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,15 +44,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType, NodeType } from "@prisma/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon, PlusIcon, Trash2Icon, Link2Icon, TableIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
-import z from "zod";
-import { toast } from "sonner";
-import { SaveTemplateButton } from "@/components/save-template-button";
 
 // ============================================
 // TYPES
@@ -88,7 +96,11 @@ function extractSpreadsheetId(url: string): string | null {
 /**
  * Format range string for Google Sheets API
  */
-function formatRange(sheetName: string, startCol?: string, endCol?: string): string {
+function formatRange(
+  sheetName: string,
+  startCol?: string,
+  endCol?: string,
+): string {
   if (startCol && endCol) {
     return `${sheetName}!${startCol}:${endCol}`;
   }
@@ -118,14 +130,19 @@ function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
     <div className={cn("rounded-lg border overflow-hidden", className)}>
       <div className="bg-muted/50 px-3 py-2 border-b flex items-center gap-2">
         <TableIcon className="size-4 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">Preview Kolom</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          Preview Kolom
+        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/30">
               {columns.map((col, i) => (
-                <th key={i} className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                <th
+                  key={i}
+                  className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap"
+                >
                   {col || `Kolom ${i + 1}`}
                 </th>
               ))}
@@ -134,9 +151,15 @@ function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
           {sampleData && sampleData.length > 0 && (
             <tbody>
               {sampleData.slice(0, 3).map((row, rowIndex) => (
-                <tr key={rowIndex} className="border-b last:border-0 hover:bg-muted/20">
+                <tr
+                  key={rowIndex}
+                  className="border-b last:border-0 hover:bg-muted/20"
+                >
                   {columns.map((_, colIndex) => (
-                    <td key={colIndex} className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                    <td
+                      key={colIndex}
+                      className="px-3 py-2 text-muted-foreground whitespace-nowrap"
+                    >
                       {row[colIndex] || "-"}
                     </td>
                   ))}
@@ -196,8 +219,8 @@ function VisualAppendForm({ columns, value, onChange }: VisualAppendFormProps) {
       ))}
       <div className="pt-2 border-t">
         <p className="text-xs text-muted-foreground">
-          💡 Gunakan {"{{variabel}}"} untuk menggunakan nilai dari node sebelumnya.
-          Contoh: {"{{input.nama}}"}
+          💡 Gunakan {"{{variabel}}"} untuk menggunakan nilai dari node
+          sebelumnya. Contoh: {"{{input.nama}}"}
         </p>
       </div>
     </div>
@@ -216,7 +239,13 @@ interface SheetSelectorProps {
   onColumnsChange: (columns: string[], sampleData?: string[][]) => void;
 }
 
-function SheetSelector({ spreadsheetId, credentialId, value, onChange, onColumnsChange }: SheetSelectorProps) {
+function SheetSelector({
+  spreadsheetId,
+  credentialId,
+  value,
+  onChange,
+  onColumnsChange,
+}: SheetSelectorProps) {
   const [sheets, setSheets] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -245,16 +274,19 @@ function SheetSelector({ spreadsheetId, credentialId, value, onChange, onColumns
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error?.message || "Gagal mengambil daftar sheet");
+          throw new Error(
+            errorData.error?.message || "Gagal mengambil daftar sheet",
+          );
         }
 
         const data = await res.json();
-        const sheetNames = data.sheets?.map((s: any) => s.properties.title) || [];
+        const sheetNames =
+          data.sheets?.map((s: any) => s.properties.title) || [];
         setSheets(sheetNames);
 
         // Auto-select first sheet if value is empty
@@ -293,7 +325,7 @@ function SheetSelector({ spreadsheetId, credentialId, value, onChange, onColumns
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (!res.ok) {
@@ -309,7 +341,7 @@ function SheetSelector({ spreadsheetId, credentialId, value, onChange, onColumns
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(value)}!A1:Z5`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         let sampleData: string[][] | undefined;
@@ -338,11 +370,7 @@ function SheetSelector({ spreadsheetId, credentialId, value, onChange, onColumns
   }
 
   if (error) {
-    return (
-      <div className="text-sm text-destructive">
-        ⚠️ {error}
-      </div>
-    );
+    return <div className="text-sm text-destructive">⚠️ {error}</div>;
   }
 
   if (sheets.length === 0 && spreadsheetId) {
@@ -392,7 +420,9 @@ export const GoogleSheetsDialog = ({
 
   const [columns, setColumns] = useState<string[]>([]);
   const [sampleData, setSampleData] = useState<string[][] | undefined>();
-  const [appendFormData, setAppendFormData] = useState<Record<string, string>>({});
+  const [appendFormData, setAppendFormData] = useState<Record<string, string>>(
+    {},
+  );
 
   // Check if URL is being used (for backwards compatibility)
   const defaultUrl = defaultValues.spreadsheetId
@@ -432,7 +462,13 @@ export const GoogleSheetsDialog = ({
       // Reset local state
       setColumns([]);
       setSampleData(undefined);
-      setAppendFormData({});
+      try {
+        setAppendFormData(
+          defaultValues.appendData ? JSON.parse(defaultValues.appendData) : {},
+        );
+      } catch (e) {
+        setAppendFormData({});
+      }
     }
   }, [open, form, defaultValues]);
 
@@ -461,14 +497,23 @@ export const GoogleSheetsDialog = ({
   };
 
   // Handle columns change
-  const handleColumnsChange = (newColumns: string[], newSampleData?: string[][]) => {
+  const handleColumnsChange = (
+    newColumns: string[],
+    newSampleData?: string[][],
+  ) => {
     setColumns(newColumns);
     setSampleData(newSampleData);
 
-    // Reset append form data when columns change
-    if (JSON.stringify(Object.keys(appendFormData)) !== JSON.stringify(newColumns)) {
-      setAppendFormData({});
-    }
+    setAppendFormData((prev) => {
+      const updated = { ...prev };
+      // Keep existing data, but we could optionally clean up keys that no longer exist in newColumns
+      Object.keys(updated).forEach((key) => {
+        if (!newColumns.includes(key)) {
+          delete updated[key];
+        }
+      });
+      return updated;
+    });
   };
 
   // Handle append form data change
@@ -480,12 +525,14 @@ export const GoogleSheetsDialog = ({
 
   const handleSubmit = (values: GoogleSheetsFormValues) => {
     // Convert append form data to the format expected by executor
+    // Gunakan 'columns' state untuk memastikan urutan value sesuai dengan urutan kolom di Spreadsheet
+    const orderedValues = columns.map((col) => appendFormData[col] || "");
+
     const finalValues = {
       ...values,
-      // For append, convert the visual form data to array format
-      values: operation === "append"
-        ? JSON.stringify([Object.values(appendFormData)])
-        : undefined,
+      // For append, convert the visual form data to array format ordered by actual columns
+      values:
+        operation === "append" ? JSON.stringify([orderedValues]) : undefined,
     };
     onSubmit(finalValues);
     onOpenChange(false);
@@ -496,10 +543,25 @@ export const GoogleSheetsDialog = ({
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <svg className="size-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#0F9D58"/>
-              <path d="M2 17L12 22L22 17" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M2 12L12 17L22 12" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round"/>
+            <svg
+              className="size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#0F9D58" />
+              <path
+                d="M2 17L12 22L22 17"
+                stroke="#0F9D58"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M2 12L12 17L22 12"
+                stroke="#0F9D58"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
             Google Sheets
           </DialogTitle>
@@ -509,8 +571,10 @@ export const GoogleSheetsDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-4">
-
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6 mt-4"
+          >
             {/* Variable Name */}
             <FormField
               control={form.control}
@@ -553,7 +617,10 @@ export const GoogleSheetsDialog = ({
                       {credentials?.length === 0 && (
                         <div className="px-2 py-4 text-center text-sm text-muted-foreground">
                           Belum ada credential Google.
-                          <a href="/credentials/new" className="text-primary hover:underline ml-1">
+                          <a
+                            href="/credentials/new"
+                            className="text-primary hover:underline ml-1"
+                          >
                             Buat baru?
                           </a>
                         </div>
@@ -676,18 +743,9 @@ export const GoogleSheetsDialog = ({
             )}
 
             {/* Hidden field untuk spreadsheetId - digunakan sebagai sumber truth */}
-            <input
-              type="hidden"
-              {...form.register("spreadsheetId")}
-            />
-            <input
-              type="hidden"
-              {...form.register("range")}
-            />
-            <input
-              type="hidden"
-              {...form.register("appendData")}
-            />
+            <input type="hidden" {...form.register("spreadsheetId")} />
+            <input type="hidden" {...form.register("range")} />
+            <input type="hidden" {...form.register("appendData")} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

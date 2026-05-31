@@ -1,36 +1,36 @@
 "use client";
 
 import { ExecutionStatus } from "@prisma/client";
+import { format, formatDistanceToNow } from "date-fns";
 import {
-  CheckIcon,
-  ClockIcon,
-  Loader2Icon,
-  XCircleIcon,
-  WorkflowIcon,
-  CalendarIcon,
-  TimerIcon,
-  HashIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   AlertTriangleIcon,
   ArrowRightIcon,
+  CalendarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ClockIcon,
+  HashIcon,
+  Loader2Icon,
   SquareIcon,
+  TimerIcon,
+  WorkflowIcon,
+  XCircleIcon,
 } from "lucide-react";
-import { useState } from "react";
-import { useSuspenseExecution } from "../hooks/use-executions";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { formatDistanceToNow, format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useSuspenseExecution } from "../hooks/use-executions";
 
 const getStatusConfig = (status: ExecutionStatus) => {
   switch (status) {
@@ -107,30 +107,40 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
       {/* Header Card */}
       <div className="relative overflow-hidden rounded-xl border bg-linear-to-br from-card to-card/80">
         {/* Status indicator bar */}
-        <div className={cn(
-          "absolute top-0 left-0 right-0 h-1",
-          execution.status === ExecutionStatus.SUCCESS && "bg-linear-to-r from-emerald-500 to-teal-500",
-          execution.status === ExecutionStatus.FAILED && "bg-linear-to-r from-red-500 to-rose-500",
-          execution.status === ExecutionStatus.RUNNING && "bg-linear-to-r from-blue-500 to-cyan-500 animate-pulse",
-        )} />
+        <div
+          className={cn(
+            "absolute top-0 left-0 right-0 h-1",
+            execution.status === ExecutionStatus.SUCCESS &&
+              "bg-linear-to-r from-emerald-500 to-teal-500",
+            execution.status === ExecutionStatus.FAILED &&
+              "bg-linear-to-r from-red-500 to-rose-500",
+            execution.status === ExecutionStatus.RUNNING &&
+              "bg-linear-to-r from-blue-500 to-cyan-500 animate-pulse",
+          )}
+        />
 
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Status Icon */}
-              <div className={cn(
-                "flex items-center justify-center size-14 rounded-xl border",
-                statusConfig.className
-              )}>
-                <StatusIcon className={cn("size-7", statusConfig.iconClassName)} />
+              <div
+                className={cn(
+                  "flex items-center justify-center size-14 rounded-xl border",
+                  statusConfig.className,
+                )}
+              >
+                <StatusIcon
+                  className={cn("size-7", statusConfig.iconClassName)}
+                />
               </div>
 
               <div>
-                <h1 className="text-xl font-semibold">
-                  {statusConfig.label}
-                </h1>
+                <h1 className="text-xl font-semibold">{statusConfig.label}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Execution for <span className="font-medium text-foreground">{execution.workflow.name}</span>
+                  Execution for{" "}
+                  <span className="font-medium text-foreground">
+                    {execution.workflow.name}
+                  </span>
                 </p>
               </div>
             </div>
@@ -170,7 +180,9 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
             <MetaItem
               icon={CalendarIcon}
               label="Started"
-              value={formatDistanceToNow(execution.startedAt, { addSuffix: true })}
+              value={formatDistanceToNow(execution.startedAt, {
+                addSuffix: true,
+              })}
               fullValue={format(execution.startedAt, "PPpp")}
             />
             <MetaItem
@@ -181,11 +193,18 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
             <MetaItem
               icon={ClockIcon}
               label="Completed"
-              value={execution.completedAt
-                ? formatDistanceToNow(execution.completedAt, { addSuffix: true })
-                : "—"
+              value={
+                execution.completedAt
+                  ? formatDistanceToNow(execution.completedAt, {
+                      addSuffix: true,
+                    })
+                  : "—"
               }
-              fullValue={execution.completedAt ? format(execution.completedAt, "PPpp") : undefined}
+              fullValue={
+                execution.completedAt
+                  ? format(execution.completedAt, "PPpp")
+                  : undefined
+              }
             />
             <MetaItem
               icon={HashIcon}
@@ -281,8 +300,7 @@ export const ExecutionView = ({ executionId }: { executionId: string }) => {
           </div>
         </div>
       )}
-
-          </div>
+    </div>
   );
 };
 
@@ -318,7 +336,11 @@ function MetaItem({
           {label}
         </span>
       </div>
-      <p suppressHydrationWarning className="text-sm font-medium truncate" title={fullValue || value}>
+      <p
+        suppressHydrationWarning
+        className="text-sm font-medium truncate"
+        title={fullValue || value}
+      >
         {value}
       </p>
     </div>

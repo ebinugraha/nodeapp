@@ -1,34 +1,36 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  Background,
+  type Connection,
+  Controls,
+  type Edge,
+  type EdgeChange,
+  MiniMap,
+  type Node,
+  type NodeChange,
+  Panel,
+  ReactFlow,
+} from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { nodeComponents } from "@/config/node-components";
-import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
-import { useUpdateWorkflow } from "@/features/workflows/hooks/use-workflows";
 import { useSettings } from "@/features/settings/hooks/use-settings";
 import {
-  ReactFlow,
-  applyNodeChanges,
-  applyEdgeChanges,
-  addEdge,
-  type Node,
-  type Edge,
-  type NodeChange,
-  type EdgeChange,
-  type Connection,
-  Background,
-  Controls,
-  MiniMap,
-  Panel,
-} from "@xyflow/react";
-// @ts-ignore: side-effect CSS import without type declarations
+  useSuspenseWorkflow,
+  useUpdateWorkflow,
+} from "@/features/workflows/hooks/use-workflows";
 import "@xyflow/react/dist/style.css";
-import { useSetAtom } from "jotai";
-import { editorAtom } from "../store/atoms";
 import { NodeType } from "@prisma/client";
-import { ExecutionButton } from "./execution-button";
+import { useSetAtom } from "jotai";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { editorAtom } from "../store/atoms";
 import { AddNoteButton } from "./add-node-button";
-import { Check, AlertCircle, Loader2 } from "lucide-react";
+import { ExecutionButton } from "./execution-button";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -42,12 +44,15 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: wofkflow } = useSuspenseWorkflow(workflowId);
   const updateWorkflow = useUpdateWorkflow();
   const { settings } = useSettings();
+  const { theme } = useTheme();
 
   const setWorkflow = useSetAtom(editorAtom);
 
   const [nodes, setNodes] = useState<Node[]>(wofkflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(wofkflow.edges);
-  const [positionStatus, setPositionStatus] = useState<"saved" | "changed" | "saving">("saved");
+  const [positionStatus, setPositionStatus] = useState<
+    "saved" | "changed" | "saving"
+  >("saved");
 
   // Get preferences from settings
   const snapToGrid = settings?.snapToGrid ?? true;
@@ -55,7 +60,9 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const compactMode = settings?.compactMode ?? false;
 
   // Refs for tracking position state
-  const lastSavedPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const lastSavedPositionsRef = useRef<
+    Record<string, { x: number; y: number }>
+  >({});
   const isSavingRef = useRef(false);
 
   // Initialize last saved positions on mount
@@ -164,20 +171,14 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   );
 
   // Edge change handler - don't trigger for edges
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
-    },
-    [],
-  );
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
+  }, []);
 
   // Connection handler - don't trigger for connections
-  const onConnect = useCallback(
-    (params: Connection) => {
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot));
-    },
-    [],
-  );
+  const onConnect = useCallback((params: Connection) => {
+    setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot));
+  }, []);
 
   const hasManualTrigger = useMemo(() => {
     return nodes.some((node) => node.type === NodeType.MANUAL_TRIGGER);
@@ -192,7 +193,12 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           animated: true,
           style: { ...edge.style, stroke: "#10b981", strokeWidth: 2 },
           labelStyle: { fill: "#10b981", fontWeight: 700, fontSize: 12 },
-          labelBgStyle: { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", strokeWidth: 1, fillOpacity: 0.9 },
+          labelBgStyle: {
+            fill: "hsl(var(--card))",
+            stroke: "hsl(var(--border))",
+            strokeWidth: 1,
+            fillOpacity: 0.9,
+          },
           labelBgPadding: [8, 4] as [number, number],
           labelBgBorderRadius: 4,
         };
@@ -204,12 +210,21 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           animated: true,
           style: { ...edge.style, stroke: "#ef4444", strokeWidth: 2 },
           labelStyle: { fill: "#ef4444", fontWeight: 700, fontSize: 12 },
-          labelBgStyle: { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", strokeWidth: 1, fillOpacity: 0.9 },
+          labelBgStyle: {
+            fill: "hsl(var(--card))",
+            stroke: "hsl(var(--border))",
+            strokeWidth: 1,
+            fillOpacity: 0.9,
+          },
           labelBgPadding: [8, 4] as [number, number],
           labelBgBorderRadius: 4,
         };
       }
-      return edge;
+      return {
+        ...edge,
+        animated: true,
+        style: { ...edge.style, strokeWidth: 2 },
+      };
     });
   }, [edges]);
 
@@ -222,6 +237,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeComponents}
+        colorMode={(theme as "light" | "dark" | "system") || "system"}
         fitView
         proOptions={{
           hideAttribution: true,

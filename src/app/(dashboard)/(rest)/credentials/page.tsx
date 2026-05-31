@@ -1,3 +1,6 @@
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import {
   CredentialsContainer,
   CredentialsList,
@@ -6,9 +9,6 @@ import { credentialsParamsLoader } from "@/features/credentials/server/params-lo
 import { prefetchCredentials } from "@/features/credentials/server/prefetch";
 import { requireAuth } from "@/lib/auth-utils";
 import { HydrateClient } from "@/trpc/server";
-import type { SearchParams } from "nuqs/server";
-import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 
 type Props = {
   searchParams: Promise<SearchParams>;

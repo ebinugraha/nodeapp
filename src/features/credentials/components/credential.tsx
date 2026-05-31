@@ -1,15 +1,29 @@
 "use client";
 
-import { CredentialType } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import {
-  useCreateCredentials,
-  useSuspenseCredential,
-  useUpdateCredential,
-} from "../hooks/use-credentials";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CredentialType } from "@prisma/client";
+import {
+  ArrowLeftIcon,
+  BookOpenIcon,
+  CheckCircle2Icon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  ExternalLinkIcon,
+  KeyIcon,
+  Loader2Icon,
+  LockIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -33,34 +47,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import {
-  ArrowLeftIcon,
-  BookOpenIcon,
-  CheckCircle2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  CopyIcon,
-  ExternalLinkIcon,
-  KeyIcon,
-  Loader2Icon,
-  LockIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  useCreateCredentials,
+  useSuspenseCredential,
+  useUpdateCredential,
+} from "../hooks/use-credentials";
 import { QuotaDisplay } from "./quota-display";
 
 // Schema validasi form
 export const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum([
-    CredentialType.OPENAI,
-    CredentialType.ANTHROPIC,
     CredentialType.GEMINI,
     CredentialType.YOUTUBE,
     CredentialType.GOOGLE,
@@ -74,22 +72,6 @@ type FormValues = z.infer<typeof formSchema>;
 
 // Credential type configurations
 const credentialTypeOptions = [
-  {
-    value: CredentialType.OPENAI,
-    label: "OpenAI",
-    logo: "/logos/openai.svg",
-    color: "bg-emerald-500/10 border-emerald-500/30 text-emerald-600",
-    description: "GPT-4, GPT-3.5 models for text generation",
-    guideType: "api_key" as const,
-  },
-  {
-    value: CredentialType.ANTHROPIC,
-    label: "Anthropic",
-    logo: "/logos/anthropic.svg",
-    color: "bg-orange-500/10 border-orange-500/30 text-orange-600",
-    description: "Claude models for advanced AI interactions",
-    guideType: "api_key" as const,
-  },
   {
     value: CredentialType.GEMINI,
     label: "Google Gemini",
@@ -109,7 +91,7 @@ const credentialTypeOptions = [
   {
     value: CredentialType.GOOGLE,
     label: "Google Sheets",
-    logo: "/logos/google.svg",
+    logo: "/logos/google-sheet.svg",
     color: "bg-blue-500/10 border-blue-500/30 text-blue-600",
     description: "Google Sheets API for data operations",
     guideType: "google_sheets" as const,
@@ -136,7 +118,9 @@ export const CredentialForm = ({
   const [selectedTypeConfig, setSelectedTypeConfig] = useState(
     credentialTypeOptions[0],
   );
-  const [expandedSection, setExpandedSection] = useState<string | null>("step1");
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "step1",
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -275,14 +259,22 @@ export const CredentialForm = ({
   const isPending = createCredential.isPending || updateCredential.isPending;
   const guideType = selectedTypeConfig.guideType;
 
-    return (
+  return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <div className="flex-1 px-4 py-6 md:px-8 md:py-8 overflow-auto flex justify-center">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl w-full">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 max-w-4xl w-full"
+          >
             {/* Header */}
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" asChild className="size-8 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="size-8 shrink-0"
+              >
                 <Link href="/credentials">
                   <ArrowLeftIcon className="size-4" />
                 </Link>
@@ -362,7 +354,10 @@ export const CredentialForm = ({
                             </FormControl>
                             <SelectContent>
                               {credentialTypeOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   <div className="flex items-center gap-3 py-1">
                                     <Image
                                       src={option.logo}
@@ -390,7 +385,9 @@ export const CredentialForm = ({
                   <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
                     <div className="flex items-center gap-3">
                       <BookOpenIcon className="size-5 text-primary" />
-                      <CardTitle className="text-base">Detail Kredensial</CardTitle>
+                      <CardTitle className="text-base">
+                        Detail Kredensial
+                      </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="px-0 space-y-4">
@@ -410,7 +407,8 @@ export const CredentialForm = ({
                             />
                           </FormControl>
                           <p className="text-[10px] text-muted-foreground mt-1">
-                            Beri nama credential ini untuk mudah mengidentifikasinya
+                            Beri nama credential ini untuk mudah
+                            mengidentifikasinya
                           </p>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -425,13 +423,19 @@ export const CredentialForm = ({
                     <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
                       <div className="flex items-center gap-3">
                         <LockIcon className="size-5 text-primary" />
-                        <CardTitle className="text-base">Konfigurasi OAuth</CardTitle>
-                        <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-primary/10 text-primary border-primary/30">
+                        <CardTitle className="text-base">
+                          Konfigurasi OAuth
+                        </CardTitle>
+                        <Badge
+                          variant="outline"
+                          className="ml-auto text-[10px] py-0 bg-primary/10 text-primary border-primary/30"
+                        >
                           Koneksi Aman
                         </Badge>
                       </div>
                       <CardDescription className="mt-1 text-xs">
-                        Masukkan kredensial OAuth Google Anda untuk menghubungkan akun
+                        Masukkan kredensial OAuth Google Anda untuk
+                        menghubungkan akun
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="px-0 space-y-4">
@@ -500,7 +504,9 @@ export const CredentialForm = ({
                         ) : (
                           <ExternalLinkIcon className="size-4" />
                         )}
-                        {isConnected ? "Sambungkan Kembali" : "Sambungkan dengan Google"}
+                        {isConnected
+                          ? "Sambungkan Kembali"
+                          : "Sambungkan dengan Google"}
                       </Button>
                     </CardContent>
                   </Card>
@@ -509,7 +515,9 @@ export const CredentialForm = ({
                     <CardHeader className="px-0 pt-0 pb-4 mb-4 border-b border-border/50">
                       <div className="flex items-center gap-3">
                         <KeyIcon className="size-5 text-primary" />
-                        <CardTitle className="text-base">Kredensial Autentikasi</CardTitle>
+                        <CardTitle className="text-base">
+                          Kredensial Autentikasi
+                        </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="px-0 space-y-4">
@@ -520,7 +528,9 @@ export const CredentialForm = ({
                           <FormItem>
                             <FormLabel className="text-xs font-semibold flex items-center justify-between">
                               <span>API Key</span>
-                              <span className="text-[9px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Terenkripsi</span>
+                              <span className="text-[9px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                Terenkripsi
+                              </span>
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -540,7 +550,9 @@ export const CredentialForm = ({
                         disabled={isPending}
                         className="w-full h-10 text-sm gap-2 mt-4"
                       >
-                        {isPending && <Loader2Icon className="size-4 animate-spin" />}
+                        {isPending && (
+                          <Loader2Icon className="size-4 animate-spin" />
+                        )}
                         {isEdit ? "Simpan Perubahan" : "Simpan Kredensial"}
                       </Button>
                     </CardContent>
@@ -549,7 +561,12 @@ export const CredentialForm = ({
 
                 {/* Back Button */}
                 <div className="flex justify-start pt-6">
-                  <Button type="button" variant="ghost" asChild className="text-base gap-2 px-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    asChild
+                    className="text-base gap-2 px-4"
+                  >
                     <Link href="/credentials">
                       <ArrowLeftIcon className="size-5" />
                       Kembali ke Kredensial
@@ -561,9 +578,11 @@ export const CredentialForm = ({
               {/* Right Column - Guide & Quota */}
               <div className="lg:col-span-1 space-y-5">
                 {/* Quota Display for YouTube - Show at top for YouTube */}
-                {isEdit && initialData?.id && selectedType === CredentialType.YOUTUBE && (
-                  <QuotaDisplay credentialId={initialData.id} />
-                )}
+                {isEdit &&
+                  initialData?.id &&
+                  selectedType === CredentialType.YOUTUBE && (
+                    <QuotaDisplay credentialId={initialData.id} />
+                  )}
 
                 {/* Guide Card */}
                 <Card className="p-5 overflow-hidden border border-border/70 shadow-sm">
@@ -571,7 +590,9 @@ export const CredentialForm = ({
                     <div className="flex items-center gap-3">
                       <BookOpenIcon className="size-4 text-primary" />
                       <CardTitle className="text-sm">
-                        {guideType === "api_key" ? "Cara Mendapatkan API Key" : "Panduan Setup"}
+                        {guideType === "api_key"
+                          ? "Cara Mendapatkan API Key"
+                          : "Panduan Setup"}
                       </CardTitle>
                     </div>
                   </CardHeader>
@@ -602,7 +623,9 @@ export const CredentialForm = ({
                         <ShieldCheckIcon className="size-4 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold">Terenkripsi Aman</p>
+                        <p className="text-xs font-semibold">
+                          Terenkripsi Aman
+                        </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
                           Kredensial Anda dienkripsi AES-256
                         </p>
@@ -629,7 +652,10 @@ function ApiKeyGuide({ service }: { service: string }) {
       { title: "Salin key yang dimulai dengan 'sk-'", url: null },
     ],
     Anthropic: [
-      { title: "Buka console.anthropic.com", url: "https://console.anthropic.com" },
+      {
+        title: "Buka console.anthropic.com",
+        url: "https://console.anthropic.com",
+      },
       { title: "Navigasi ke bagian API Keys", url: null },
       { title: "Klik 'Create Key'", url: null },
       { title: "Salin API key Anda", url: null },
@@ -647,7 +673,10 @@ function ApiKeyGuide({ service }: { service: string }) {
   return (
     <div className="space-y-2">
       {guideSteps.map((step, index) => (
-        <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+        <div
+          key={index}
+          className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+        >
           <div className="size-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center shrink-0">
             {index + 1}
           </div>
@@ -690,15 +719,28 @@ function YouTubeGuide({
         <div className="space-y-3 text-sm">
           <p>Pertama, Anda perlu membuat project di Google Cloud Console.</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
-            <li>Buka <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">console.cloud.google.com</a></li>
+            <li>
+              Buka{" "}
+              <a
+                href="https://console.cloud.google.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                console.cloud.google.com
+              </a>
+            </li>
             <li>Klik &quot;Select Project&quot; di bagian kiri atas</li>
             <li>Klik &quot;New Project&quot; untuk membuat project baru</li>
-            <li>Beri nama project Anda (contoh: &quot;Integrasi CleenChat&quot;)</li>
+            <li>
+              Beri nama project Anda (contoh: &quot;Integrasi CleenChat&quot;)
+            </li>
             <li>Tunggu project selesai dibuat</li>
           </ol>
           <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-950/30">
             <p className="text-xs text-blue-700 dark:text-blue-400">
-              <strong>Tips:</strong> Pastikan untuk memilih project baru Anda dari dropdown di bagian atas sebelum melanjutkan!
+              <strong>Tips:</strong> Pastikan untuk memilih project baru Anda
+              dari dropdown di bagian atas sebelum melanjutkan!
             </p>
           </div>
         </div>
@@ -711,14 +753,18 @@ function YouTubeGuide({
         <div className="space-y-3 text-sm">
           <p>Aktifkan YouTube Data API untuk project Anda.</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
-            <li>Di menu sebelah kiri, buka &quot;APIs & Services&quot; lalu &quot;Library&quot;</li>
+            <li>
+              Di menu sebelah kiri, buka &quot;APIs & Services&quot; lalu
+              &quot;Library&quot;
+            </li>
             <li>Cari &quot;YouTube Data API v3&quot;</li>
             <li>Klik pada hasilnya dan klik &quot;Enable&quot;</li>
             <li>Tunggu API aktif (dapat memakan waktu beberapa menit)</li>
           </ol>
           <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30">
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              <strong>Penting:</strong> YouTube API harus diaktifkan terlebih dahulu sebelum Anda dapat menggunakannya!
+              <strong>Penting:</strong> YouTube API harus diaktifkan terlebih
+              dahulu sebelum Anda dapat menggunakannya!
             </p>
           </div>
         </div>
@@ -731,16 +777,28 @@ function YouTubeGuide({
         <div className="space-y-3 text-sm">
           <p>Atur layar persetujuan OAuth untuk aplikasi Anda.</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
-            <li>Buka &quot;APIs & Services&quot; lalu &quot;OAuth consent screen&quot;</li>
-            <li>Pilih tipe pengguna &quot;External&quot; dan klik &quot;Create&quot;</li>
-            <li>Isi kolom yang diperlukan:
+            <li>
+              Buka &quot;APIs & Services&quot; lalu &quot;OAuth consent
+              screen&quot;
+            </li>
+            <li>
+              Pilih tipe pengguna &quot;External&quot; dan klik
+              &quot;Create&quot;
+            </li>
+            <li>
+              Isi kolom yang diperlukan:
               <ul className="list-disc pl-4 mt-1 space-y-1">
-                <li>Nama aplikasi: &quot;CleenChat&quot; (atau nama pilihan Anda)</li>
+                <li>
+                  Nama aplikasi: &quot;CleenChat&quot; (atau nama pilihan Anda)
+                </li>
                 <li>Email dukungan pengguna: Email Anda</li>
                 <li>Kontak developer: Email Anda</li>
               </ul>
             </li>
-            <li>Klik &quot;Save and Continue&quot; (Anda dapat melewati Scopes untuk saat ini)</li>
+            <li>
+              Klik &quot;Save and Continue&quot; (Anda dapat melewati Scopes
+              untuk saat ini)
+            </li>
             <li>Tambahkan email Anda sebagai test user</li>
             <li>Klik &quot;Save and Continue&quot;</li>
           </ol>
@@ -754,29 +812,49 @@ function YouTubeGuide({
         <div className="space-y-3 text-sm">
           <p>Buat OAuth client ID dan secret.</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
-            <li>Buka &quot;APIs & Services&quot; lalu &quot;Credentials&quot;</li>
-            <li>Klik &quot;Create Credentials&quot; dan pilih &quot;OAuth client ID&quot;</li>
+            <li>
+              Buka &quot;APIs & Services&quot; lalu &quot;Credentials&quot;
+            </li>
+            <li>
+              Klik &quot;Create Credentials&quot; dan pilih &quot;OAuth client
+              ID&quot;
+            </li>
             <li>Application type: Pilih &quot;Web application&quot;</li>
             <li>Beri nama (contoh: &quot;CleenChat Web Client&quot;)</li>
-            <li>Di bagian &quot;Authorized redirect URIs&quot;, klik &quot;Add URI&quot;</li>
+            <li>
+              Di bagian &quot;Authorized redirect URIs&quot;, klik &quot;Add
+              URI&quot;
+            </li>
             <li>Tempel URL berikut:</li>
           </ol>
           <div className="p-3 rounded-lg bg-muted border border-border/50">
             <div className="flex items-center justify-between">
-              <code className="text-xs font-mono break-all">{origin}/api/credentials/oauth/callback</code>
+              <code className="text-xs font-mono break-all">
+                {origin}/api/credentials/oauth/callback
+              </code>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => navigator.clipboard.writeText(`${origin}/api/credentials/oauth/callback`)}
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    `${origin}/api/credentials/oauth/callback`,
+                  )
+                }
                 className="ml-2"
               >
                 <CopyIcon className="size-3" />
               </Button>
             </div>
           </div>
-          <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground" start={7}>
+          <ol
+            className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground"
+            start={7}
+          >
             <li>Klik &quot;Create&quot;</li>
-            <li>Salin &quot;Client ID&quot; dan &quot;Client Secret&quot; yang ditampilkan</li>
+            <li>
+              Salin &quot;Client ID&quot; dan &quot;Client Secret&quot; yang
+              ditampilkan
+            </li>
           </ol>
         </div>
       ),
@@ -790,7 +868,8 @@ function YouTubeGuide({
           <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
             <CheckCircle2Icon className="size-5 text-emerald-600" />
             <p className="text-xs text-emerald-700">
-              Anda siap! Cukup salin Client ID dan Client Secret ke formulir dan klik &quot;Sambungkan dengan Google&quot;
+              Anda siap! Cukup salin Client ID dan Client Secret ke formulir dan
+              klik &quot;Sambungkan dengan Google&quot;
             </p>
           </div>
         </div>
@@ -801,22 +880,23 @@ function YouTubeGuide({
   return (
     <div className="space-y-2">
       {sections.map((section) => (
-        <div
-          key={section.id}
-          className="border rounded-lg overflow-hidden"
-        >
+        <div key={section.id} className="border rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={() => onToggle(expandedSection === section.id ? "" : section.id)}
+            onClick={() =>
+              onToggle(expandedSection === section.id ? "" : section.id)
+            }
             className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
-              <div className={cn(
-                "size-6 rounded-full flex items-center justify-center text-xs font-bold",
-                expandedSection === section.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}>
+              <div
+                className={cn(
+                  "size-6 rounded-full flex items-center justify-center text-xs font-bold",
+                  expandedSection === section.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
                 {sections.indexOf(section) + 1}
               </div>
               <span className="text-sm font-medium">{section.title}</span>
@@ -828,9 +908,7 @@ function YouTubeGuide({
             )}
           </button>
           {expandedSection === section.id && (
-            <div className="px-4 pb-4 bg-muted/20">
-              {section.content}
-            </div>
+            <div className="px-4 pb-4 bg-muted/20">{section.content}</div>
           )}
         </div>
       ))}
@@ -856,8 +934,20 @@ function GoogleSheetsGuide({
         <div className="space-y-3 text-sm">
           <p>Buat project di Google Cloud Console.</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-muted-foreground">
-            <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">console.cloud.google.com</a></li>
-            <li>Click &quot;Select Project&quot; then &quot;New Project&quot;</li>
+            <li>
+              Go to{" "}
+              <a
+                href="https://console.cloud.google.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                console.cloud.google.com
+              </a>
+            </li>
+            <li>
+              Click &quot;Select Project&quot; then &quot;New Project&quot;
+            </li>
             <li>Name it &quot;CleenChat Sheets&quot; or similar</li>
             <li>Select your new project</li>
           </ol>
@@ -883,10 +973,14 @@ function GoogleSheetsGuide({
       title: "Langkah 3: Konfigurasi OAuth (sama seperti YouTube)",
       content: (
         <div className="space-y-3 text-sm">
-          <p>Ikuti langkah-langkah setup OAuth yang sama seperti YouTube (langkah 3-4 di atas).</p>
+          <p>
+            Ikuti langkah-langkah setup OAuth yang sama seperti YouTube (langkah
+            3-4 di atas).
+          </p>
           <div className="p-3 rounded-lg bg-muted border border-border/50">
             <p className="text-xs text-muted-foreground">
-              Gunakan kredensial OAuth yang sama untuk YouTube dan Google Sheets!
+              Gunakan kredensial OAuth yang sama untuk YouTube dan Google
+              Sheets!
             </p>
           </div>
         </div>
@@ -897,11 +991,15 @@ function GoogleSheetsGuide({
       title: "Langkah 4: Masukkan Kredensial",
       content: (
         <div className="space-y-3 text-sm">
-          <p>Salin kredensial Anda ke formulir dan klik &quot;Sambungkan dengan Google&quot;.</p>
+          <p>
+            Salin kredensial Anda ke formulir dan klik &quot;Sambungkan dengan
+            Google&quot;.
+          </p>
           <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
             <CheckCircle2Icon className="size-5 text-emerald-600" />
             <p className="text-xs text-emerald-700">
-              Setelah tersambung, Anda dapat membaca dan menulis ke Google Sheets Anda!
+              Setelah tersambung, Anda dapat membaca dan menulis ke Google
+              Sheets Anda!
             </p>
           </div>
         </div>
@@ -912,22 +1010,23 @@ function GoogleSheetsGuide({
   return (
     <div className="space-y-2">
       {sections.map((section) => (
-        <div
-          key={section.id}
-          className="border rounded-lg overflow-hidden"
-        >
+        <div key={section.id} className="border rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={() => onToggle(expandedSection === section.id ? "" : section.id)}
+            onClick={() =>
+              onToggle(expandedSection === section.id ? "" : section.id)
+            }
             className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
-              <div className={cn(
-                "size-6 rounded-full flex items-center justify-center text-xs font-bold",
-                expandedSection === section.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-muted text-muted-foreground"
-              )}>
+              <div
+                className={cn(
+                  "size-6 rounded-full flex items-center justify-center text-xs font-bold",
+                  expandedSection === section.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
                 {sections.indexOf(section) + 1}
               </div>
               <span className="text-sm font-medium">{section.title}</span>
@@ -939,9 +1038,7 @@ function GoogleSheetsGuide({
             )}
           </button>
           {expandedSection === section.id && (
-            <div className="px-4 pb-4 bg-blue-50/30">
-              {section.content}
-            </div>
+            <div className="px-4 pb-4 bg-blue-50/30">{section.content}</div>
           )}
         </div>
       ))}

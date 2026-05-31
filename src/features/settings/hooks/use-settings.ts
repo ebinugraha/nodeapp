@@ -1,20 +1,18 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
 import {
+  queryOptions,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { queryOptions } from "@tanstack/react-query";
+import { useTRPC } from "@/trpc/client";
 
 export const useSuspenseSettings = () => {
   const trpc = useTRPC();
 
-  return useSuspenseQuery(
-    trpc.settings.get.queryOptions(),
-  );
+  return useSuspenseQuery(trpc.settings.get.queryOptions());
 };
 
 export const useSettings = () => {

@@ -1,44 +1,37 @@
 "use client";
 
-import {
-  NodeType,
-} from "@prisma/client";
 import { createId } from "@paralleldrive/cuid2";
+import { NodeType } from "@prisma/client";
+import { useReactFlow } from "@xyflow/react";
 import {
-  GlobeIcon,
-  MousePointerIcon,
-  SplitIcon,
-  ShieldIcon,
-  MessageSquareIcon,
   AlertTriangleIcon,
-  ClockIcon,
-  WebhookIcon,
-  DatabaseIcon,
-  FilterIcon,
-  BrainIcon,
-  SendIcon,
-  ZapIcon,
-  SparklesIcon,
-  WorkflowIcon,
   BookmarkIcon,
+  BrainIcon,
+  ClockIcon,
+  DatabaseIcon,
+  Dice5Icon,
+  FilterIcon,
+  GlobeIcon,
+  MessageSquareIcon,
   MoreVerticalIcon,
+  MousePointerIcon,
+  SendIcon,
+  ShieldIcon,
+  SparklesIcon,
+  SplitIcon,
   TrashIcon,
+  WebhookIcon,
+  WorkflowIcon,
+  ZapIcon,
 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+  useDeleteTemplate,
+  useTemplates,
+} from "@/features/templates/hooks/use-templates";
+import { cn } from "@/lib/utils";
+import { SaveTemplateDialog } from "./save-template-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,17 +42,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { useReactFlow } from "@xyflow/react";
-import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "./ui/badge";
-import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import {
-  useTemplates,
-  useDeleteTemplate,
-} from "@/features/templates/hooks/use-templates";
-import { SaveTemplateDialog } from "./save-template-dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
 
 interface TemplateData {
   id: string;
@@ -74,7 +73,13 @@ export type NodeTypeOption = {
   label: string;
   description: string;
   icon: React.ComponentType<{ className?: string }> | string;
-  category?: "trigger" | "moderation" | "action" | "logic" | "ai" | "notification";
+  category?:
+    | "trigger"
+    | "moderation"
+    | "action"
+    | "logic"
+    | "ai"
+    | "notification";
 };
 
 // Category configuration for visual styling
@@ -175,13 +180,6 @@ const moderationNodes: NodeTypeOption[] = [
     icon: "/logos/youtube_delete.svg",
     category: "moderation",
   },
-  {
-    type: NodeType.YOUTUBE_HIDE,
-    label: "Hide Comment",
-    description: "Mark comment as spam or hide it",
-    icon: ShieldIcon,
-    category: "moderation",
-  },
 
   {
     type: NodeType.YOUTUBE_TIMEOUT,
@@ -190,17 +188,9 @@ const moderationNodes: NodeTypeOption[] = [
     icon: ClockIcon,
     category: "moderation",
   },
-
 ];
 
 const aiNodes: NodeTypeOption[] = [
-  {
-    type: NodeType.AI_MODERATION,
-    label: "AI Moderation",
-    description: "Analyze comment with AI for moderation",
-    icon: BrainIcon,
-    category: "ai",
-  },
   {
     type: NodeType.SENTIMENT_ANALYSIS,
     label: "Sentiment Analysis",
@@ -213,6 +203,13 @@ const aiNodes: NodeTypeOption[] = [
     label: "Spam Detection",
     description: "Detect spam patterns in comments",
     icon: FilterIcon,
+    category: "ai",
+  },
+  {
+    type: NodeType.GAMBLING_CHECKER,
+    label: "Gambling Checker",
+    description: "Detect online gambling content",
+    icon: Dice5Icon,
     category: "ai",
   },
   {
@@ -232,13 +229,6 @@ const notificationNodes: NodeTypeOption[] = [
     icon: SendIcon,
     category: "notification",
   },
-  {
-    type: NodeType.DISCORD,
-    label: "Discord Message",
-    description: "Send a message to Discord",
-    icon: "/logos/discord.svg",
-    category: "notification",
-  },
 ];
 
 const logicNodes: NodeTypeOption[] = [
@@ -247,13 +237,6 @@ const logicNodes: NodeTypeOption[] = [
     label: "Decision",
     description: "Make a decision based on conditions",
     icon: SplitIcon,
-    category: "logic",
-  },
-  {
-    type: NodeType.FILTER,
-    label: "Filter",
-    description: "Filter comments based on conditions",
-    icon: FilterIcon,
     category: "logic",
   },
   {
@@ -285,13 +268,6 @@ const actionNodes: NodeTypeOption[] = [
     label: "Google Sheets",
     description: "Read or write data to spreadsheets",
     icon: "/logos/google-sheet.svg",
-    category: "action",
-  },
-  {
-    type: NodeType.STORE_DB,
-    label: "Store to DB",
-    description: "Store comment data to database",
-    icon: DatabaseIcon,
     category: "action",
   },
 ];
@@ -333,8 +309,8 @@ export function NodeSelector({
   // that should be replaced when adding a real trigger
   const hasTriggerNode = useCallback(() => {
     const nodes = getNodes();
-    return nodes.some(
-      (node) => TRIGGER_NODE_TYPES.includes(node.type as NodeType),
+    return nodes.some((node) =>
+      TRIGGER_NODE_TYPES.includes(node.type as NodeType),
     );
   }, [getNodes]);
 
@@ -351,9 +327,8 @@ export function NodeSelector({
       // Validate: only one trigger node allowed per workflow
       if (selection.category === "trigger") {
         const nodes = getNodes();
-        const existingTrigger = nodes.find(
-          (node) =>
-            TRIGGER_NODE_TYPES.includes(node.type as NodeType),
+        const existingTrigger = nodes.find((node) =>
+          TRIGGER_NODE_TYPES.includes(node.type as NodeType),
         );
 
         if (existingTrigger) {
@@ -450,7 +425,10 @@ export function NodeSelector({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{children}</SheetTrigger>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-0">
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md overflow-y-auto p-0"
+        >
           <SheetHeader className="px-6 pt-6 pb-4 border-b">
             <SheetTitle className="flex items-center gap-2">
               <WorkflowIcon className="size-5 text-primary" />
@@ -530,20 +508,30 @@ function TemplatesSection({
   const { data: templates, isLoading } = useTemplates();
   const deleteTemplate = useDeleteTemplate();
   const TemplateIcon = TEMPLATE_CATEGORY_CONFIG.icon;
-  const [templateToDelete, setTemplateToDelete] = useState<TemplateData | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<TemplateData | null>(
+    null,
+  );
 
   if (isLoading) {
     return (
-      <div className={cn(
-        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
-        TEMPLATE_CATEGORY_CONFIG.borderColor
-      )}>
-        <div className={cn(
-          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
-          TEMPLATE_CATEGORY_CONFIG.gradient
-        )}>
-          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
-          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
+      <div
+        className={cn(
+          "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+          TEMPLATE_CATEGORY_CONFIG.borderColor,
+        )}
+      >
+        <div
+          className={cn(
+            "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+            TEMPLATE_CATEGORY_CONFIG.gradient,
+          )}
+        >
+          <TemplateIcon
+            className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)}
+          />
+          <span className="text-sm font-semibold">
+            {TEMPLATE_CATEGORY_CONFIG.label}
+          </span>
         </div>
         <div className="p-4 text-center text-sm text-muted-foreground">
           Loading templates...
@@ -554,17 +542,30 @@ function TemplatesSection({
 
   if (!templates?.length) {
     return (
-      <div className={cn(
-        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
-        TEMPLATE_CATEGORY_CONFIG.borderColor
-      )}>
-        <div className={cn(
-          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
-          TEMPLATE_CATEGORY_CONFIG.gradient
-        )}>
-          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
-          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
-          <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", TEMPLATE_CATEGORY_CONFIG.badgeColor)}>
+      <div
+        className={cn(
+          "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
+          TEMPLATE_CATEGORY_CONFIG.borderColor,
+        )}
+      >
+        <div
+          className={cn(
+            "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
+            TEMPLATE_CATEGORY_CONFIG.gradient,
+          )}
+        >
+          <TemplateIcon
+            className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)}
+          />
+          <span className="text-sm font-semibold">
+            {TEMPLATE_CATEGORY_CONFIG.label}
+          </span>
+          <Badge
+            className={cn(
+              "ml-auto text-[10px] px-1.5 py-0.5",
+              TEMPLATE_CATEGORY_CONFIG.badgeColor,
+            )}
+          >
             Empty
           </Badge>
         </div>
@@ -577,22 +578,30 @@ function TemplatesSection({
 
   return (
     <>
-      <div className={cn(
-        "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
-        TEMPLATE_CATEGORY_CONFIG.borderColor
-      )}>
-        <div className={cn(
-          "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
-          TEMPLATE_CATEGORY_CONFIG.gradient
-        )}>
-          <TemplateIcon className={cn("size-4", TEMPLATE_CATEGORY_CONFIG.iconColor)} />
-          <span className="text-sm font-semibold">{TEMPLATE_CATEGORY_CONFIG.label}</span>
-          <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", TEMPLATE_CATEGORY_CONFIG.badgeColor)}>
+      {/* Saved Templates Category */}
+      <div className="flex flex-col gap-1 mb-6">
+        <div className="px-3 flex items-center gap-2 mb-2">
+          <div
+            className={cn("p-1 rounded-md", TEMPLATE_CATEGORY_CONFIG.gradient)}
+          >
+            <TemplateIcon
+              className={cn("size-3.5", TEMPLATE_CATEGORY_CONFIG.iconColor)}
+            />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {TEMPLATE_CATEGORY_CONFIG.label}
+          </span>
+          <Badge
+            className={cn(
+              "ml-auto text-[10px] px-1.5 py-0",
+              TEMPLATE_CATEGORY_CONFIG.badgeColor,
+            )}
+          >
             {templates.length}
           </Badge>
         </div>
 
-        <div className="p-2 space-y-1 max-h-[300px] overflow-y-auto">
+        <div className="px-1 space-y-0.5 max-h-[300px] overflow-y-auto">
           {templates.map((template) => (
             <TemplateItem
               key={template.id}
@@ -650,23 +659,27 @@ function TemplateItem({
 }) {
   return (
     <div
-      className="group relative w-full h-auto py-3 px-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50"
+      className="group relative w-full h-auto py-2.5 px-2 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent hover:text-accent-foreground"
       onClick={onSelect}
     >
       <div className="flex items-center gap-3 w-full">
-        <div className="flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-cyan-500/10 to-cyan-500/5">
-          <BookmarkIcon className="size-5 text-cyan-500" />
+        <div className="flex flex-shrink-0 items-center justify-center size-8 rounded-md border border-border/50 bg-background shadow-sm text-cyan-500">
+          <BookmarkIcon className="size-4" />
         </div>
         <div className="flex flex-col items-start text-left min-w-0 flex-1">
           <span className="text-sm font-medium">{template.name}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground line-clamp-1">
             {template.description || template.nodeType}
           </span>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 opacity-0 group-hover:opacity-100"
+            >
               <MoreVerticalIcon className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -722,10 +735,10 @@ function NodeItem({
   return (
     <div
       className={cn(
-        "group relative w-full h-auto py-3 px-3 rounded-lg transition-all duration-200",
+        "group relative w-full h-auto py-2.5 px-2 rounded-lg transition-all duration-200",
         disabled
           ? "opacity-50 cursor-not-allowed"
-          : "cursor-pointer hover:bg-accent/50 hover:scale-[1.01] active:scale-[0.99]",
+          : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
       )}
       onClick={() => {
         if (disabled) {
@@ -739,35 +752,54 @@ function NodeItem({
     >
       {/* Hover indicator bar */}
       {!disabled && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-r-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-0 rounded-r-full bg-indigo-500 opacity-0 group-hover:h-6 group-hover:opacity-100 transition-all duration-200" />
       )}
 
       <div className="flex items-center gap-3 w-full overflow-hidden">
-        <div className={cn(
-          "flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5",
-          iconColor
-        )}>
+        <div
+          className={cn(
+            "flex flex-shrink-0 items-center justify-center size-8 rounded-md border border-border/50 bg-background shadow-sm",
+            iconColor,
+          )}
+        >
           {typeof Icon === "string" ? (
-            <img src={Icon} alt={nodeType.label} className="size-5 object-contain" />
+            <img
+              src={Icon}
+              alt={nodeType.label}
+              className="size-4 object-contain"
+            />
           ) : (
-            <Icon className="size-5" />
+            <Icon className="size-4" />
           )}
         </div>
         <div className="flex flex-col items-start text-left min-w-0 flex-1">
           <span className="text-sm font-medium">{nodeType.label}</span>
-          <span className="text-xs text-muted-foreground line-clamp-2">
+          <span className="text-[11px] text-muted-foreground line-clamp-1">
             {getDisabledMessage()}
           </span>
         </div>
         {!disabled && (
           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <svg className="size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="size-4 text-muted-foreground"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
           </div>
         )}
         {disabled && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-destructive/10 text-destructive border-destructive/20">
+          <Badge
+            variant="outline"
+            className="text-[10px] px-1.5 py-0.5 bg-destructive/10 text-destructive border-destructive/20"
+          >
             Used
           </Badge>
         )}
@@ -786,7 +818,7 @@ function NodeCategory({
   existingTrigger,
 }: {
   category: keyof typeof CATEGORY_CONFIG;
-  config: typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG];
+  config: (typeof CATEGORY_CONFIG)[keyof typeof CATEGORY_CONFIG];
   nodes: NodeTypeOption[];
   onSelect: (selection: NodeTypeOption) => void;
   disabled?: boolean;
@@ -795,24 +827,19 @@ function NodeCategory({
   const CategoryIcon = config.icon;
 
   return (
-    <div className={cn(
-      "rounded-xl border bg-gradient-to-b from-card to-card/50 overflow-hidden",
-      config.borderColor
-    )}>
+    <div className="flex flex-col gap-1 mb-6">
       {/* Category header */}
-      <div className={cn(
-        "px-4 py-3 bg-gradient-to-r flex items-center gap-2",
-        config.gradient
-      )}>
-        <CategoryIcon className={cn("size-4", config.iconColor)} />
-        <span className="text-sm font-semibold">{config.label}</span>
-        <Badge className={cn("ml-auto text-[10px] px-1.5 py-0.5", config.badgeColor)}>
-          {config.description}
-        </Badge>
+      <div className="px-3 flex items-center gap-2 mb-2">
+        <div className={cn("p-1 rounded-md", config.gradient)}>
+          <CategoryIcon className={cn("size-3.5", config.iconColor)} />
+        </div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {config.label}
+        </span>
       </div>
 
       {/* Category items */}
-      <div className="p-2 space-y-1">
+      <div className="px-1 space-y-0.5">
         {nodes.map((nodeType) => (
           <NodeItem
             key={nodeType.type}

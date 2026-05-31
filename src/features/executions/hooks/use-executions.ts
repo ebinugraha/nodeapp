@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
+import { CredentialType } from "@prisma/client";
 import {
   useMutation,
   useQuery,
@@ -8,7 +8,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CredentialType } from "@prisma/client";
+import { useTRPC } from "@/trpc/client";
 import { useExecutionsParams } from "./use-executions-params";
 
 /**

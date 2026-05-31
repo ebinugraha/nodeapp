@@ -1,15 +1,18 @@
 "use client";
 
-import { NodeProps, useReactFlow } from "@xyflow/react";
+import { type NodeProps, useReactFlow } from "@xyflow/react";
+import { Loader2, PauseIcon, PlayIcon } from "lucide-react";
 import { memo, useState } from "react";
-import { BaseTriggerNode } from "../base-trigger-node";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
 import { youtubeLiveChatChannel } from "@/inngest/channels/youtube-live-chat";
+import { BaseTriggerNode } from "../base-trigger-node";
 import { fetchYoutubeToken, toggleYoutubePolling } from "./actions"; // Import toggle
-import { YoutubeLiveChatDialog, YoutubeLiveChatFormValues } from "./dialog";
-import { Button } from "@/components/ui/button";
-import { PlayIcon, PauseIcon, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import {
+  YoutubeLiveChatDialog,
+  type YoutubeLiveChatFormValues,
+} from "./dialog";
 
 // ... type definition sama ...
 type YoutubeNodeData = YoutubeLiveChatFormValues & {

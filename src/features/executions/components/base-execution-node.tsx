@@ -1,23 +1,21 @@
 "use client";
 
-import { LucideIcon } from "lucide-react";
-import { memo } from "react";
 import { Position, useReactFlow } from "@xyflow/react";
+import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
-import { WorkflowNode } from "@/components/workflow-node";
-import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
+import { memo } from "react";
 import { BaseHandle } from "@/components/react-flow/base-handle";
-import {
-  NodeStatusIndicator,
-} from "@/components/react-flow/node-status-indicator";
+import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node";
+import { NodeStatusIndicator } from "@/components/react-flow/node-status-indicator";
+import { WorkflowNode } from "@/components/workflow-node";
 import { NodeErrorPanel } from "@/features/executions/components/node-error";
 import { useNodeError } from "@/features/executions/hooks/use-node-error";
+import { cn } from "@/lib/utils";
 import {
   categoryConfig,
   type NodeCategory,
   type NodeStatus,
 } from "@/types/node";
-import { cn } from "@/lib/utils";
 
 interface BaseExecutionNodeProps {
   Icon: LucideIcon | string;
@@ -54,7 +52,11 @@ export const BaseExecutionNode = memo(
     const { setNodes, setEdges } = useReactFlow();
     const config = categoryConfig[category];
 
-    const hasErrorTracking = !!(errorChannel && errorTopic && errorRefreshToken);
+    const hasErrorTracking = !!(
+      errorChannel &&
+      errorTopic &&
+      errorRefreshToken
+    );
 
     const errorState = hasErrorTracking
       ? useNodeError({
@@ -99,7 +101,8 @@ export const BaseExecutionNode = memo(
             onDoubleClick={onDoubleClick}
             className={cn(
               "rounded-xl min-w-[140px] max-w-[200px]",
-              nodeError && "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
+              nodeError &&
+                "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
               !nodeError && config.border,
               "bg-linear-to-br from-card to-card/80",
               "group-hover:shadow-lg group-hover:scale-[1.02]",
@@ -107,50 +110,59 @@ export const BaseExecutionNode = memo(
             )}
           >
             {/* Header */}
-            <div className={cn(
-              "relative flex items-center gap-2 px-2 py-1.5 bg-card rounded-t-xl overflow-hidden",
-              (children || description || nodeError) && "border-b border-border"
-            )}>
+            <div
+              className={cn(
+                "relative flex items-center gap-2 px-2 py-1.5 bg-card rounded-t-xl overflow-hidden",
+                (children || description || nodeError) &&
+                  "border-b border-border",
+              )}
+            >
               {/* Left Accent Bar */}
-              <div className={cn(
-                "absolute left-0 top-0 bottom-0 w-1",
-                nodeError ? "bg-red-500" : config.iconColor.replace("text-", "bg-")
-              )} />
-              
+              <div
+                className={cn(
+                  "absolute left-0 top-0 bottom-0 w-1",
+                  nodeError
+                    ? "bg-red-500"
+                    : config.iconColor.replace("text-", "bg-"),
+                )}
+              />
+
               <div
                 className={cn(
                   "flex items-center justify-center size-6 rounded-md shrink-0 ml-1",
                   nodeError ? "bg-red-500/10" : config.iconBg,
                 )}
               >
-                  {typeof Icon === "string" ? (
-                    <Image
-                      src={Icon}
-                      alt={name}
-                      width={14}
-                      height={14}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <Icon
-                      className={cn(
-                        "size-3.5",
-                        nodeError ? "text-red-600" : config.iconColor,
-                      )}
-                    />
+                {typeof Icon === "string" ? (
+                  <Image
+                    src={Icon}
+                    alt={name}
+                    width={14}
+                    height={14}
+                    className="object-contain"
+                  />
+                ) : (
+                  <Icon
+                    className={cn(
+                      "size-3.5",
+                      nodeError ? "text-red-600" : config.iconColor,
+                    )}
+                  />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[11px] font-semibold truncate leading-none">
+                    {name}
+                  </p>
+                  {nodeError && (
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 py-0.5 rounded-sm">
+                      Error
+                    </span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[11px] font-semibold truncate leading-none">{name}</p>
-                    {nodeError && (
-                      <span className="text-[8px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 py-0.5 rounded-sm">
-                        Error
-                      </span>
-                    )}
-                  </div>
-                </div>
               </div>
+            </div>
 
             {/* Content */}
             {(children || description || nodeError) && (
@@ -178,11 +190,7 @@ export const BaseExecutionNode = memo(
 
             {/* Handles */}
             <BaseHandle id="target-1" type="target" position={Position.Left} />
-            <BaseHandle
-              id="source-1"
-              type="source"
-              position={Position.Right}
-            />
+            <BaseHandle id="source-1" type="source" position={Position.Right} />
           </BaseNode>
         </NodeStatusIndicator>
       </WorkflowNode>

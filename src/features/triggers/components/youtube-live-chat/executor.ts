@@ -1,4 +1,4 @@
-import { NodeExecutor } from "@/features/executions/type";
+import type { NodeExecutor } from "@/features/executions/type";
 import { youtubeLiveChatChannel } from "@/inngest/channels/youtube-live-chat";
 
 type YoutubeData = Record<string, unknown>;

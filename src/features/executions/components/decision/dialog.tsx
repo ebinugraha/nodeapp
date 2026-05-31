@@ -1,3 +1,9 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,12 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   variableName: z.string().min(1, "Variable Name is required (e.g. isBadWord)"),

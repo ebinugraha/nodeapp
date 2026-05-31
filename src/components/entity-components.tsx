@@ -1,5 +1,7 @@
 import {
   AlertTriangleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   Loader2Icon,
   MoreVerticalIcon,
   PackageOpenIcon,
@@ -7,8 +9,16 @@ import {
   SearchIcon,
   TrashIcon,
 } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Card, CardContent, CardDescription, CardTitle } from "./ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import {
   Empty,
   EmptyContent,
@@ -17,15 +27,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "./ui/empty";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardTitle } from "./ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+import { Input } from "./ui/input";
+import { Skeleton } from "./ui/skeleton";
 
 type EntityHeaderProps = {
   title: string;
@@ -34,10 +37,10 @@ type EntityHeaderProps = {
   disabled?: boolean;
   isCreating?: boolean;
 } & (
-    | { onNew: () => void; newButtonHref?: never }
-    | { newButtonHref: string; onNew?: never }
-    | { onNew?: never; newButtonHref?: never }
-  );
+  | { onNew: () => void; newButtonHref?: never }
+  | { newButtonHref: string; onNew?: never }
+  | { onNew?: never; newButtonHref?: never }
+);
 
 export const EntityHeader = ({
   title,
@@ -140,27 +143,68 @@ export const EntityPagination = ({
   onPageChange,
   disabled = false,
 }: EntityPaginationProps) => {
+  if (totalPages <= 1 && page === 1) return null;
+
   return (
-    <div className="flex items-center justify-between gap-x-2 w-full">
-      <div className="flex-1 text-sm text-muted-foreground">
-        Page {page} of {totalPages || 1}
+    <div className="flex items-center justify-between px-2 py-4 border-t border-border w-full mt-4">
+      <div className="text-sm text-muted-foreground flex items-center">
+        Showing page{" "}
+        <span className="font-medium text-foreground mx-1">{page}</span> of{" "}
+        <span className="font-medium text-foreground mx-1">
+          {totalPages || 1}
+        </span>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center space-x-2">
         <Button
-          disabled={page == 1 || disabled}
-          size={"sm"}
-          variant={"outline"}
+          disabled={page <= 1 || disabled}
+          size="sm"
+          variant="outline"
+          className="h-8 w-8 p-0"
           onClick={() => onPageChange(Math.max(1, page - 1))}
         >
-          Prev
+          <span className="sr-only">Previous page</span>
+          <ChevronLeftIcon className="h-4 w-4" />
         </Button>
+
+        <div className="flex items-center space-x-1 mx-2">
+          {Array.from({ length: Math.min(5, totalPages || 1) }).map((_, i) => {
+            let pageNum = page;
+            const maxVisible = 5;
+            if (totalPages <= maxVisible) pageNum = i + 1;
+            else if (page <= 3) pageNum = i + 1;
+            else if (page >= totalPages - 2)
+              pageNum = totalPages - maxVisible + 1 + i;
+            else pageNum = page - 2 + i;
+
+            return (
+              <Button
+                key={pageNum}
+                disabled={disabled}
+                size="sm"
+                variant={page === pageNum ? "default" : "ghost"}
+                className={cn(
+                  "h-8 w-8 p-0",
+                  page === pageNum
+                    ? ""
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => onPageChange(pageNum)}
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+        </div>
+
         <Button
-          disabled={page == totalPages || disabled || page === 0}
-          size={"sm"}
-          variant={"outline"}
+          disabled={page >= totalPages || disabled || page === 0}
+          size="sm"
+          variant="outline"
+          className="h-8 w-8 p-0"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
         >
-          Next
+          <span className="sr-only">Next page</span>
+          <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -173,9 +217,27 @@ interface StateViewProps {
 
 export const LoadingView = ({ message }: StateViewProps) => {
   return (
-    <div className="flex justify-center items-center h-full flex-1 flex-col gap-y-4">
-      <Loader2Icon className="size-6 animate-spin text-primary" />
-      {!!message && <p className="text-sm text-muted-foreground">{message}</p>}
+    <div className="flex flex-col gap-y-4 w-full h-full">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Card key={i} className="shadow-none border cursor-default">
+          <CardContent className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-md" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-3 w-[150px]" />
+              </div>
+            </div>
+            <div className="flex gap-x-4 items-center">
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      <div className="flex justify-center mt-8 text-muted-foreground items-center gap-2">
+        <Loader2Icon className="size-4 animate-spin text-primary" />
+        <p className="text-sm font-medium">{message || "Loading..."}</p>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
+import type { NodeExecutor } from "@/features/executions/type";
 
 type SpamDetectionData = {
   variableName?: string;
@@ -31,7 +31,8 @@ export const SpamDetectionExecutor: NodeExecutor<SpamDetectionData> = async ({
   data,
   context,
 }) => {
-  const commentData = (context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
+  const commentData = (context.YOUTUBE_VIDEO_COMMENT ||
+    context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
 
   if (!commentData) {
     throw new NonRetriableError("No YouTube comment data in context");
@@ -62,7 +63,9 @@ export const SpamDetectionExecutor: NodeExecutor<SpamDetectionData> = async ({
     const matches = commentText.match(repeatedCharPattern);
     if (matches && matches.length > 0) {
       scores.repeatedChars = Math.min(matches.length * 0.2, 1);
-      reasons.push(`Repeated characters detected (${matches.length} occurrences)`);
+      reasons.push(
+        `Repeated characters detected (${matches.length} occurrences)`,
+      );
     }
   }
 
@@ -73,12 +76,18 @@ export const SpamDetectionExecutor: NodeExecutor<SpamDetectionData> = async ({
     const capsThreshold = data.capsLockThreshold || 0.7;
     if (totalChars > 0 && capsCount / totalChars > capsThreshold) {
       scores.capsLock = Math.min((capsCount / totalChars) * 0.5, 1);
-      reasons.push(`Excessive caps lock (${Math.round((capsCount / totalChars) * 100)}%)`);
+      reasons.push(
+        `Excessive caps lock (${Math.round((capsCount / totalChars) * 100)}%)`,
+      );
     }
   }
 
   // Calculate overall spam score
-  scores.overall = Math.max(scores.links, scores.repeatedChars, scores.capsLock);
+  scores.overall = Math.max(
+    scores.links,
+    scores.repeatedChars,
+    scores.capsLock,
+  );
   const isSpam = scores.overall >= 0.5;
 
   return {

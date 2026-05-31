@@ -1,3 +1,10 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CredentialType, NodeType } from "@prisma/client";
+import Image from "next/image";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,13 +33,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType, NodeType } from "@prisma/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
 
 export const AVAILABLE_MODELS = [
   "gemini-2.0-flash",

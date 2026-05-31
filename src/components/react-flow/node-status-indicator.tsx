@@ -1,12 +1,12 @@
-import { type ReactNode } from "react";
 import {
-  LoaderCircle,
   CheckCircle2,
-  XCircle,
   Clock,
+  LoaderCircle,
   SkipForward,
   Sparkles,
+  XCircle,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { NodeStatus, NodeStatusVariant } from "@/types/node";
 
@@ -97,13 +97,15 @@ export const InlineIndicator = ({
         className,
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", {
-        "bg-blue-500 animate-pulse": status === "loading",
-        "bg-emerald-500": status === "success",
-        "bg-red-500": status === "error",
-        "bg-slate-500": status === "skipped",
-        "bg-amber-500 animate-pulse": status === "pending",
-      })} />
+      <span
+        className={cn("w-1.5 h-1.5 rounded-full", {
+          "bg-blue-500 animate-pulse": status === "loading",
+          "bg-emerald-500": status === "success",
+          "bg-red-500": status === "error",
+          "bg-slate-500": status === "skipped",
+          "bg-amber-500 animate-pulse": status === "pending",
+        })}
+      />
       {labels[status]}
     </div>
   );
@@ -135,22 +137,26 @@ export const BorderIndicator = ({
   return (
     <div className={cn("relative rounded-xl border-2", className)}>
       {/* Border glow */}
-      <div className={cn(
-        "absolute inset-[-2px] rounded-xl",
-        borderStyles[status],
-        status === "loading" && "animate-pulse",
-        status === "pending" && "animate-pulse",
-      )} />
+      <div
+        className={cn(
+          "absolute inset-[-2px] rounded-xl",
+          borderStyles[status],
+          status === "loading" && "animate-pulse",
+          status === "pending" && "animate-pulse",
+        )}
+      />
 
       {/* Glow effect */}
-      <div className={cn(
-        "absolute inset-[-4px] rounded-xl blur-sm opacity-30",
-        status === "loading" && "bg-blue-500",
-        status === "success" && "bg-emerald-500",
-        status === "error" && "bg-red-500",
-        status === "skipped" && "bg-slate-500",
-        status === "pending" && "bg-amber-500",
-      )} />
+      <div
+        className={cn(
+          "absolute inset-[-4px] rounded-xl blur-sm opacity-30",
+          status === "loading" && "bg-blue-500",
+          status === "success" && "bg-emerald-500",
+          status === "error" && "bg-red-500",
+          status === "skipped" && "bg-slate-500",
+          status === "pending" && "bg-amber-500",
+        )}
+      />
 
       <div className="relative z-10">{children}</div>
     </div>
@@ -241,11 +247,7 @@ export const NodeStatusIndicator = ({
       );
 
     case "overlay":
-      return (
-        <SpinnerOverlay className={className}>
-          {children}
-        </SpinnerOverlay>
-      );
+      return <SpinnerOverlay className={className}>{children}</SpinnerOverlay>;
 
     case "inline":
       return (

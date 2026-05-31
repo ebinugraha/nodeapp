@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/db";
-import { inngest } from "@/inngest/client";
 import { ExecutionStatus } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { inngest } from "@/inngest/client";
+import prisma from "@/lib/db";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: executionId } = await params;
@@ -17,14 +17,14 @@ export async function POST(
     if (!execution) {
       return NextResponse.json(
         { error: "Execution not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (execution.status !== ExecutionStatus.RUNNING) {
       return NextResponse.json(
         { error: "Execution is not running" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(
     console.error("[EXECUTION_STOP]", error);
     return NextResponse.json(
       { error: "Failed to stop execution" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

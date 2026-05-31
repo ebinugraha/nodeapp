@@ -1,12 +1,12 @@
-import { NonRetriableError } from "inngest";
-import { inngest } from "./client";
-import prisma from "@/lib/db";
-import { topologicalSort } from "@/lib/topologicalSort";
-import { ExecutionStatus, NodeType } from "@prisma/client";
-import { getExecutor } from "@/features/executions/lib/executor-register";
-import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
-import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
 import { createId } from "@paralleldrive/cuid2";
+import { ExecutionStatus, type NodeType } from "@prisma/client";
+import { NonRetriableError } from "inngest";
+import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
+import { getExecutor } from "@/features/executions/lib/executor-register";
+import prisma from "@/lib/db";
+import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
+import { topologicalSort } from "@/lib/topologicalSort";
+import { inngest } from "./client";
 
 const getDescendants = (
   nodes: any[],
@@ -278,7 +278,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
         }
 
         // Track quota for video list operation
-        await trackYoutubeQuota(credential.id, "videos.list", credential.userId);
+        await trackYoutubeQuota(
+          credential.id,
+          "videos.list",
+          credential.userId,
+        );
       }
 
       // Bangun URL Request
@@ -346,23 +350,34 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     // Track quota for live chat messages list (HANYA jika ada pesan baru)
     if (messages.length > 0) {
       await step.run("track-quota", async () => {
-        await trackYoutubeQuota(credential.id, "liveChatMessages.list", credential.userId);
+        await trackYoutubeQuota(
+          credential.id,
+          "liveChatMessages.list",
+          credential.userId,
+        );
       });
     }
 
     // OPTIMASI 1: Load processed IDs HANYA jika ada pesan
     let newMessages: any[] = [];
     if (messages.length > 0) {
-      const { processedMessageIds } = await step.run("load-processed-ids", async () => {
-        const node = await prisma.node.findUnique({
-          where: { id: nodeId },
-          select: { data: true },
-        });
-        const data = node?.data as { processedMessageIds?: string[]; lastProcessedAt?: string } || {};
-        return {
-          processedMessageIds: data.processedMessageIds || [],
-        };
-      });
+      const { processedMessageIds } = await step.run(
+        "load-processed-ids",
+        async () => {
+          const node = await prisma.node.findUnique({
+            where: { id: nodeId },
+            select: { data: true },
+          });
+          const data =
+            (node?.data as {
+              processedMessageIds?: string[];
+              lastProcessedAt?: string;
+            }) || {};
+          return {
+            processedMessageIds: data.processedMessageIds || [],
+          };
+        },
+      );
 
       // OPTIMASI 2: Deduplication - Filter pesan yang sudah diproses
       newMessages = messages.filter((msg: any) => {
@@ -384,6 +399,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
                   message: msg.snippet.displayMessage,
                   author: msg.authorDetails.displayName,
                   publishedAt: msg.snippet.publishedAt,
+                  liveChatId: msg.snippet.liveChatId,
                   raw: msg,
                 },
               },
@@ -396,10 +412,17 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
         // OPTIMASI 4: Update database HANYA jika ada pesan baru
         await step.run("save-processed-ids", async () => {
-          const allProcessedIds = [...processedMessageIds, ...newMessages.map((m: any) => m.id)];
+          const allProcessedIds = [
+            ...processedMessageIds,
+            ...newMessages.map((m: any) => m.id),
+          ];
           const trimmedIds = allProcessedIds.slice(-50); // Kurangi dari 100 ke 50
-          const existingNode = await prisma.node.findUnique({ where: { id: nodeId }, select: { data: true } });
-          const existingData = (existingNode?.data as Record<string, unknown>) || {};
+          const existingNode = await prisma.node.findUnique({
+            where: { id: nodeId },
+            select: { data: true },
+          });
+          const existingData =
+            (existingNode?.data as Record<string, unknown>) || {};
           await prisma.node.update({
             where: { id: nodeId },
             data: {
@@ -425,7 +448,10 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       nextInterval = Math.max(5, successResult.suggestedInterval || 10);
     } else {
       // Normal - pakai interval yang direkomendasikan YouTube
-      nextInterval = Math.max(pollingInterval || 10, successResult.suggestedInterval || 10);
+      nextInterval = Math.max(
+        pollingInterval || 10,
+        successResult.suggestedInterval || 10,
+      );
     }
 
     await step.sleep("wait-interval", nextInterval * 1000);
@@ -510,7 +536,11 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     // OPTIMASI: Track quota HANYA jika ada comments
     if (comments.length > 0) {
       await step.run("track-quota", async () => {
-        await trackYoutubeQuota(credential.id, "comments.list", credential.userId);
+        await trackYoutubeQuota(
+          credential.id,
+          "comments.list",
+          credential.userId,
+        );
       });
     }
 

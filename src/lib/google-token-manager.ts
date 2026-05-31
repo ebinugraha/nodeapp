@@ -1,6 +1,7 @@
 // src/lib/google-token-manager.ts
-import prisma from "@/lib/db";
+
 import { NonRetriableError } from "inngest";
+import prisma from "@/lib/db";
 
 interface GoogleCredentialValue {
   clientId: string;

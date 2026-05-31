@@ -1,9 +1,9 @@
-import { NodeExecutor } from "@/features/executions/type";
-import Handlebars from "handlebars";
-import { geminiExecutionChannel } from "@/inngest/channels/gemini";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
+import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
+import type { NodeExecutor } from "@/features/executions/type";
+import { geminiExecutionChannel } from "@/inngest/channels/gemini";
 import prisma from "@/lib/db";
 
 Handlebars.registerHelper("json", (context) => {
@@ -24,7 +24,7 @@ const publishError = async (
   step: any,
   nodeId: string,
   topicSuffix: string,
-  error: { message: string; code?: string; field?: string }
+  error: { message: string; code?: string; field?: string },
 ) => {
   await step.realtime.publish(
     `gemini-${nodeId}-${topicSuffix}`,
@@ -105,19 +105,31 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
   });
 
   try {
-    const { steps } = await step.ai.wrap("gemini-generate-text", generateText, {
-      model: google(data.model || "gemini-2.0-flash"),
-      system: systemPrompt,
-      prompt: userPrompt,
-      experimental_telemetry: {
-        isEnabled: true,
-        recordInputs: true,
-        recordOutputs: true,
-      },
+    const result = await step.run("gemini-generate-text", async () => {
+      try {
+        const response = await generateText({
+          model: google(data.model || "gemini-2.0-flash"),
+          system: systemPrompt,
+          prompt: userPrompt,
+        });
+        return { text: response.text, error: null };
+      } catch (err: any) {
+        return {
+          text: null,
+          error: err?.message || "Failed to generate text from Gemini",
+        };
+      }
     });
 
-    const text =
-      steps[0].content[0].type === "text" ? steps[0].content[0].text : "";
+    if (result.error) {
+      await publishError(step, nodeId, "error-generate", {
+        message: result.error,
+        code: "api_error",
+      });
+      throw new NonRetriableError(result.error);
+    }
+
+    const text = result.text || "";
 
     await step.realtime.publish(
       `gemini-${nodeId}-success`,
@@ -132,11 +144,15 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
       },
     };
   } catch (err: any) {
+    if (err instanceof NonRetriableError) {
+      throw err;
+    }
+
     await publishError(step, nodeId, "error-generate", {
       message: err?.message || "Failed to generate text from Gemini",
       code: "api_error",
     });
 
-    throw new Error(err?.message || "Gemini generation failed");
+    throw new NonRetriableError(err?.message || "Gemini generation failed");
   }
 };

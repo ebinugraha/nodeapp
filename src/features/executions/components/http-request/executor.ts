@@ -1,7 +1,7 @@
-import { NodeExecutor } from "@/features/executions/type";
+import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
 import ky, { type Options as KyOptions } from "ky";
-import Handlebars from "handlebars";
+import type { NodeExecutor } from "@/features/executions/type";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 
 Handlebars.registerHelper("json", (context) => {
@@ -49,15 +49,22 @@ export const httpRequestExecutor: NodeExecutor<HTTPRequestData> = async ({
       const method = data.method;
 
       // 3. Rakit JSON dari Key-Value Pairs
-      let bodyPayload: any = {};
+      const bodyPayload: any = {};
 
       if (data.bodyPairs && Array.isArray(data.bodyPairs)) {
         for (const pair of data.bodyPairs) {
           if (!pair.key) continue; // Skip jika key kosong
 
           // Compile value (ubah {{variable}} jadi data asli)
-          const compiledValue = Handlebars.compile(pair.value)(context);
-          console.log(compiledValue);
+          let compiledValue: any = Handlebars.compile(pair.value)(context);
+
+          // Coba parse ke JSON agar number, boolean, dan object tidak terkirim sebagai string
+          try {
+            compiledValue = JSON.parse(compiledValue);
+          } catch (e) {
+            // Biarkan sebagai string jika bukan JSON yang valid
+          }
+
           bodyPayload[pair.key] = compiledValue;
         }
       }

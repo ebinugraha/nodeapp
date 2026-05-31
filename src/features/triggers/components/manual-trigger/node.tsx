@@ -1,11 +1,11 @@
-import { NodeProps } from "@xyflow/react";
-import { memo, useState } from "react";
-import { BaseTriggerNode } from "../base-trigger-node";
+import type { NodeProps } from "@xyflow/react";
 import { MousePointerIcon } from "lucide-react";
-import { ManualTriggerDialog } from "./dialog";
+import { memo, useState } from "react";
 import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
 import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
+import { BaseTriggerNode } from "../base-trigger-node";
 import { fetchManualTriggerToken } from "./actions";
+import { ManualTriggerDialog } from "./dialog";
 
 export const ManualTriggerNode = memo((props: NodeProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

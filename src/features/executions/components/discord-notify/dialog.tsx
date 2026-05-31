@@ -1,10 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -17,12 +24,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   webhookUrl: z.string().url("Invalid webhook URL"),
@@ -51,7 +52,9 @@ export const DiscordNotifyDialog = ({
     defaultValues: {
       webhookUrl: defaultValues.webhookUrl || "",
       title: defaultValues.title || "New YouTube Comment",
-      description: defaultValues.description || "**Author:** {{author}}\n**Comment:** {{comment}}",
+      description:
+        defaultValues.description ||
+        "**Author:** {{author}}\n**Comment:** {{comment}}",
       color: defaultValues.color || "#FF0000",
     },
   });
@@ -61,7 +64,9 @@ export const DiscordNotifyDialog = ({
       form.reset({
         webhookUrl: defaultValues.webhookUrl || "",
         title: defaultValues.title || "New YouTube Comment",
-        description: defaultValues.description || "**Author:** {{author}}\n**Comment:** {{comment}}",
+        description:
+          defaultValues.description ||
+          "**Author:** {{author}}\n**Comment:** {{comment}}",
         color: defaultValues.color || "#FF0000",
       });
     }
@@ -90,7 +95,10 @@ export const DiscordNotifyDialog = ({
                 <FormItem>
                   <FormLabel>Discord Webhook URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://discord.com/api/webhooks/..." {...field} />
+                    <Input
+                      placeholder="https://discord.com/api/webhooks/..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Get this from your Discord channel settings
@@ -128,7 +136,8 @@ export const DiscordNotifyDialog = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    Available variables: {"{{author}}"}, {"{{comment}}"}, {"{{videoId}}"}
+                    Available variables: {"{{author}}"}, {"{{comment}}"},{" "}
+                    {"{{videoId}}"}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -143,14 +152,25 @@ export const DiscordNotifyDialog = ({
                   <FormLabel>Embed Color (Hex)</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
-                      <Input type="color" value={field.value} onChange={field.onChange} className="w-12" />
-                      <Input placeholder="#FF0000" {...field} className="flex-1" />
+                      <Input
+                        type="color"
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-12"
+                      />
+                      <Input
+                        placeholder="#FF0000"
+                        {...field}
+                        className="flex-1"
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <NodeOutputHint nodeType={NodeType.DISCORD_NOTIFY} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

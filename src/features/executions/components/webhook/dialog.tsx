@@ -1,10 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,7 +23,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,12 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   url: z.string().url("Invalid URL"),
@@ -60,7 +61,9 @@ export const WebhookDialog = ({
       url: defaultValues.url || "",
       method: defaultValues.method || "POST",
       headers: defaultValues.headers || "Content-Type: application/json",
-      bodyTemplate: defaultValues.bodyTemplate || '{"author": "{{author}}", "comment": "{{comment}}"}',
+      bodyTemplate:
+        defaultValues.bodyTemplate ||
+        '{"author": "{{author}}", "comment": "{{comment}}"}',
       variableName: defaultValues.variableName || "webhookResult",
     },
   });
@@ -71,7 +74,9 @@ export const WebhookDialog = ({
         url: defaultValues.url || "",
         method: defaultValues.method || "POST",
         headers: defaultValues.headers || "Content-Type: application/json",
-        bodyTemplate: defaultValues.bodyTemplate || '{"author": "{{author}}", "comment": "{{comment}}"}',
+        bodyTemplate:
+          defaultValues.bodyTemplate ||
+          '{"author": "{{author}}", "comment": "{{comment}}"}',
         variableName: defaultValues.variableName || "webhookResult",
       });
     }
@@ -100,7 +105,10 @@ export const WebhookDialog = ({
                 <FormItem>
                   <FormLabel>Webhook URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/webhook" {...field} />
+                    <Input
+                      placeholder="https://example.com/webhook"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -148,9 +156,7 @@ export const WebhookDialog = ({
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Format: Header-Name: value
-                  </FormDescription>
+                  <FormDescription>Format: Header-Name: value</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -190,6 +196,8 @@ export const WebhookDialog = ({
                 </FormItem>
               )}
             />
+
+            <NodeOutputHint nodeType={NodeType.WEBHOOK} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

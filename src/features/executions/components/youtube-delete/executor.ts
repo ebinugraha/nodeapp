@@ -1,10 +1,10 @@
-import { NodeExecutor } from "@/features/executions/type";
-import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
-import { NonRetriableError } from "inngest";
 import Handlebars from "handlebars";
+import { NonRetriableError } from "inngest";
 import ky, { HTTPError } from "ky";
-import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 import { trackYoutubeQuota } from "@/features/credentials/lib/quota-tracking";
+import type { NodeExecutor } from "@/features/executions/type";
+import { youtubeDeleteChannel } from "@/inngest/channels/youtube-delete";
+import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 
 type YoutubeDeleteData = {
   credentialId?: string;
@@ -55,7 +55,8 @@ export const YoutubeDeleteExecutor: NodeExecutor<YoutubeDeleteData> = async ({
     const targetType = data.targetType || "live-chat";
 
     let endpoint = "";
-    let endpointType: "comments.delete" | "liveChatMessages.insert" = "comments.delete";
+    let endpointType: "comments.delete" | "liveChatMessages.insert" =
+      "comments.delete";
     if (targetType === "comment") {
       endpoint = "https://www.googleapis.com/youtube/v3/comments";
       endpointType = "comments.delete";

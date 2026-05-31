@@ -1,9 +1,9 @@
+import { ErrorBoundary } from "@sentry/nextjs";
+import { Suspense } from "react";
 import { CredentialView } from "@/features/credentials/components/credential";
 import { prefetchCredential } from "@/features/credentials/server/prefetch";
 import { requireAuth } from "@/lib/auth-utils";
 import { HydrateClient } from "@/trpc/server";
-import { ErrorBoundary } from "@sentry/nextjs";
-import { Suspense } from "react";
 
 interface PageProps {
   params: Promise<{ credentialId: string }>;

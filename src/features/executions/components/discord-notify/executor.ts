@@ -1,6 +1,6 @@
-import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { compileTemplate } from "@/features/executions/lib/template";
+import type { NodeExecutor } from "@/features/executions/type";
 import { discordNotifyChannel } from "@/inngest/channels/moderation";
 
 type DiscordNotifyData = {
@@ -33,8 +33,10 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
         throw new NonRetriableError("Discord webhook URL is required");
       }
 
-      const title = compileTemplate(data.title, context) || "YouTube Comment Alert";
-      const description = compileTemplate(data.description, context) || "New comment detected";
+      const title =
+        compileTemplate(data.title, context) || "YouTube Comment Alert";
+      const description =
+        compileTemplate(data.description, context) || "New comment detected";
       const color = parseInt(data.color?.replace("#", "") || "15158332", 16); // Default red
 
       const fields = (data.fields || []).map((field) => ({
@@ -56,7 +58,8 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
       };
 
       // Add thumbnail for YouTube comments
-      const hasYouTubeData = context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT;
+      const hasYouTubeData =
+        context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT;
       if (hasYouTubeData) {
         embed.thumbnail = {
           url: "https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/yt_social_square_rgb.png",
@@ -64,7 +67,9 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
       }
 
       // Add AI moderation results if available
-      const moderationResult = context.moderationResult as Record<string, unknown> | undefined;
+      const moderationResult = context.moderationResult as
+        | Record<string, unknown>
+        | undefined;
       if (moderationResult) {
         embed.fields = [
           ...fields,
@@ -110,7 +115,10 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
 
     return result;
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to send Discord notification";
+    const errorMessage =
+      err instanceof Error
+        ? err.message
+        : "Failed to send Discord notification";
 
     // Publish error status
     await step.realtime.publish(

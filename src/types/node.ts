@@ -1,7 +1,13 @@
-import { type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // Node status types
-export type NodeStatus = "initial" | "loading" | "success" | "error" | "skipped" | "pending";
+export type NodeStatus =
+  | "initial"
+  | "loading"
+  | "success"
+  | "error"
+  | "skipped"
+  | "pending";
 
 // Node status variant for different visual styles
 export type NodeStatusVariant = "badge" | "border" | "overlay" | "inline";
@@ -93,7 +99,10 @@ export interface StatusColorConfig {
   pulse: string;
 }
 
-export const statusColors: Record<Exclude<NodeStatus, "initial">, StatusColorConfig> = {
+export const statusColors: Record<
+  Exclude<NodeStatus, "initial">,
+  StatusColorConfig
+> = {
   loading: {
     border: "border-blue-500/60",
     bg: "bg-blue-500/10",
@@ -184,7 +193,8 @@ export function formatErrorMessage(error: NodeErrorData["error"]): {
     },
     credential: {
       title: "Authentication Error",
-      suggestion: "Please check your credentials and make sure they are still valid.",
+      suggestion:
+        "Please check your credentials and make sure they are still valid.",
     },
     network: {
       title: "Network Error",
@@ -200,7 +210,8 @@ export function formatErrorMessage(error: NodeErrorData["error"]): {
     },
     not_found: {
       title: "Not Found",
-      suggestion: "The requested resource was not found. Please verify the ID or URL.",
+      suggestion:
+        "The requested resource was not found. Please verify the ID or URL.",
     },
     timeout: {
       title: "Request Timeout",

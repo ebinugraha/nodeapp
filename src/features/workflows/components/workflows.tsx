@@ -1,5 +1,19 @@
 "use client";
 
+import type { Workflow } from "@prisma/client";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  AlertCircleIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+  ClockIcon,
+  PlayIcon,
+  Trash2Icon,
+  WorkflowIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   EmptyView,
   EntityContainer,
@@ -11,23 +25,17 @@ import {
   ErrorView,
   LoadingView,
 } from "@/components/entity-components";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useEntitySearch } from "@/hooks/use-entity-search";
+import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
+import { cn } from "@/lib/utils";
 import {
   useCreateWorkflow,
   useRemoveWorkflow,
   useSuspenseWorkflows,
 } from "../hooks/use-workflows";
-import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
-import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
-import { useEntitySearch } from "@/hooks/use-entity-search";
-import type { Workflow } from "@prisma/client";
-import { WorkflowIcon, ClockIcon, ArrowRightIcon, Trash2Icon, AlertCircleIcon, PlayIcon, CalendarIcon } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { useState } from "react";
 
 export const WorkflowSearch = () => {
   const [params, setParams] = useWorkflowsParams();
@@ -150,12 +158,14 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
 
   return (
     <Link href={`/workflows/${data.id}`} className="block group prefetch">
-      <div className={cn(
-        "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
-        "bg-card",
-        "hover:border-primary/40 hover:shadow-md cursor-pointer",
-        removeWorkflow.isPending && "opacity-50"
-      )}>
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+          "bg-card",
+          "hover:border-primary/40 hover:shadow-md cursor-pointer",
+          removeWorkflow.isPending && "opacity-50",
+        )}
+      >
         {/* Subtle glow/shadow overlay on hover */}
         <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
@@ -180,11 +190,20 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
 
                 {/* Meta info */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-0.5">
-                  <span suppressHydrationWarning className="flex items-center gap-1.5 shrink-0" title={format(data.updatedAt, "PPpp")}>
+                  <span
+                    suppressHydrationWarning
+                    className="flex items-center gap-1.5 shrink-0"
+                    title={format(data.updatedAt, "PPpp")}
+                  >
                     <ClockIcon className="size-3" />
-                    Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
+                    Updated{" "}
+                    {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
                   </span>
-                  <span suppressHydrationWarning className="flex items-center gap-1.5 shrink-0" title={format(data.createdAt, "PPpp")}>
+                  <span
+                    suppressHydrationWarning
+                    className="flex items-center gap-1.5 shrink-0"
+                    title={format(data.createdAt, "PPpp")}
+                  >
                     <CalendarIcon className="size-3" />
                     Created {format(data.createdAt, "MMM d, yyyy")}
                   </span>
@@ -211,7 +230,7 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
                 >
                   <Trash2Icon className="size-4" />
                 </Button>
-                
+
                 <div className="opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1">
                   <ArrowRightIcon className="size-4" />
                 </div>
@@ -220,13 +239,18 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
 
             {/* Right side - Delete Confirm State */}
             {showDeleteConfirm && (
-              <div 
+              <div
                 className="flex items-center gap-2 h-10 shrink-0 z-10 animate-in fade-in zoom-in-95"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
               >
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-destructive/10 border border-destructive/20 mr-2">
                   <AlertCircleIcon className="size-3.5 text-destructive" />
-                  <span className="text-xs font-medium text-destructive">Delete?</span>
+                  <span className="text-xs font-medium text-destructive">
+                    Delete?
+                  </span>
                 </div>
                 <Button
                   size="sm"

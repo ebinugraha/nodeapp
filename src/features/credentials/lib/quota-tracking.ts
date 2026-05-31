@@ -1,7 +1,7 @@
 "use server";
 
-import prisma from "@/lib/db";
 import { CredentialType } from "@prisma/client";
+import prisma from "@/lib/db";
 import { getOrRefreshAccessToken } from "@/lib/google-token-manager";
 
 // YouTube Data API quota costs
@@ -72,7 +72,10 @@ function shouldResetDaily(lastReset: Date | null): boolean {
   const lastResetDate = new Date(lastReset);
 
   // Reset if it's a new day in UTC
-  return now.toISOString().split("T")[0] !== lastResetDate.toISOString().split("T")[0];
+  return (
+    now.toISOString().split("T")[0] !==
+    lastResetDate.toISOString().split("T")[0]
+  );
 }
 
 function shouldResetMonthly(lastReset: Date | null): boolean {
@@ -108,16 +111,16 @@ function getNextMonthlyReset(): Date {
 export async function trackYoutubeQuota(
   credentialId: string,
   endpoint: YoutubeApiEndpoint,
-  userId: string
+  userId: string,
 ): Promise<QuotaUsage | null> {
   // Get the credential
-  const credential = await prisma.credential.findFirst({
+  const credential = (await prisma.credential.findFirst({
     where: {
       id: credentialId,
       userId,
       type: CredentialType.YOUTUBE,
     },
-  }) as any;
+  })) as any;
 
   if (!credential) {
     return null;
@@ -127,8 +130,12 @@ export async function trackYoutubeQuota(
   const now = new Date();
 
   // Check if we need to reset daily quota
-  const shouldResetDailyQuota = shouldResetDaily(credential.lastQuotaReset ?? null);
-  const shouldResetMonthlyQuota = shouldResetMonthly(credential.lastMonthlyReset ?? null);
+  const shouldResetDailyQuota = shouldResetDaily(
+    credential.lastQuotaReset ?? null,
+  );
+  const shouldResetMonthlyQuota = shouldResetMonthly(
+    credential.lastMonthlyReset ?? null,
+  );
 
   // Build update object
   const updateData: any = {};
@@ -159,15 +166,15 @@ export async function trackYoutubeQuota(
 // Get current quota usage for a credential
 export async function getYoutubeQuotaUsage(
   credentialId: string,
-  userId: string
+  userId: string,
 ): Promise<QuotaUsage | null> {
-  const credential = await prisma.credential.findFirst({
+  const credential = (await prisma.credential.findFirst({
     where: {
       id: credentialId,
       userId,
       type: CredentialType.YOUTUBE,
     },
-  }) as any;
+  })) as any;
 
   if (!credential) {
     return null;
@@ -239,7 +246,7 @@ function getQuotaUsage(credential: any): QuotaUsage {
 export async function resetYoutubeQuota(
   credentialId: string,
   userId: string,
-  type: "daily" | "monthly" | "both" = "both"
+  type: "daily" | "monthly" | "both" = "both",
 ): Promise<boolean> {
   const updateData: any = {};
 
@@ -266,14 +273,14 @@ export async function resetYoutubeQuota(
 
 // Get all YouTube credentials quota for a user
 export async function getAllYoutubeQuotaUsage(
-  userId: string
+  userId: string,
 ): Promise<Array<{ credentialId: string; name: string; usage: QuotaUsage }>> {
-  const credentials = await prisma.credential.findMany({
+  const credentials = (await prisma.credential.findMany({
     where: {
       userId,
       type: CredentialType.YOUTUBE,
     },
-  }) as any[];
+  })) as any[];
 
   return credentials.map((cred) => ({
     credentialId: cred.id,
@@ -286,7 +293,7 @@ export async function getAllYoutubeQuotaUsage(
 export async function updateQuotaLimits(
   credentialId: string,
   dailyLimit: number,
-  monthlyLimit: number
+  monthlyLimit: number,
 ): Promise<void> {
   await prisma.credential.update({
     where: { id: credentialId },
@@ -315,7 +322,7 @@ export async function testYoutubeConnection(credentialId: string): Promise<{
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {

@@ -1,6 +1,8 @@
 "use client";
 
+import type { NodeType } from "@prisma/client";
 import { Loader2Icon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateTemplate } from "@/features/templates/hooks/use-templates";
-import { NodeType } from "@prisma/client";
-import { useState } from "react";
 
 interface SaveTemplateDialogProps {
   open: boolean;
@@ -80,7 +80,9 @@ export function SaveTemplateDialog({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description (optional)</label>
+            <label className="text-sm font-medium">
+              Description (optional)
+            </label>
             <Textarea
               placeholder="Describe when to use this template..."
               value={description}
@@ -99,10 +101,7 @@ export function SaveTemplateDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!name.trim() || isLoading}
-          >
+          <Button onClick={handleSubmit} disabled={!name.trim() || isLoading}>
             {isLoading && <Loader2Icon className="size-4 animate-spin mr-2" />}
             Save Template
           </Button>

@@ -1,10 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,14 +23,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VariablePicker } from "@/components/variable-picker";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
 
 const formSchema = z.object({
   minConfidence: z.number().min(0).max(1),
@@ -82,7 +90,7 @@ export const SentimentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Sentiment Analysis Configuration</DialogTitle>
         </DialogHeader>
@@ -113,7 +121,8 @@ export const SentimentDialog = ({
                     />
                   </div>
                   <FormDescription>
-                    Enter static text or insert variables using the {`{}`} button
+                    Enter static text or insert variables using the {`{}`}{" "}
+                    button
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -125,7 +134,9 @@ export const SentimentDialog = ({
               name="minConfidence"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Minimum Confidence ({Math.round(field.value * 100)}%)</FormLabel>
+                  <FormLabel>
+                    Minimum Confidence ({Math.round(field.value * 100)}%)
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="range"
@@ -133,7 +144,9 @@ export const SentimentDialog = ({
                       max={1}
                       step={0.1}
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value))
+                      }
                     />
                   </FormControl>
                   <FormDescription>
@@ -158,15 +171,7 @@ export const SentimentDialog = ({
               )}
             />
 
-            <div className="bg-muted p-4 rounded-lg">
-              <h4 className="text-sm font-medium mb-2">Output Fields:</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• <code>label</code>: "positive" | "negative" | "neutral"</li>
-                <li>• <code>score</code>: -1 to 1</li>
-                <li>• <code>confidence</code>: 0 to 1</li>
-                <li>• <code>emotions</code>: {`{joy, anger, sadness, surprise}`}</li>
-              </ul>
-            </div>
+            <NodeOutputHint nodeType={NodeType.SENTIMENT_ANALYSIS} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

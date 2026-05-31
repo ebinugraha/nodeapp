@@ -1,13 +1,15 @@
-import { PAGINATION } from "@/config/constant";
 import { CredentialType } from "@prisma/client";
-import prisma from "@/lib/db";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { getYoutubeQuotaUsage, resetYoutubeQuota, updateQuotaLimits, testYoutubeConnection } from "../lib/quota-tracking";
+import { PAGINATION } from "@/config/constant";
+import prisma from "@/lib/db";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+  getYoutubeQuotaUsage,
+  resetYoutubeQuota,
+  testYoutubeConnection,
+  updateQuotaLimits,
+} from "../lib/quota-tracking";
 
 export const credentialsRouter = createTRPCRouter({
   create: protectedProcedure
@@ -211,7 +213,7 @@ export const credentialsRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         type: z.enum(["daily", "monthly", "both"]).default("both"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const credential = await prisma.credential.findFirst({
@@ -229,7 +231,11 @@ export const credentialsRouter = createTRPCRouter({
         });
       }
 
-      const success = await resetYoutubeQuota(credential.id, ctx.auth.user.id, input.type);
+      const success = await resetYoutubeQuota(
+        credential.id,
+        ctx.auth.user.id,
+        input.type,
+      );
 
       if (!success) {
         throw new TRPCError({
@@ -247,7 +253,7 @@ export const credentialsRouter = createTRPCRouter({
         id: z.string(),
         dailyLimit: z.number().min(1).max(10000000),
         monthlyLimit: z.number().min(1).max(100000000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const credential = await prisma.credential.findFirst({
@@ -265,7 +271,11 @@ export const credentialsRouter = createTRPCRouter({
         });
       }
 
-      await updateQuotaLimits(credential.id, input.dailyLimit, input.monthlyLimit);
+      await updateQuotaLimits(
+        credential.id,
+        input.dailyLimit,
+        input.monthlyLimit,
+      );
 
       return { success: true };
     }),

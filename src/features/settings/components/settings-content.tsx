@@ -1,9 +1,9 @@
 "use client";
 
+import { SettingsIcon, UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProfileSettings } from "./profile-settings";
 import { PreferencesSettings } from "./preferences-settings";
-import { UserIcon, SettingsIcon } from "lucide-react";
+import { ProfileSettings } from "./profile-settings";
 
 export const SettingsContent = () => {
   return (

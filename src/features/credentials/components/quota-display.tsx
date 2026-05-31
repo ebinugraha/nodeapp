@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useYoutubeQuotaUsage, useResetYoutubeQuota, useTestYoutubeConnection } from "../hooks/use-credentials";
+import { formatDistanceToNow } from "date-fns";
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -11,19 +10,16 @@ import {
   ExternalLinkIcon,
   RefreshCwIcon,
   RotateCcwIcon,
+  SettingsIcon,
   TrendingUpIcon,
   WifiIcon,
   XCircleIcon,
-  SettingsIcon,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +29,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import {
+  useResetYoutubeQuota,
+  useTestYoutubeConnection,
+  useYoutubeQuotaUsage,
+} from "../hooks/use-credentials";
 
 interface QuotaDisplayProps {
   credentialId: string;
@@ -47,13 +51,23 @@ export const QuotaDisplay = ({
   initialDailyLimit = 10000,
   initialMonthlyLimit = 1000000,
 }: QuotaDisplayProps) => {
-  const { data: quota, isLoading, error, refetch } = useYoutubeQuotaUsage(credentialId);
+  const {
+    data: quota,
+    isLoading,
+    error,
+    refetch,
+  } = useYoutubeQuotaUsage(credentialId);
   const resetQuota = useResetYoutubeQuota();
   const testConnection = useTestYoutubeConnection();
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [dailyLimit, setDailyLimit] = useState(initialDailyLimit.toString());
-  const [monthlyLimit, setMonthlyLimit] = useState(initialMonthlyLimit.toString());
+  const [monthlyLimit, setMonthlyLimit] = useState(
+    initialMonthlyLimit.toString(),
+  );
 
   const handleTestConnection = async () => {
     setTestResult(null);
@@ -152,7 +166,7 @@ export const QuotaDisplay = ({
               "text-[10px] px-1.5",
               quota.daily.isOverLimit || quota.monthly.isOverLimit
                 ? "bg-red-100 text-red-700 border-red-200"
-                : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                : "bg-emerald-100 text-emerald-700 border-emerald-200",
             )}
           >
             {quota.daily.isOverLimit || quota.monthly.isOverLimit ? (
@@ -178,14 +192,18 @@ export const QuotaDisplay = ({
               <span className="text-xs font-medium">Daily Quota</span>
             </div>
             <span className="text-xs text-muted-foreground">
-              {formatNumber(quota.daily.used)} / {formatNumber(quota.daily.limit)}
+              {formatNumber(quota.daily.used)} /{" "}
+              {formatNumber(quota.daily.limit)}
             </span>
           </div>
           <div className="space-y-1">
             <Progress
               value={Math.min(quota.daily.percentage, 100)}
               className="h-2"
-              indicatorClassName={getProgressColor(quota.daily.percentage, quota.daily.isOverLimit)}
+              indicatorClassName={getProgressColor(
+                quota.daily.percentage,
+                quota.daily.isOverLimit,
+              )}
             />
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               <span>{quota.daily.percentage}% used</span>
@@ -202,14 +220,18 @@ export const QuotaDisplay = ({
               <span className="text-xs font-medium">Monthly Quota</span>
             </div>
             <span className="text-xs text-muted-foreground">
-              {formatNumber(quota.monthly.used)} / {formatNumber(quota.monthly.limit)}
+              {formatNumber(quota.monthly.used)} /{" "}
+              {formatNumber(quota.monthly.limit)}
             </span>
           </div>
           <div className="space-y-1">
             <Progress
               value={Math.min(quota.monthly.percentage, 100)}
               className="h-2"
-              indicatorClassName={getProgressColor(quota.monthly.percentage, quota.monthly.isOverLimit)}
+              indicatorClassName={getProgressColor(
+                quota.monthly.percentage,
+                quota.monthly.isOverLimit,
+              )}
             />
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               <span>{quota.monthly.percentage}% used</span>
@@ -226,7 +248,9 @@ export const QuotaDisplay = ({
               <p className="font-medium">Quota Warning</p>
               <p className="text-amber-700/80 mt-0.5">
                 {quota.daily.isNearLimit && "Daily quota is above 80%"}
-                {quota.daily.isNearLimit && quota.monthly.isNearLimit && " and "}
+                {quota.daily.isNearLimit &&
+                  quota.monthly.isNearLimit &&
+                  " and "}
                 {quota.monthly.isNearLimit && "Monthly quota is above 80%"}
               </p>
             </div>
@@ -235,21 +259,25 @@ export const QuotaDisplay = ({
 
         {/* Test Connection Result */}
         {testResult && (
-          <div className={cn(
-            "flex items-start gap-2 p-2 rounded-lg border",
-            testResult.success
-              ? "bg-emerald-50 border-emerald-200"
-              : "bg-red-50 border-red-200"
-          )}>
+          <div
+            className={cn(
+              "flex items-start gap-2 p-2 rounded-lg border",
+              testResult.success
+                ? "bg-emerald-50 border-emerald-200"
+                : "bg-red-50 border-red-200",
+            )}
+          >
             {testResult.success ? (
               <CheckCircle2Icon className="size-4 text-emerald-600 mt-0.5" />
             ) : (
               <XCircleIcon className="size-4 text-red-600 mt-0.5" />
             )}
-            <p className={cn(
-              "text-xs",
-              testResult.success ? "text-emerald-700" : "text-red-700"
-            )}>
+            <p
+              className={cn(
+                "text-xs",
+                testResult.success ? "text-emerald-700" : "text-red-700",
+              )}
+            >
               {testResult.message}
             </p>
           </div>
@@ -265,7 +293,9 @@ export const QuotaDisplay = ({
                   Daily Reset
                 </p>
                 <p suppressHydrationWarning className="text-xs font-medium">
-                  {formatDistanceToNow(quota.resetInfo.dailyResetsAt, { addSuffix: true })}
+                  {formatDistanceToNow(quota.resetInfo.dailyResetsAt, {
+                    addSuffix: true,
+                  })}
                 </p>
               </div>
             </div>
@@ -276,7 +306,9 @@ export const QuotaDisplay = ({
                   Monthly Reset
                 </p>
                 <p suppressHydrationWarning className="text-xs font-medium">
-                  {formatDistanceToNow(quota.resetInfo.monthlyResetsAt, { addSuffix: true })}
+                  {formatDistanceToNow(quota.resetInfo.monthlyResetsAt, {
+                    addSuffix: true,
+                  })}
                 </p>
               </div>
             </div>

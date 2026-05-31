@@ -1,9 +1,6 @@
-import prisma from "@/lib/db";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/trpc/init";
 import { z } from "zod";
+import prisma from "@/lib/db";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 const themeEnum = z.enum(["light", "dark", "system"]);
 
@@ -61,6 +58,7 @@ export const settingsRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1).max(100).optional(),
         bio: z.string().max(500).optional(),
+        image: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

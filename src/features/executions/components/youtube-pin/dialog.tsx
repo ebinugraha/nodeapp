@@ -1,12 +1,20 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CredentialType, NodeType } from "@prisma/client";
+import Image from "next/image";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -25,13 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
-import { CredentialType, NodeType } from "@prisma/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import Image from "next/image";
-import { SaveTemplateButton } from "@/components/save-template-button";
 
 const formSchema = z.object({
   credentialId: z.string().min(1, "Credential is required"),
@@ -140,6 +141,8 @@ export const PinDialog = ({
                 </FormItem>
               )}
             />
+
+            <NodeOutputHint nodeType={NodeType.YOUTUBE_PIN} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

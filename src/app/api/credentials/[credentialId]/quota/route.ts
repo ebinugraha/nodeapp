@@ -1,15 +1,15 @@
-import { requireAuth } from "@/lib/auth-utils";
-import { getYoutubeQuotaUsage, QuotaUsage } from "@/features/credentials/lib/quota-tracking";
 import { NextResponse } from "next/server";
+import {
+  getYoutubeQuotaUsage,
+  QuotaUsage,
+} from "@/features/credentials/lib/quota-tracking";
+import { requireAuth } from "@/lib/auth-utils";
 
 interface RouteContext {
   params: Promise<{ credentialId: string }>;
 }
 
-export async function GET(
-  request: Request,
-  context: RouteContext
-) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const session = await requireAuth();
     const userId = session.user?.id;
@@ -18,14 +18,14 @@ export async function GET(
     if (!credentialId) {
       return NextResponse.json(
         { error: "Credential ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!userId) {
       return NextResponse.json(
         { error: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function GET(
     if (!quotaUsage) {
       return NextResponse.json(
         { error: "Credential not found or not a YouTube credential" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -46,7 +46,7 @@ export async function GET(
     console.error("Error fetching quota usage:", error);
     return NextResponse.json(
       { error: "Failed to fetch quota usage" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

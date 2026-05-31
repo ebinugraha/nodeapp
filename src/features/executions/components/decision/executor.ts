@@ -1,6 +1,6 @@
-import { NodeExecutor } from "@/features/executions/type";
-import { NonRetriableError } from "inngest";
 import Handlebars from "handlebars";
+import { NonRetriableError } from "inngest";
+import type { NodeExecutor } from "@/features/executions/type";
 
 // Helper untuk Handlebars jika belum ada
 if (!Handlebars.helpers.json) {

@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ credentialId: string }> }
+  { params }: { params: Promise<{ credentialId: string }> },
 ) {
   try {
     // Get session using better-auth pattern from tRPC
@@ -27,12 +27,18 @@ export async function GET(
     });
 
     if (!credential) {
-      return NextResponse.json({ error: "Credential not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Credential not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json(credential);
   } catch (error) {
     console.error("Error fetching credential:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -4,11 +4,17 @@ import {
   FolderOpenIcon,
   HistoryIcon,
   KeyIcon,
-  LogOutIcon,
-  SettingsIcon,
-  PlusIcon,
   Loader2Icon,
+  LogOutIcon,
+  PlusIcon,
+  SettingsIcon,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useCreateWorkflow } from "@/features/workflows/hooks/use-workflows";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "./ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -20,12 +26,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { useCreateWorkflow } from "@/features/workflows/hooks/use-workflows";
-import { Button } from "./ui/button";
 
 const menuItems = [
   {

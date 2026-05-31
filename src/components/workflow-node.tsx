@@ -1,14 +1,16 @@
 "use client";
 
 import { NodeToolbar, Position } from "@xyflow/react";
-import { Button } from "./ui/button";
 import {
+  GripVerticalIcon,
+  MoreHorizontalIcon,
   Settings2Icon,
   Trash2Icon,
-  MoreHorizontalIcon,
-  GripVerticalIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { categoryConfig, type NodeCategory } from "@/types/node";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { cn } from "@/lib/utils";
-import { categoryConfig, type NodeCategory } from "@/types/node";
 
 interface WorkflowNodeProps {
   children: React.ReactNode;

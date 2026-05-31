@@ -1,25 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import {
   AlertTriangleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ExternalLinkIcon,
+  LightbulbIcon,
   RefreshCwIcon,
   XIcon,
-  LightbulbIcon,
-  ExternalLinkIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatErrorMessage, type NodeErrorData } from "@/types/node";
 import { cn } from "@/lib/utils";
+import { formatErrorMessage, type NodeErrorData } from "@/types/node";
 
 interface NodeErrorTooltipProps {
   error: NodeErrorData;
@@ -72,7 +72,9 @@ export const NodeErrorTooltip = ({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-red-900">{title}</p>
-            <p className="text-xs text-red-700/80 line-clamp-2">{description}</p>
+            <p className="text-xs text-red-700/80 line-clamp-2">
+              {description}
+            </p>
           </div>
         </div>
 

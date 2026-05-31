@@ -1,10 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NodeType } from "@prisma/client";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { SaveTemplateButton } from "@/components/save-template-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -23,16 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import z from "zod";
-import { SaveTemplateButton } from "@/components/save-template-button";
-import { NodeType } from "@prisma/client";
+import { VariablePicker } from "@/components/variable-picker";
 
 const formSchema = z.object({
-  delaySeconds: z.number().min(1).max(3600),
+  mode: z.enum(["fixed", "random"]),
   delayType: z.enum(["seconds", "minutes", "hours"]),
+  delaySeconds: z.union([z.string(), z.number()]).optional(),
+  minDelay: z.union([z.string(), z.number()]).optional(),
+  maxDelay: z.union([z.string(), z.number()]).optional(),
   variableName: z.string(),
 });
 
@@ -43,6 +48,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: WaitDelayFormValues) => void;
   defaultValues?: Partial<WaitDelayFormValues>;
+  nodeId?: string;
 }
 
 export const WaitDelayDialog = ({
@@ -50,12 +56,16 @@ export const WaitDelayDialog = ({
   onOpenChange,
   onSubmit,
   defaultValues = {},
+  nodeId = "wait-delay",
 }: Props) => {
   const form = useForm<WaitDelayFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      delaySeconds: defaultValues.delaySeconds || 5,
+      mode: defaultValues.mode || "fixed",
       delayType: defaultValues.delayType || "seconds",
+      delaySeconds: defaultValues.delaySeconds || 5,
+      minDelay: defaultValues.minDelay || 2,
+      maxDelay: defaultValues.maxDelay || 5,
       variableName: defaultValues.variableName || "delayResult",
     },
   });
@@ -63,8 +73,11 @@ export const WaitDelayDialog = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        delaySeconds: defaultValues.delaySeconds || 5,
+        mode: defaultValues.mode || "fixed",
         delayType: defaultValues.delayType || "seconds",
+        delaySeconds: defaultValues.delaySeconds || 5,
+        minDelay: defaultValues.minDelay || 2,
+        maxDelay: defaultValues.maxDelay || 5,
         variableName: defaultValues.variableName || "delayResult",
       });
     }
@@ -75,18 +88,16 @@ export const WaitDelayDialog = ({
     onOpenChange(false);
   };
 
-  const formatDuration = () => {
-    const seconds = form.watch("delaySeconds");
-    const type = form.watch("delayType");
-    switch (type) {
-      case "minutes":
-        return `${seconds} minute(s)`;
-      case "hours":
-        return `${seconds} hour(s)`;
-      default:
-        return `${seconds} second(s)`;
-    }
+  const handleInsertVariable = (
+    currentValue: string | number | undefined,
+    newValue: string,
+    onChange: (val: string) => void,
+  ) => {
+    onChange((currentValue?.toString() || "") + newValue);
   };
+
+  const mode = form.watch("mode");
+  const delayType = form.watch("delayType");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,54 +110,150 @@ export const WaitDelayDialog = ({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4 w-full"
           >
-            <FormField
-              control={form.control}
-              name="delayType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Delay Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="seconds">Seconds</SelectItem>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="mode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Wait Mode</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="fixed">Fixed Duration</SelectItem>
+                        <SelectItem value="random">Random Range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="delaySeconds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={form.watch("delayType") === "hours" ? 24 : form.watch("delayType") === "minutes" ? 60 : 3600}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Total delay: {formatDuration()}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="delayType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time Unit</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="seconds">Seconds</SelectItem>
+                        <SelectItem value="minutes">Minutes</SelectItem>
+                        <SelectItem value="hours">Hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {mode === "fixed" ? (
+              <FormField
+                control={form.control}
+                name="delaySeconds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fixed Duration</FormLabel>
+                    <div className="flex gap-2 items-start">
+                      <FormControl className="flex-1">
+                        <Input
+                          placeholder={`e.g. 5 or {{var}}`}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <VariablePicker
+                        nodeId={nodeId}
+                        onSelect={(val) =>
+                          handleInsertVariable(field.value, val, field.onChange)
+                        }
+                      />
+                    </div>
+                    <FormDescription>
+                      Amount of {delayType} to wait.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="minDelay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Min Duration</FormLabel>
+                      <div className="flex gap-2 items-start">
+                        <FormControl className="flex-1">
+                          <Input
+                            placeholder={`Min`}
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <VariablePicker
+                          nodeId={nodeId}
+                          onSelect={(val) =>
+                            handleInsertVariable(
+                              field.value,
+                              val,
+                              field.onChange,
+                            )
+                          }
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maxDelay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Max Duration</FormLabel>
+                      <div className="flex gap-2 items-start">
+                        <FormControl className="flex-1">
+                          <Input
+                            placeholder={`Max`}
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <VariablePicker
+                          nodeId={nodeId}
+                          onSelect={(val) =>
+                            handleInsertVariable(
+                              field.value,
+                              val,
+                              field.onChange,
+                            )
+                          }
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}
@@ -161,6 +268,8 @@ export const WaitDelayDialog = ({
                 </FormItem>
               )}
             />
+
+            <NodeOutputHint nodeType={NodeType.WAIT_DELAY} />
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <SaveTemplateButton

@@ -1,4 +1,4 @@
-import { NodeExecutor } from "@/features/executions/type";
+import type { NodeExecutor } from "@/features/executions/type";
 import { youtubeVideoCommentChannel } from "@/inngest/channels/youtube-video-comment";
 
 export const YoutubeVideoCommentExecutor: NodeExecutor<

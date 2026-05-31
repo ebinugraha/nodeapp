@@ -1,21 +1,21 @@
 "use client";
 
-import { NodeProps, useReactFlow } from "@xyflow/react";
+import { type NodeProps, useReactFlow } from "@xyflow/react";
+import { Loader2, PauseIcon, PlayIcon } from "lucide-react";
 import { memo, useState } from "react";
-import { BaseTriggerNode } from "../base-trigger-node";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
 import { youtubeVideoCommentChannel } from "@/inngest/channels/youtube-video-comment";
+import { BaseTriggerNode } from "../base-trigger-node";
 import {
   fetchYoutubeVideoCommentToken,
   toggleYoutubeVideoPolling,
 } from "./actions";
 import {
   YoutubeVideoCommentDialog,
-  YoutubeVideoCommentFormValues,
+  type YoutubeVideoCommentFormValues,
 } from "./dialog";
-import { Button } from "@/components/ui/button";
-import { PlayIcon, PauseIcon, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 type YoutubeVideoCommentData = YoutubeVideoCommentFormValues & {
   isActive?: boolean;

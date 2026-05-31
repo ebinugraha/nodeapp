@@ -1,5 +1,18 @@
 "use client";
 
+import { type Execution, ExecutionStatus } from "@prisma/client";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  ClockIcon,
+  Loader2Icon,
+  TimerIcon,
+  WorkflowIcon,
+  XCircleIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   EmptyView,
   EntityContainer,
@@ -10,28 +23,10 @@ import {
   ErrorView,
   LoadingView,
 } from "@/components/entity-components";
-
-import { useRouter } from "next/navigation";
-import { formatDistanceToNow, format } from "date-fns";
-
-import {
-  Execution,
-  ExecutionStatus,
-} from "@prisma/client";
-import {
-  CheckIcon,
-  ClockIcon,
-  Loader2Icon,
-  XCircleIcon,
-  WorkflowIcon,
-  ArrowRightIcon,
-  TimerIcon,
-} from "lucide-react";
-import { useSuspenseExecutions } from "../hooks/use-executions";
-import { useExecutionsParams } from "../hooks/use-executions-params";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { useSuspenseExecutions } from "../hooks/use-executions";
+import { useExecutionsParams } from "../hooks/use-executions-params";
 
 export const ExecutionsList = () => {
   const executions = useSuspenseExecutions();
@@ -148,35 +143,39 @@ export const ExecutionItem = ({
   };
 
   return (
-    <Link
-      href={`/executions/${data.id}`}
-      className="block group"
-      prefetch
-    >
-      <div className={cn(
-        "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
-        "bg-card",
-        "hover:border-primary/40 hover:shadow-md cursor-pointer"
-      )}>
+    <Link href={`/executions/${data.id}`} className="block group" prefetch>
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+          "bg-card",
+          "hover:border-primary/40 hover:shadow-md cursor-pointer",
+        )}
+      >
         {/* Subtle glow/shadow overlay on hover */}
         <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Status indicator line */}
-        <div className={cn(
-          "absolute left-0 top-0 bottom-0 w-1",
-          statusConfig.dotClassName
-        )} />
+        <div
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-1",
+            statusConfig.dotClassName,
+          )}
+        />
 
         <div className="px-4 py-3">
           <div className="flex items-start justify-between gap-4">
             {/* Left side - Status and info */}
             <div className="flex items-start gap-3 min-w-0">
               {/* Status Badge */}
-              <div className={cn(
-                "flex items-center justify-center size-10 rounded-lg shrink-0",
-                statusConfig.className
-              )}>
-                <StatusIcon className={cn("size-5", statusConfig.iconClassName)} />
+              <div
+                className={cn(
+                  "flex items-center justify-center size-10 rounded-lg shrink-0",
+                  statusConfig.className,
+                )}
+              >
+                <StatusIcon
+                  className={cn("size-5", statusConfig.iconClassName)}
+                />
               </div>
 
               <div className="flex flex-col justify-center min-w-0 space-y-0.5">
@@ -185,7 +184,10 @@ export const ExecutionItem = ({
                   <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                     {data.workflow.name}
                   </h3>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-background uppercase tracking-wider">
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] px-1.5 py-0 bg-background uppercase tracking-wider"
+                  >
                     {statusConfig.label}
                   </Badge>
                 </div>
@@ -201,7 +203,11 @@ export const ExecutionItem = ({
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-1">
                   <span className="flex items-center gap-1.5 shrink-0">
                     <ClockIcon className="size-3" />
-                    <span suppressHydrationWarning className="truncate" title={format(data.startedAt, "PPpp")}>
+                    <span
+                      suppressHydrationWarning
+                      className="truncate"
+                      title={format(data.startedAt, "PPpp")}
+                    >
                       {formatDistanceToNow(data.startedAt, { addSuffix: true })}
                     </span>
                   </span>

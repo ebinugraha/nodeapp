@@ -1,9 +1,9 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
+import type { NodeType } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { NodeType } from "@prisma/client";
+import { useTRPC } from "@/trpc/client";
 
 export const useTemplates = () => {
   const trpc = useTRPC();
@@ -46,7 +46,9 @@ export const useUpdateTemplate = () => {
       onSuccess: (data) => {
         toast.success(`Template "${data.name}" updated`);
         queryClient.invalidateQueries(trpc.templates.getAll.queryOptions());
-        queryClient.invalidateQueries(trpc.templates.getOne.queryOptions({ id: data.id }));
+        queryClient.invalidateQueries(
+          trpc.templates.getOne.queryOptions({ id: data.id }),
+        );
       },
       onError: (error) => {
         toast.error(`Failed to update template: ${error.message}`);

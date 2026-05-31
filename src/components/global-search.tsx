@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { WorkflowIcon, KeyIcon, HistoryIcon } from "lucide-react";
-import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { HistoryIcon, KeyIcon, WorkflowIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { useTRPC } from "@/trpc/client";
 
 interface WorkflowResult {
   id: string;
@@ -63,7 +70,8 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
     enabled: true,
   });
 
-  const isLoading = isLoadingWorkflows || isLoadingCredentials || isLoadingExecutions;
+  const isLoading =
+    isLoadingWorkflows || isLoadingCredentials || isLoadingExecutions;
 
   const allResults: SearchResult[] = [
     ...workflows.map((w: WorkflowResult) => ({
@@ -88,7 +96,8 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
     })),
   ];
 
-  const hasAnyResults = workflows.length > 0 || credentials.length > 0 || executions.length > 0;
+  const hasAnyResults =
+    workflows.length > 0 || credentials.length > 0 || executions.length > 0;
 
   const handleSelect = useCallback(
     (result: SearchResult) => {
@@ -105,7 +114,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
           break;
       }
     },
-    [router, onOpenChange]
+    [router, onOpenChange],
   );
 
   useEffect(() => {
@@ -128,7 +137,9 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
       />
       <CommandList>
         <CommandEmpty>
-          <span className="text-muted-foreground">No results found for &quot;{query}&quot;</span>
+          <span className="text-muted-foreground">
+            No results found for &quot;{query}&quot;
+          </span>
         </CommandEmpty>
 
         {allResults.length > 0 && (
@@ -150,9 +161,17 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                   >
                     <WorkflowIcon className="mr-2 size-4" />
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="truncate font-medium">{workflow.name}</span>
-                      <span suppressHydrationWarning className="text-xs text-muted-foreground">
-                        Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
+                      <span className="truncate font-medium">
+                        {workflow.name}
+                      </span>
+                      <span
+                        suppressHydrationWarning
+                        className="text-xs text-muted-foreground"
+                      >
+                        Updated{" "}
+                        {formatDistanceToNow(new Date(workflow.updatedAt), {
+                          addSuffix: true,
+                        })}
                       </span>
                     </div>
                   </CommandItem>
@@ -178,8 +197,12 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                   >
                     <KeyIcon className="mr-2 size-4" />
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="truncate font-medium">{credential.name}</span>
-                      <span className="text-xs text-muted-foreground">{credential.type}</span>
+                      <span className="truncate font-medium">
+                        {credential.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {credential.type}
+                      </span>
                     </div>
                   </CommandItem>
                 ))}
@@ -204,9 +227,17 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                   >
                     <HistoryIcon className="mr-2 size-4" />
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="truncate font-medium">{execution.workflow.name}</span>
-                      <span suppressHydrationWarning className="text-xs text-muted-foreground">
-                        ID: {execution.id.slice(-8)} • {formatDistanceToNow(new Date(execution.startedAt), { addSuffix: true })}
+                      <span className="truncate font-medium">
+                        {execution.workflow.name}
+                      </span>
+                      <span
+                        suppressHydrationWarning
+                        className="text-xs text-muted-foreground"
+                      >
+                        ID: {execution.id.slice(-8)} •{" "}
+                        {formatDistanceToNow(new Date(execution.startedAt), {
+                          addSuffix: true,
+                        })}
                       </span>
                     </div>
                   </CommandItem>
@@ -233,6 +264,8 @@ export function useGlobalSearch() {
   return {
     open,
     setOpen,
-    GlobalSearchDialog: () => <GlobalSearch open={open} onOpenChange={setOpen} />,
+    GlobalSearchDialog: () => (
+      <GlobalSearch open={open} onOpenChange={setOpen} />
+    ),
   };
 }

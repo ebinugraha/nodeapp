@@ -1,14 +1,18 @@
 "use client";
 
-import { Node, NodeProps, useReactFlow } from "@xyflow/react";
-import { memo, useState } from "react";
-import { BaseExecutionNode } from "../base-execution-node";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { GlobeIcon } from "lucide-react";
-import { AVAILABLE_MODELS, GeminiDialog, GeminiFormValues } from "./dialog";
-import { useNodeStatus } from "../../hooks/use-node-status";
-import { httpRequestChannel } from "@/inngest/channels/http-request";
+import { memo, useState } from "react";
 import { geminiExecutionChannel } from "@/inngest/channels/gemini";
+import { httpRequestChannel } from "@/inngest/channels/http-request";
+import { useNodeStatus } from "../../hooks/use-node-status";
+import { BaseExecutionNode } from "../base-execution-node";
 import { fetchGeminiToken } from "./actions";
+import {
+  AVAILABLE_MODELS,
+  GeminiDialog,
+  type GeminiFormValues,
+} from "./dialog";
 
 type GeminiNodeData = {
   variableName?: string;

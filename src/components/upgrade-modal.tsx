@@ -22,7 +22,8 @@ export const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
         <AlertDialogHeader>
           <AlertDialogTitle>Feature Unavailable</AlertDialogTitle>
           <AlertDialogDescription>
-            This feature is currently unavailable. Please contact support if you believe this is an error.
+            This feature is currently unavailable. Please contact support if you
+            believe this is an error.
           </AlertDialogDescription>
         </AlertDialogHeader>
       </AlertDialogContent>

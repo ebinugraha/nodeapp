@@ -1,6 +1,6 @@
-import { NodeExecutor } from "@/features/executions/type";
 import { NonRetriableError } from "inngest";
 import { compileTemplate } from "@/features/executions/lib/template";
+import type { NodeExecutor } from "@/features/executions/type";
 
 type WebhookData = {
   variableName?: string;
@@ -23,7 +23,8 @@ export const WebhookExecutor: NodeExecutor<WebhookData> = async ({
     }
 
     // Compile body template
-    const body = compileTemplate(data.bodyTemplate, context) || JSON.stringify(context);
+    const body =
+      compileTemplate(data.bodyTemplate, context) || JSON.stringify(context);
 
     // Build headers
     const headers: Record<string, string> = {
@@ -43,7 +44,9 @@ export const WebhookExecutor: NodeExecutor<WebhookData> = async ({
 
     if (!response.ok) {
       const error = await response.text();
-      throw new NonRetriableError(`Webhook failed: ${response.status} - ${error}`);
+      throw new NonRetriableError(
+        `Webhook failed: ${response.status} - ${error}`,
+      );
     }
 
     const responseData = await response.json().catch(() => response.text());

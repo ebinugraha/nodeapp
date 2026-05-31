@@ -1,4 +1,4 @@
-import { workflowContext } from "@/features/executions/type";
+import type { workflowContext } from "@/features/executions/type";
 
 /**
  * Compiles template strings with context variables.
@@ -14,7 +14,7 @@ import { workflowContext } from "@/features/executions/type";
  */
 export function compileTemplate(
   template: string | undefined,
-  context: workflowContext
+  context: workflowContext,
 ): string {
   if (!template) return "";
 
@@ -56,14 +56,17 @@ export function compileTemplate(
     (context.YOUTUBE_LIVE_CHAT as Record<string, unknown> | undefined);
 
   if (commentData) {
-    result = result.replace(/\{\{author\}\}/g, String(commentData.author ?? ""));
+    result = result.replace(
+      /\{\{author\}\}/g,
+      String(commentData.author ?? ""),
+    );
     result = result.replace(
       /\{\{comment\}\}/g,
-      String(commentData.text ?? commentData.message ?? "")
+      String(commentData.text ?? commentData.message ?? ""),
     );
     result = result.replace(
       /\{\{videoId\}\}/g,
-      String(commentData.videoId ?? "")
+      String(commentData.videoId ?? ""),
     );
   }
 
@@ -74,14 +77,15 @@ export function compileTemplate(
  * Extracts all variable references from a template string.
  * Useful for debugging or validation.
  */
-export function extractTemplateVariables(
-  template: string
-): { nested: string[]; topLevel: string[] } {
+export function extractTemplateVariables(template: string): {
+  nested: string[];
+  topLevel: string[];
+} {
   const nested: string[] = [];
   const topLevel: string[] = [];
 
   const nestedMatches = template.matchAll(
-    /\{\{([A-Z_][A-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g
+    /\{\{([A-Z_][A-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g,
   );
   for (const match of nestedMatches) {
     nested.push(match[1]);

@@ -1,8 +1,8 @@
 "use client";
 
-import Head from "next/head";
 import * as Sentry from "@sentry/nextjs";
-import { useState, useEffect } from "react";
+import Head from "next/head";
+import { useEffect, useState } from "react";
 
 class SentryExampleFrontendError extends Error {
   constructor(message: string | undefined) {
@@ -50,6 +50,7 @@ export default function Page() {
           <a
             target="_blank"
             href="https://variant-k2.sentry.io/issues/?project=4510220128550912"
+            rel="noopener"
           >
             Issues Page
           </a>
@@ -57,6 +58,7 @@ export default function Page() {
           <a
             target="_blank"
             href="https://docs.sentry.io/platforms/javascript/guides/nextjs/"
+            rel="noopener"
           >
             read our docs
           </a>

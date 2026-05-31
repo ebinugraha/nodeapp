@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import type { NodeType } from "@prisma/client";
 import { BookmarkIcon, Loader2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { SaveTemplateDialog } from "@/components/save-template-dialog";
-import { NodeType } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 interface SaveTemplateButtonProps {
   nodeType: NodeType;
