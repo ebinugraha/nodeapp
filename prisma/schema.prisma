@@ -8,11 +8,11 @@ datasource db {
 }
 
 model User {
-  id            String       @id
-  name          String
-  email         String       @unique
+  id            String       @id @db.VarChar(36)
+  name          String       @db.VarChar(60)
+  email         String       @unique @db.VarChar(254)
   emailVerified Boolean      @default(false)
-  image         String?
+  image         String?      @db.VarChar(500)
   bio           String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @default(now()) @updatedAt
@@ -27,29 +27,29 @@ model User {
 }
 
 model Settings {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme             String   @default("system")
-  showLineNumbers   Boolean  @default(true)
-  snapToGrid        Boolean  @default(true)
-  compactMode       Boolean  @default(false)
-  showMiniMap       Boolean  @default(true)
-  emailExecution    Boolean  @default(false)
-  emailError        Boolean  @default(true)
-  emailCredential   Boolean  @default(true)
-  browserNotif     Boolean  @default(true)
-  browserSound     Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme           String   @default("system")
+  showLineNumbers Boolean  @default(true)
+  snapToGrid      Boolean  @default(true)
+  compactMode     Boolean  @default(false)
+  showMiniMap     Boolean  @default(true)
+  emailExecution  Boolean  @default(false)
+  emailError      Boolean  @default(true)
+  emailCredential Boolean  @default(true)
+  browserNotif    Boolean  @default(true)
+  browserSound    Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
 
   @@map("settings")
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @db.VarChar(36)
   expiresAt DateTime
-  token     String   @unique
+  token     String   @unique @db.VarChar(64)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -79,27 +79,16 @@ model Account {
   @@map("account")
 }
 
-model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-
-  @@map("verification")
-}
-
 model Template {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
   nodeType    NodeType
-  config      Json      @default("{}")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([nodeType])
@@ -107,8 +96,8 @@ model Template {
 }
 
 model Workflow {
-  id          String       @id @default(cuid())
-  name        String
+  id          String       @id @default(cuid()) @db.VarChar(36)
+  name        String       @db.VarChar(70)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now()) @updatedAt
   userId      String
@@ -121,19 +110,19 @@ model Workflow {
 }
 
 model Credential {
-  id                String         @id @default(cuid())
-  name              String
-  value             String
+  id                String         @id @default(cuid()) @db.VarChar(36)
+  name              String         @db.VarChar(100)
+  value             String         @db.VarChar(500)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   type              CredentialType
   userId            String
   dailyQuotaLimit   Int?
-  dailyQuotaUsed    Int      @default(0)
-  lastQuotaReset    DateTime @default(now())
+  dailyQuotaUsed    Int            @default(0)
+  lastQuotaReset    DateTime       @default(now())
   monthlyQuotaLimit Int?
-  monthlyQuotaUsed  Int      @default(0)
-  lastMonthlyReset  DateTime @default(now())
+  monthlyQuotaUsed  Int            @default(0)
+  lastMonthlyReset  DateTime       @default(now())
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Node              Node[]
 
@@ -141,7 +130,7 @@ model Credential {
 }
 
 model Node {
-  id                String       @id @default(cuid())
+  id                String       @id @default(cuid()) @db.VarChar(36)
   workflowId        String
   name              String
   type              NodeType
@@ -159,7 +148,7 @@ model Node {
 }
 
 model Connection {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid()) @db.VarChar(36)
   workflowId String
   fromNodeId String
   toNodeId   String
@@ -176,7 +165,7 @@ model Connection {
 }
 
 model Execution {
-  id             String          @id @default(cuid())
+  id             String          @id @default(cuid()) @db.VarChar(36)
   workflowId     String
   status         ExecutionStatus @default(RUNNING)
   error          String?

@@ -8,6 +8,9 @@ import prisma from "@/lib/db";
 import { sendWorkflowExecution } from "@/lib/send-workflow-execution";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
+import { TRPCError } from "@trpc/server";
+import { topologicalSort } from "@/lib/topologicalSort";
+
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -17,7 +20,23 @@ export const workflowsRouter = createTRPCRouter({
           id: input.id,
           userId: ctx.auth.user.id,
         },
+        include: {
+          nodes: true,
+          connections: true,
+        },
       });
+
+      try {
+        topologicalSort(workflow.nodes, workflow.connections);
+      } catch (error) {
+        if (error instanceof Error && error.message === "Workflow contains a cycle.") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Error: Workflow contains a cycle.",
+          });
+        }
+        throw error;
+      }
 
       await sendWorkflowExecution({
         workflowId: workflow.id,

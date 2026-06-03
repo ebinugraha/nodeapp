@@ -214,9 +214,8 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       event.data;
 
     // 1. Cek status node & AMBIL CREDENTIAL (OAUTH)
-    const { isActive, workflowId, credential } = await step.run(
-      "check-node-status",
-      async () => {
+    const { isActive, workflowId, credential, dbPollingInterval } =
+      await step.run("check-node-status", async () => {
         const node = await prisma.node.findUnique({
           where: { id: nodeId },
           select: {
@@ -227,16 +226,24 @@ export const pollYoutubeLiveChat = inngest.createFunction(
         });
 
         if (!node)
-          return { isActive: false, workflowId: null, credential: null };
+          return {
+            isActive: false,
+            workflowId: null,
+            credential: null,
+            dbPollingInterval: null,
+          };
 
-        const data = node.data as { isActive?: boolean };
+        const data = node.data as {
+          isActive?: boolean;
+          pollingInterval?: number;
+        };
         return {
           isActive: data?.isActive ?? false,
           workflowId: node.workflowId,
           credential: node.credential,
+          dbPollingInterval: data?.pollingInterval ?? null,
         };
-      },
-    );
+      });
 
     if (!isActive || !workflowId || !credential) {
       return { status: "stopped" };
@@ -437,22 +444,8 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       }
     }
 
-    // OPTIMASI 5: Adaptive polling interval
-    // Jika tidak ada pesan baru, tidur lebih lama
-    let nextInterval: number;
-    if (newMessages.length === 0) {
-      // Tidak ada pesan baru - pakai interval lebih lama (maks 60 detik)
-      nextInterval = Math.min((pollingInterval || 10) * 2, 60);
-    } else if (newMessages.length > 5) {
-      // Banyak pesan baru - polling lebih sering
-      nextInterval = Math.max(5, successResult.suggestedInterval || 10);
-    } else {
-      // Normal - pakai interval yang direkomendasikan YouTube
-      nextInterval = Math.max(
-        pollingInterval || 10,
-        successResult.suggestedInterval || 10,
-      );
-    }
+    // Gunakan polling interval dari database jika ada, jika tidak, gunakan dari event atau default 20 detik
+    const nextInterval = dbPollingInterval ?? pollingInterval ?? 20;
 
     await step.sleep("wait-interval", nextInterval * 1000);
 
@@ -461,7 +454,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       data: {
         nodeId,
         videoId,
-        pollingInterval: nextInterval, // Use adaptive interval
+        pollingInterval: nextInterval,
         pageToken: successResult.nextPageToken,
         liveChatId: successResult.activeLiveChatId,
       },

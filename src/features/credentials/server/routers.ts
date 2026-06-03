@@ -163,11 +163,11 @@ export const credentialsRouter = createTRPCRouter({
           userId: ctx.auth.user.id,
           ...(input.query
             ? {
-                name: {
-                  contains: input.query,
-                  mode: "insensitive",
-                },
-              }
+              name: {
+                contains: input.query,
+                mode: "insensitive",
+              },
+            }
             : {}),
         },
         take: 8,
