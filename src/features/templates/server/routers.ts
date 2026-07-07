@@ -1,7 +1,7 @@
 import { NodeType } from "@prisma/client";
 import z from "zod";
-import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { templateService } from "../application/template.service";
 
 export const templatesRouter = createTRPCRouter({
   create: protectedProcedure
@@ -15,16 +15,13 @@ export const templatesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { name, description, nodeType, config } = input;
-
-      return prisma.template.create({
-        data: {
-          name,
-          description,
-          nodeType,
-          config,
-          userId: ctx.auth.user.id,
-        },
-      });
+      return await templateService.createTemplate(
+        ctx.auth.user.id,
+        name,
+        description,
+        nodeType,
+        config,
+      );
     }),
 
   update: protectedProcedure
@@ -38,42 +35,37 @@ export const templatesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, name, description, config } = input;
-
-      return prisma.template.update({
-        where: { id, userId: ctx.auth.user.id },
-        data: { name, description, config },
-      });
+      return await templateService.updateTemplate(
+        id,
+        ctx.auth.user.id,
+        name,
+        description,
+        config,
+      );
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return prisma.template.delete({
-        where: { id: input.id, userId: ctx.auth.user.id },
-      });
+      return await templateService.deleteTemplate(input.id, ctx.auth.user.id);
     }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    return prisma.template.findMany({
-      where: { userId: ctx.auth.user.id },
-      orderBy: { updatedAt: "desc" },
-    });
+    return await templateService.getAllTemplates(ctx.auth.user.id);
   }),
 
   getByNodeType: protectedProcedure
     .input(z.object({ nodeType: z.nativeEnum(NodeType) }))
     .query(async ({ ctx, input }) => {
-      return prisma.template.findMany({
-        where: { userId: ctx.auth.user.id, nodeType: input.nodeType },
-        orderBy: { updatedAt: "desc" },
-      });
+      return await templateService.getTemplatesByNodeType(
+        ctx.auth.user.id,
+        input.nodeType,
+      );
     }),
 
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return prisma.template.findUniqueOrThrow({
-        where: { id: input.id, userId: ctx.auth.user.id },
-      });
+      return await templateService.getTemplateById(input.id, ctx.auth.user.id);
     }),
 });

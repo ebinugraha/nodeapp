@@ -41,6 +41,7 @@ export const DiscordNotifyNode = memo(
           onOpenChange={setIsDialogOpen}
           onSubmit={onSubmit}
           defaultValues={props.data}
+          nodeId={props.id}
         />
         <BaseExecutionNode
           Icon={Send}

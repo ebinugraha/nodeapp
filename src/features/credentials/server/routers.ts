@@ -2,86 +2,64 @@ import { CredentialType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { PAGINATION } from "@/config/constant";
-import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import {
-  getYoutubeQuotaUsage,
-  resetYoutubeQuota,
-  testYoutubeConnection,
-  updateQuotaLimits,
-} from "../lib/quota-tracking";
+import { credentialService } from "../application/credential.service";
 
 export const credentialsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, "Name is required"),
-        type: z.enum(CredentialType),
+        type: z.nativeEnum(CredentialType),
         value: z.string().min(1, "Value is required"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const { name, type, value } = input;
-
-      return prisma.credential.create({
-        data: {
-          name,
-          userId: ctx.auth.user.id,
-          type,
-          value, // TODO add encrypting in production
-        },
-      });
+      return await credentialService.createCredential(
+        ctx.auth.user.id,
+        name,
+        type,
+        value,
+      );
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return prisma.credential.delete({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-      });
+      return await credentialService.deleteCredential(
+        input.id,
+        ctx.auth.user.id,
+      );
     }),
+
   update: protectedProcedure
     .input(
       z.object({
         id: z.string(),
-
         name: z.string().min(1, "Name is required"),
-        type: z.enum(CredentialType),
+        type: z.nativeEnum(CredentialType),
         value: z.string().min(1, "Value is required"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const { name, id, type, value } = input;
-
-      const creadential = await prisma.credential.findUniqueOrThrow({
-        where: {
-          id,
-          userId: ctx.auth.user.id,
-        },
-      });
-
-      return prisma.credential.update({
-        where: { id, userId: ctx.auth.user.id },
-        data: {
-          name,
-          type,
-          value, // TODO encruipt the value
-        },
-      });
+      return await credentialService.updateCredential(
+        id,
+        ctx.auth.user.id,
+        name,
+        type,
+        value,
+      );
     }),
 
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return prisma.credential.findUniqueOrThrow({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-      });
+      return await credentialService.getCredentialById(
+        input.id,
+        ctx.auth.user.id,
+      );
     }),
 
   getAll: protectedProcedure
@@ -98,89 +76,30 @@ export const credentialsRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize, search } = input;
-
-      const [items, totalCount] = await Promise.all([
-        prisma.credential.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          where: {
-            userId: ctx.auth.user.id,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        }),
-        prisma.credential.count({
-          where: {
-            userId: ctx.auth.user.id,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        }),
-      ]);
-
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const hasNextPage = page < totalPages;
-      const hasPreviousPage = page > 1;
-
-      return {
-        items,
+      return await credentialService.getCredentials(
+        ctx.auth.user.id,
         page,
         pageSize,
-        totalCount,
-        totalPages,
-        hasNextPage,
-        hasPreviousPage,
-      };
+        search,
+      );
     }),
-  getByType: protectedProcedure
-    .input(z.object({ type: z.enum(CredentialType) }))
-    .query(async ({ ctx, input }) => {
-      const { type } = input;
 
-      return prisma.credential.findMany({
-        where: {
-          userId: ctx.auth.user.id,
-          type,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      });
+  getByType: protectedProcedure
+    .input(z.object({ type: z.nativeEnum(CredentialType) }))
+    .query(async ({ ctx, input }) => {
+      return await credentialService.getCredentialsByType(
+        ctx.auth.user.id,
+        input.type,
+      );
     }),
 
   search: protectedProcedure
     .input(z.object({ query: z.string().min(0).optional() }))
     .query(async ({ input, ctx }) => {
-      return prisma.credential.findMany({
-        where: {
-          userId: ctx.auth.user.id,
-          ...(input.query
-            ? {
-              name: {
-                contains: input.query,
-                mode: "insensitive",
-              },
-            }
-            : {}),
-        },
-        take: 8,
-        orderBy: {
-          updatedAt: "desc",
-        },
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          updatedAt: true,
-        },
-      });
+      return await credentialService.searchCredentials(
+        ctx.auth.user.id,
+        input.query,
+      );
     }),
 
   // ========================
@@ -190,22 +109,17 @@ export const credentialsRouter = createTRPCRouter({
   getQuota: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const credential = await prisma.credential.findFirst({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-          type: CredentialType.YOUTUBE,
-        },
-      });
-
-      if (!credential) {
+      try {
+        return await credentialService.getYoutubeQuota(
+          input.id,
+          ctx.auth.user.id,
+        );
+      } catch (err: any) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "YouTube credential not found",
+          message: err.message,
         });
       }
-
-      return getYoutubeQuotaUsage(credential.id, ctx.auth.user.id);
     }),
 
   resetQuota: protectedProcedure
@@ -216,35 +130,18 @@ export const credentialsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const credential = await prisma.credential.findFirst({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-          type: CredentialType.YOUTUBE,
-        },
-      });
-
-      if (!credential) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "YouTube credential not found",
-        });
-      }
-
-      const success = await resetYoutubeQuota(
-        credential.id,
-        ctx.auth.user.id,
-        input.type,
-      );
-
-      if (!success) {
+      try {
+        return await credentialService.resetYoutubeQuota(
+          input.id,
+          ctx.auth.user.id,
+          input.type,
+        );
+      } catch (err: any) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to reset quota",
+          message: err.message,
         });
       }
-
-      return { success: true, type: input.type };
     }),
 
   updateQuotaLimits: protectedProcedure
@@ -256,48 +153,34 @@ export const credentialsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const credential = await prisma.credential.findFirst({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-          type: CredentialType.YOUTUBE,
-        },
-      });
-
-      if (!credential) {
+      try {
+        return await credentialService.updateYoutubeQuotaLimits(
+          input.id,
+          ctx.auth.user.id,
+          input.dailyLimit,
+          input.monthlyLimit,
+        );
+      } catch (err: any) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "YouTube credential not found",
+          message: err.message,
         });
       }
-
-      await updateQuotaLimits(
-        credential.id,
-        input.dailyLimit,
-        input.monthlyLimit,
-      );
-
-      return { success: true };
     }),
 
   testConnection: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const credential = await prisma.credential.findFirst({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-          type: CredentialType.YOUTUBE,
-        },
-      });
-
-      if (!credential) {
+      try {
+        return await credentialService.testYoutubeConnection(
+          input.id,
+          ctx.auth.user.id,
+        );
+      } catch (err: any) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "YouTube credential not found",
+          message: err.message,
         });
       }
-
-      return testYoutubeConnection(credential.id);
     }),
 });

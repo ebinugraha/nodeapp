@@ -6,10 +6,10 @@ type WaitDelayData = {
   variableName?: string;
   mode?: "fixed" | "random";
   delayType?: "seconds" | "minutes" | "hours";
-  
+
   // For Fixed Mode
   delaySeconds?: string | number;
-  
+
   // For Random Mode
   minDelay?: string | number;
   maxDelay?: string | number;
@@ -25,7 +25,10 @@ export const WaitDelayExecutor: NodeExecutor<WaitDelayData> = async ({
   const actualDelay = await step.run("wait-delay-calc", async () => {
     let delayInSeconds = 0;
 
-    const parseDelay = (val: string | number | undefined, defaultVal: number) => {
+    const parseDelay = (
+      val: string | number | undefined,
+      defaultVal: number,
+    ) => {
       if (val === undefined || val === null) return defaultVal;
       if (typeof val === "number") return val;
       const compiled = Handlebars.compile(val.toString())(context);
@@ -56,7 +59,7 @@ export const WaitDelayExecutor: NodeExecutor<WaitDelayData> = async ({
     const finalSeconds = delayInSeconds * multiplier;
 
     // Cap at 2 hours for safety
-    const maxDelay = 7200; 
+    const maxDelay = 7200;
     return Math.min(finalSeconds, maxDelay);
   });
 
@@ -65,7 +68,7 @@ export const WaitDelayExecutor: NodeExecutor<WaitDelayData> = async ({
   await step.realtime.publish(
     `wait-${nodeId}-waiting`,
     waitDelayChannel.status,
-    { nodeId, status: "loading" as any, expiresAt }
+    { nodeId, status: "loading" as any, expiresAt },
   );
 
   // Step 3: SLEEP (Must be outside step.run!)
@@ -78,7 +81,7 @@ export const WaitDelayExecutor: NodeExecutor<WaitDelayData> = async ({
   await step.realtime.publish(
     `wait-${nodeId}-success`,
     waitDelayChannel.status,
-    { nodeId, status: "success" }
+    { nodeId, status: "success" },
   );
 
   return step.run("wait-delay-result", async () => {

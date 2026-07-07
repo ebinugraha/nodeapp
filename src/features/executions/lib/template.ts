@@ -20,24 +20,32 @@ export function compileTemplate(
 
   let result = template;
 
-  // Handle nested context variables like {{YOUTUBE_LIVE_CHAT.message}}
-  // Match patterns like {{contextKey.property}} or {{contextKey}}
-  const nestedPattern = /\{\{([A-Z_][A-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
+  // Handle nested context variables like {{YOUTUBE_LIVE_CHAT.raw.authorDetails.displayName}}
+  const nestedPattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
   let match;
 
   while ((match = nestedPattern.exec(template)) !== null) {
-    const [fullMatch, contextKey, property] = match;
+    const [fullMatch, contextKey, propertyPath] = match;
     const value = context[contextKey];
     if (typeof value === "object" && value !== null) {
-      const nestedValue = (value as Record<string, unknown>)[property];
-      result = result.replace(fullMatch, String(nestedValue ?? ""));
+      const keys = propertyPath.split(".");
+      let current: any = value;
+      for (const key of keys) {
+        if (current && typeof current === "object") {
+          current = current[key];
+        } else {
+          current = undefined;
+          break;
+        }
+      }
+      result = result.replace(fullMatch, current !== undefined && current !== null ? String(current) : "");
     } else {
       result = result.replace(fullMatch, "");
     }
   }
 
   // Handle top-level context variables like {{variableName}}
-  const topLevelPattern = /\{\{([A-Z_][A-Z0-9_]*)\}\}/g;
+  const topLevelPattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
   while ((match = topLevelPattern.exec(template)) !== null) {
     const [fullMatch, key] = match;
     const value = context[key];
@@ -85,13 +93,13 @@ export function extractTemplateVariables(template: string): {
   const topLevel: string[] = [];
 
   const nestedMatches = template.matchAll(
-    /\{\{([A-Z_][A-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g,
+    /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z0-9_.]+)\s*\}\}/g,
   );
   for (const match of nestedMatches) {
     nested.push(match[1]);
   }
 
-  const topLevelMatches = template.matchAll(/\{\{([A-Z_][A-Z0-9_]*)\}\}/g);
+  const topLevelMatches = template.matchAll(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g);
   for (const match of topLevelMatches) {
     topLevel.push(match[1]);
   }

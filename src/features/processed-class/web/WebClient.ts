@@ -11,7 +11,6 @@ export class WebClient {
   private nodeClient: NodeClient;
   private executionClientInstance: executionClient;
   private workflowServiceInstance: workflowService;
-
   private workflowClientInstance: workflowClient;
 
   constructor(
@@ -35,7 +34,7 @@ export class WebClient {
   }
   public async onClick(contextOrId?: string, isConfirmed?: boolean): Promise<any> {
     console.log("[WebClient] Click event");
-    
+
     // Flow: Create workflow
     if (contextOrId === "create_workflow") {
       await this.workflowClientInstance.createWorkflow();
@@ -62,7 +61,7 @@ export class WebClient {
       this.showAll(creds);
       return;
     }
-    
+
     // Flow: View all workflows
     if (contextOrId === "workflow") {
       const workflows = await this.workflowClientInstance.getMany();
@@ -108,13 +107,13 @@ export class WebClient {
   }
   public async onSubmit(
     emailOrName?: string | any, // Can be dataJson
-    passwordOrApiKey?: string, 
-    confirmPassword?: string, 
+    passwordOrApiKey?: string,
+    confirmPassword?: string,
     context: "auth" | "credential" | "logout" | "node" = "auth",
     isConfirmed: boolean = true
   ): Promise<any> {
     console.log("[WebClient] Form submitted");
-    
+
     // Node settings flow
     if (context === "node" && emailOrName) {
       const dataJson = emailOrName;
@@ -122,7 +121,7 @@ export class WebClient {
       this.closeDialog();
       return;
     }
-    
+
     // Create Credential Flow
     if (context === "credential" && emailOrName && passwordOrApiKey) {
       await this.credentialClient.createCredential(emailOrName, passwordOrApiKey);
@@ -141,7 +140,7 @@ export class WebClient {
     }
 
     const isValid = await this.validateForm();
-    
+
     if (!isValid) {
       this.showValidationError();
       return;
@@ -150,35 +149,36 @@ export class WebClient {
     // Registration Flow
     if (emailOrName && passwordOrApiKey && confirmPassword) {
       const response = await this.betterAuthClient.signUp(emailOrName, passwordOrApiKey, confirmPassword);
-      
+
       if (response && response.status === "success") {
         this.redirect("/dashboard");
       } else {
         this.showNotification(response?.message || "Registration failed");
       }
-    } 
+    }
     // Login Flow
     else if (emailOrName && passwordOrApiKey) {
       const response = await this.betterAuthClient.signIn(emailOrName, passwordOrApiKey);
-      
+
       if (response && response.status === "success") {
         this.redirect("/dashboard");
       } else {
         this.showNotification(response?.message || "Login failed");
       }
     }
+
+
   }
   public closeDialog(): any {
-    console.log("[WebClient] Closing dialog");
+    return true;
   }
   public showAll(data?: any): any {
-    console.log("[WebClient] Show all", data);
+    return data;
   }
   public setNodeIndicator(status: string): any {
-    console.log(`[WebClient] Node indicator set to: ${status}`);
+    return status;
   }
-  public onDoubleClick(): any {
-    console.log("[WebClient] Double click event");
-    this.showDialog();
+  public onDoubleClick(onOpen: () => void): any {
+    onOpen();
   }
 }

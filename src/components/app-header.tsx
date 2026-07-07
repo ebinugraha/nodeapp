@@ -31,7 +31,7 @@ export const AppHeader = () => {
     user?.image ||
     (user?.email
       ? `https://api.dicebear.com/9.x/micah/svg?seed=${encodeURIComponent(user.email)}&backgroundColor=transparent`
-      : "");
+      : undefined);
   const { open, setOpen, GlobalSearchDialog } = useGlobalSearch();
 
   const handleSignOut = () => {

@@ -142,7 +142,7 @@ export const useExecuteWorkflow = () => {
         toast.error(
           error.message === "Error: Workflow contains a cycle."
             ? error.message
-            : `Failed to execute workflow : ${error.message}`
+            : `Failed to execute workflow : ${error.message}`,
         );
       },
     }),

@@ -32,7 +32,7 @@ export async function toggleYoutubePolling(
   await prisma.node.update({
     where: { id: nodeId },
     data: {
-      credentialId: credentialId,
+      credentialId: credentialId || undefined, // Gunakan undefined jika string kosong agar tidak error foreign key
       data: {
         ...currentData,
         isActive, // Set status true/false di DB

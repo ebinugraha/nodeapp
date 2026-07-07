@@ -5,9 +5,6 @@ import { MLService } from "../ml/MLService";
 
 const prisma = new PrismaClient();
 
-// Utility to simulate network/database latency
-const simulateDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
 export class workflowService {
   public id: string;
   public name: string;
@@ -21,7 +18,7 @@ export class workflowService {
 
   public async createWorkflow(name: string): Promise<any> {
     console.log(`[workflowService] Executing INSERT query for workflow: ${name}`);
-    
+
     try {
       if (!name) {
         throw new Error("Workflow name cannot be empty.");
@@ -36,11 +33,11 @@ export class workflowService {
           nodesCount: 0,
         }
       });
-      
+
       console.log(`[workflowService] Successfully inserted workflow ${newWorkflow.id}`);
-      return { 
+      return {
         status: "success",
-        data: newWorkflow 
+        data: newWorkflow
       };
     } catch (error: any) {
       console.error(`[workflowService] Error creating workflow:`, error.message);
@@ -51,7 +48,7 @@ export class workflowService {
   public async getWorkflow(workflow: any): Promise<any> {
     const queryId = typeof workflow === "string" ? workflow : workflow?.id || this.id;
     console.log(`[workflowService] Executing SELECT query for workflow: ${queryId}`);
-    
+
     try {
       // Real Prisma ORM Query
       const data = await prisma.workflow.findUnique({
@@ -62,7 +59,7 @@ export class workflowService {
       if (!data) {
         return { status: "error", message: "Workflow not found in database." };
       }
-      
+
       return { status: "success", workflowData: data };
     } catch (error: any) {
       return { status: "error", message: error.message };
@@ -86,7 +83,7 @@ export class workflowService {
       const inngestService = new InngestService("event-" + workflowId);
       const youtubeService = new YoutubeService();
       const mlService = new MLService();
-      
+
       const { NodeService } = await import("../node/NodeService");
       const nodeService = new NodeService();
 
@@ -99,7 +96,7 @@ export class workflowService {
       }
 
       const result = await inngestService.startInngest(workflowId, youtubeService, mlService, nodeService, onNodeStatus);
-      
+
       if (workflowRecord) {
         await (prisma.workflow as any).update({
           where: { id: workflowId },
@@ -114,7 +111,7 @@ export class workflowService {
           where: { id: workflowId },
           data: { status: "failed" }
         });
-      } catch (updateErr) {}
+      } catch (updateErr) { }
 
       console.error(`[workflowService] Workflow execution failed:`, err.message);
       return { status: "error", message: "Execution failed" };
@@ -123,13 +120,13 @@ export class workflowService {
 
   public async getAll(): Promise<any> {
     console.log(`[workflowService] Executing SELECT * FROM workflows...`);
-    
+
     try {
       // Real Prisma ORM Query
       const workflows = await prisma.workflow.findMany({
         orderBy: { createdAt: 'desc' }
       });
-      
+
       return { status: "success", data: workflows };
     } catch (error: any) {
       console.error(`[workflowService] Failed to retrieve workflows:`, error);
@@ -139,13 +136,13 @@ export class workflowService {
 
   public async remove(workflowId: string): Promise<any> {
     console.log(`[workflowService] Executing DELETE query for workflow: ${workflowId}`);
-    
+
     try {
       // Real Prisma ORM Query
       await prisma.workflow.delete({
         where: { id: workflowId }
       });
-      
+
       console.log(`[workflowService] Successfully deleted workflow ${workflowId}`);
       return { status: "success", id: workflowId, deleted: true };
     } catch (error: any) {

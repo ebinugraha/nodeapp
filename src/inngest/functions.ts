@@ -386,9 +386,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
         },
       );
 
-      // OPTIMASI 2: Deduplication - Filter pesan yang sudah diproses
+      // OPTIMASI 2: Deduplication & Filter - Hanya proses pesan teks, hiraukan event sistem (seperti userBannedEvent dll)
       newMessages = messages.filter((msg: any) => {
-        return !processedMessageIds.includes(msg.id);
+        const isTextMessage = msg.snippet?.type === "textMessageEvent";
+        const isNew = !processedMessageIds.includes(msg.id);
+        return isTextMessage && isNew;
       });
 
       // OPTIMASI 3: Batch events jadi SATU event dengan array of messages
@@ -407,6 +409,8 @@ export const pollYoutubeLiveChat = inngest.createFunction(
                   author: msg.authorDetails.displayName,
                   publishedAt: msg.snippet.publishedAt,
                   liveChatId: msg.snippet.liveChatId,
+                  snippet: msg.snippet,
+                  authorDetails: msg.authorDetails,
                   raw: msg,
                 },
               },

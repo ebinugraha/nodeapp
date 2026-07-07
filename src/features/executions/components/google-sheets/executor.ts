@@ -15,7 +15,7 @@ if (!Handlebars.helpers.json) {
 type GoogleSheetsData = {
   variableName?: string;
   credentialId?: string;
-  operation?: "read" | "append";
+  operation?: "append";
   spreadsheetId?: string;
   range?: string;
   values?: string; // JSON String
@@ -118,20 +118,7 @@ export const GoogleSheetsExecutor: NodeExecutor<GoogleSheetsData> = async ({
     let resultData;
 
     // 4. Eksekusi Operasi
-    if (data.operation === "read") {
-      // --- READ ---
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
-      const response = await ky
-        .get(url, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        .json<any>();
-
-      resultData = {
-        values: response.values || [],
-        majorDimension: response.majorDimension,
-      };
-    } else if (data.operation === "append") {
+    if (data.operation === "append" || !data.operation) {
       // --- APPEND ---
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append`;
 

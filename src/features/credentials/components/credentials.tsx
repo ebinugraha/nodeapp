@@ -137,14 +137,7 @@ const credentialTypeConfig: Record<
     description: string;
   }
 > = {
-  [CredentialType.GEMINI]: {
-    label: "Google Gemini",
-    logo: "/logos/gemini.svg",
-    color: "text-violet-600",
-    bgColor: "bg-violet-500/10",
-    borderColor: "border-violet-500/30",
-    description: "Google's AI models",
-  },
+
   [CredentialType.YOUTUBE]: {
     label: "YouTube",
     logo: "/logos/youtube.svg",
@@ -171,7 +164,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
 
   const config =
     credentialTypeConfig[data.type] ||
-    credentialTypeConfig[CredentialType.GEMINI];
+    credentialTypeConfig[CredentialType.YOUTUBE];
 
   // Check if credential is an OAuth type (stored as JSON)
   const isOAuth = data.value.startsWith("{");
@@ -262,10 +255,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
                   API Key
                 </Badge>
               )}
-              {/* Quota badge for YouTube credentials */}
-              {data.type === CredentialType.YOUTUBE && (
-                <QuotaBadge credentialId={data.id} />
-              )}
+
             </div>
             <p className="text-[12px] text-muted-foreground mt-0.5">
               {config.description}

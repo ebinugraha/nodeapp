@@ -21,9 +21,11 @@ export const NODE_OUTPUTS: Partial<Record<NodeType, VariableDefinition[]>> = {
     { key: "raw", label: "Full Raw Data (JSON)" },
   ],
   [NodeType.YOUTUBE_LIVE_CHAT]: [
-    { key: "message", label: "Chat Message" },
-    { key: "author", label: "Author Name" },
-    { key: "publishedAt", label: "Time" },
+    { key: "snippet.displayMessage", label: "Full Comment Text" },
+    { key: "raw.authorDetails.displayName", label: "Commenter Name" },
+    { key: "message", label: "Chat Message (Shorthand)" },
+    { key: "author", label: "Author Name (Shorthand)" },
+    { key: "publishedAt", label: "Published Time" },
     { key: "raw", label: "Full Raw Data" },
   ],
 
@@ -39,31 +41,11 @@ export const NODE_OUTPUTS: Partial<Record<NodeType, VariableDefinition[]>> = {
   ],
 
   // --- AI MODELS ---
-  [NodeType.GEMINI]: [{ key: "text", label: "Generated Text" }],
-  [NodeType.OPENAI]: [{ key: "text", label: "Generated Text" }],
-  [NodeType.ANTHROPIC]: [{ key: "text", label: "Generated Text" }],
-  [NodeType.DEEPSEEK]: [{ key: "text", label: "Generated Text" }],
   [NodeType.GAMBLING_CHECKER]: [
     { key: "isGambling", label: "Is Gambling? (True/False)" },
     { key: "prediction", label: "Prediction (1/0)" },
     { key: "label", label: "Label Text" },
     { key: "confidence", label: "Confidence (%)" },
-  ],
-  [NodeType.SENTIMENT_ANALYSIS]: [
-    { key: "label", label: "Sentiment Label (positive/negative/neutral)" },
-    { key: "score", label: "Score (-1 to 1)" },
-    { key: "confidence", label: "Confidence (0 to 1)" },
-    { key: "emotions.joy", label: "Joy Score" },
-    { key: "emotions.anger", label: "Anger Score" },
-    { key: "emotions.sadness", label: "Sadness Score" },
-    { key: "emotions.surprise", label: "Surprise Score" },
-  ],
-  [NodeType.SPAM_DETECTION]: [
-    { key: "isSpam", label: "Is Spam? (True/False)" },
-    { key: "reasons", label: "Spam Reasons List" },
-    { key: "scores.links", label: "Links Spam Score" },
-    { key: "scores.repeatedChars", label: "Repeated Chars Score" },
-    { key: "scores.capsLock", label: "Caps Lock Score" },
   ],
 
   // --- INTEGRATIONS ---
@@ -101,7 +83,7 @@ export const NODE_OUTPUTS: Partial<Record<NodeType, VariableDefinition[]>> = {
 
   // --- GOOGLE SHEETS (Yang baru kita buat) ---
   [NodeType.GOOGLE_SHEETS]: [
-    { key: "values", label: "Read: Rows Data" },
+
     { key: "updates", label: "Append: Update Info" },
     { key: "success", label: "Success Status" },
   ],

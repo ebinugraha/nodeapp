@@ -1,28 +1,16 @@
 import z from "zod";
 import { PAGINATION } from "@/config/constant";
-import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { executionService } from "../application/execution.service";
 
 export const exectutionRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return prisma.execution.findUniqueOrThrow({
-        where: {
-          id: input.id,
-          workflow: {
-            userId: ctx.auth.user.id,
-          },
-        },
-        include: {
-          workflow: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
+      return await executionService.getExecutionById(
+        input.id,
+        ctx.auth.user.id,
+      );
     }),
 
   getMany: protectedProcedure
@@ -38,81 +26,19 @@ export const exectutionRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize } = input;
-
-      const [items, totalCount] = await Promise.all([
-        prisma.execution.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          where: {
-            workflow: {
-              userId: ctx.auth.user.id,
-            },
-          },
-          orderBy: {
-            startedAt: "desc",
-          },
-          include: {
-            workflow: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        }),
-        prisma.execution.count({
-          where: {
-            workflow: {
-              userId: ctx.auth.user.id,
-            },
-          },
-        }),
-      ]);
-
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const hasNextPage = page < totalPages;
-      const hasPreviousPage = page > 1;
-
-      return {
-        items,
+      return await executionService.getExecutions(
+        ctx.auth.user.id,
         page,
         pageSize,
-        totalCount,
-        totalPages,
-        hasNextPage,
-        hasPreviousPage,
-      };
+      );
     }),
 
   search: protectedProcedure
     .input(z.object({ query: z.string().min(0).optional() }))
     .query(async ({ input, ctx }) => {
-      return prisma.execution.findMany({
-        where: {
-          workflow: {
-            userId: ctx.auth.user.id,
-            ...(input.query
-              ? {
-                  name: {
-                    contains: input.query,
-                    mode: "insensitive",
-                  },
-                }
-              : {}),
-          },
-        },
-        take: 8,
-        orderBy: {
-          startedAt: "desc",
-        },
-        include: {
-          workflow: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
+      return await executionService.searchExecutions(
+        ctx.auth.user.id,
+        input.query,
+      );
     }),
 });

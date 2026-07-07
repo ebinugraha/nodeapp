@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CredentialType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { NodeOutputHint } from "@/components/node-output-hint";
+import { MessageCircleIcon, YoutubeIcon } from "lucide-react";
 
 const formSchema = z.object({
   videoId: z.string().min(1),
@@ -80,95 +82,141 @@ export const YoutubeLiveChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>YouTube Live Chat Configuration</DialogTitle>
-          <DialogDescription>
-            Enter the Video ID of your YouTube Live Stream.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            className="w-full space-y-6 mt-4"
-            onSubmit={form.handleSubmit(handleSubmit)}
-          >
-            {/* [BARU] Input Pilih Akun */}
-            <FormField
-              control={form.control}
-              name="credentialId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>YouTube Account</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select account..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {credentials?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          <div className="flex items-center gap-2">
-                            <Image
-                              src="/logos/youtube.svg"
-                              alt="YT"
-                              width={16}
-                              height={16}
-                            />
-                            {c.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="videoId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Video ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. jNQXAC9IVRw" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Found in the URL: youtube.com/watch?v=<b>VIDEO_ID</b>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <DialogContent className="sm:max-w-[550px] overflow-hidden p-0">
+        <div className="bg-gradient-to-r from-red-500/10 to-transparent p-6 pb-4 border-b border-border/50">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/20 rounded-lg text-red-600 dark:text-red-400">
+                <YoutubeIcon className="size-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">YouTube Live Chat</DialogTitle>
+                <DialogDescription className="mt-1 text-xs">
+                  Configure the trigger to listen to incoming live chat messages.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-            <FormField
-              control={form.control}
-              name="pollingInterval"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Interval (seconds)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={5} {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Check for new messages every X seconds.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
+              <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Connection Settings
+                </h4>
 
-            <DialogFooter>
-              <Button className="w-full" type="submit">
-                Save Configuration
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <FormField
+                  control={form.control}
+                  name="credentialId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        YouTube Account
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select account..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {credentials?.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              <div className="flex items-center gap-2">
+                                <Image
+                                  src="/logos/youtube.svg"
+                                  alt="YT"
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="font-medium">{c.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Stream Settings
+                </h4>
+
+                <FormField
+                  control={form.control}
+                  name="videoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Video ID
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g. jNQXAC9IVRw" 
+                          className="font-mono text-sm"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        Found in the URL: youtube.com/watch?v=<b className="text-foreground">VIDEO_ID</b>
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="pollingInterval"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex justify-between">
+                        <span>Polling Interval</span>
+                        <span className="text-primary normal-case font-normal">{field.value} seconds</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="range" 
+                          min={5} 
+                          max={60} 
+                          step={1}
+                          className="cursor-pointer"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        Check for new messages every {field.value} seconds. (Minimum 5s).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
+                <NodeOutputHint nodeType={NodeType.YOUTUBE_LIVE_CHAT} />
+              </div>
+
+              <DialogFooter className="pt-2 border-t border-border/40">
+                <Button className="w-full sm:w-auto px-6 font-medium bg-red-600 hover:bg-red-700 text-white" type="submit">
+                  Save Configuration
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

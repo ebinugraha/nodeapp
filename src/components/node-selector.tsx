@@ -74,12 +74,12 @@ export type NodeTypeOption = {
   description: string;
   icon: React.ComponentType<{ className?: string }> | string;
   category?:
-    | "trigger"
-    | "moderation"
-    | "action"
-    | "logic"
-    | "ai"
-    | "notification";
+  | "trigger"
+  | "moderation"
+  | "action"
+  | "logic"
+  | "ai"
+  | "notification";
 };
 
 // Category configuration for visual styling
@@ -104,7 +104,7 @@ const CATEGORY_CONFIG = {
   },
   ai: {
     icon: SparklesIcon,
-    label: "AI & Analysis",
+    label: "Analysis",
     gradient: "from-violet-500/10 to-purple-500/10",
     borderColor: "border-violet-500/30",
     badgeColor: "bg-violet-500/20 text-violet-600 dark:text-violet-400",
@@ -192,31 +192,10 @@ const moderationNodes: NodeTypeOption[] = [
 
 const aiNodes: NodeTypeOption[] = [
   {
-    type: NodeType.SENTIMENT_ANALYSIS,
-    label: "Sentiment Analysis",
-    description: "Analyze comment sentiment with AI",
-    icon: BrainIcon,
-    category: "ai",
-  },
-  {
-    type: NodeType.SPAM_DETECTION,
-    label: "Spam Detection",
-    description: "Detect spam patterns in comments",
-    icon: FilterIcon,
-    category: "ai",
-  },
-  {
     type: NodeType.GAMBLING_CHECKER,
     label: "Gambling Checker",
     description: "Detect online gambling content",
     icon: Dice5Icon,
-    category: "ai",
-  },
-  {
-    type: NodeType.GEMINI,
-    label: "Gemini",
-    description: "Use Google Gemini to generate text",
-    icon: "/logos/gemini.svg",
     category: "ai",
   },
 ];

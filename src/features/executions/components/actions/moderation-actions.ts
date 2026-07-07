@@ -5,15 +5,13 @@ import {
   aiModerationChannel,
   discordNotifyChannel,
   filterChannel,
-  sentimentAnalysisChannel,
-  spamDetectionChannel,
+  gamblingCheckerChannel,
   storeDBChannel,
   waitDelayChannel,
   webhookChannel,
   youtubePinChannel,
   youtubeReplyChannel,
   youtubeTimeoutChannel,
-  gamblingCheckerChannel,
 } from "@/inngest/channels/moderation";
 import { inngest } from "@/inngest/client";
 
@@ -53,23 +51,6 @@ export async function fetchAIModerationToken() {
   return { key: token.key, apiBaseUrl: token.apiBaseUrl };
 }
 
-export async function fetchSentimentToken() {
-  const token = await getSubscriptionToken(inngest, {
-    channel: sentimentAnalysisChannel,
-    topics: ["status"],
-  });
-  if (!token.key) throw new Error("Failed to get realtime token");
-  return { key: token.key, apiBaseUrl: token.apiBaseUrl };
-}
-
-export async function fetchSpamToken() {
-  const token = await getSubscriptionToken(inngest, {
-    channel: spamDetectionChannel,
-    topics: ["status"],
-  });
-  if (!token.key) throw new Error("Failed to get realtime token");
-  return { key: token.key, apiBaseUrl: token.apiBaseUrl };
-}
 
 export async function fetchFilterToken() {
   const token = await getSubscriptionToken(inngest, {
@@ -124,4 +105,3 @@ export async function fetchGamblingToken() {
   if (!token.key) throw new Error("Failed to get realtime token");
   return { key: token.key, apiBaseUrl: token.apiBaseUrl };
 }
-

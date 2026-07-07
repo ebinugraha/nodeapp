@@ -41,6 +41,7 @@ export const GamblingCheckerNode = memo(
           onOpenChange={setIsDialogOpen}
           onSubmit={onSubmit}
           defaultValues={props.data}
+          nodeId={props.id}
         />
         <BaseExecutionNode
           Icon={Dice5}

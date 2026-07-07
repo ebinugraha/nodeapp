@@ -59,7 +59,6 @@ import { QuotaDisplay } from "./quota-display";
 export const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum([
-    CredentialType.GEMINI,
     CredentialType.YOUTUBE,
     CredentialType.GOOGLE,
   ]),
@@ -72,14 +71,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 // Credential type configurations
 const credentialTypeOptions = [
-  {
-    value: CredentialType.GEMINI,
-    label: "Google Gemini",
-    logo: "/logos/gemini.svg",
-    color: "bg-violet-500/10 border-violet-500/30 text-violet-600",
-    description: "Google's multimodal AI models",
-    guideType: "api_key" as const,
-  },
+
   {
     value: CredentialType.YOUTUBE,
     label: "YouTube",
@@ -98,7 +90,7 @@ const credentialTypeOptions = [
   },
 ];
 
-type GuideType = "api_key" | "youtube" | "google_sheets";
+type GuideType = "youtube" | "google_sheets";
 
 export const CredentialForm = ({
   initialData,
@@ -158,7 +150,7 @@ export const CredentialForm = ({
         }
       : {
           name: "",
-          type: CredentialType.GEMINI,
+          type: CredentialType.YOUTUBE,
           value: "",
           clientId: "",
           clientSecret: "",
@@ -590,16 +582,12 @@ export const CredentialForm = ({
                     <div className="flex items-center gap-3">
                       <BookOpenIcon className="size-4 text-primary" />
                       <CardTitle className="text-sm">
-                        {guideType === "api_key"
-                          ? "Cara Mendapatkan API Key"
-                          : "Panduan Setup"}
+                        Panduan Setup
                       </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="px-0 space-y-4">
-                    {guideType === "api_key" ? (
-                      <ApiKeyGuide service={selectedTypeConfig.label} />
-                    ) : guideType === "youtube" ? (
+                    {guideType === "youtube" ? (
                       <YouTubeGuide
                         origin={origin}
                         expandedSection={expandedSection}
@@ -642,64 +630,6 @@ export const CredentialForm = ({
   );
 };
 
-// API Key Guide Component
-function ApiKeyGuide({ service }: { service: string }) {
-  const steps = {
-    OpenAI: [
-      { title: "Buka platform.openai.com", url: "https://platform.openai.com" },
-      { title: "Klik 'API keys' di menu kiri", url: null },
-      { title: "Klik 'Create new secret key'", url: null },
-      { title: "Salin key yang dimulai dengan 'sk-'", url: null },
-    ],
-    Anthropic: [
-      {
-        title: "Buka console.anthropic.com",
-        url: "https://console.anthropic.com",
-      },
-      { title: "Navigasi ke bagian API Keys", url: null },
-      { title: "Klik 'Create Key'", url: null },
-      { title: "Salin API key Anda", url: null },
-    ],
-    "Google Gemini": [
-      { title: "Buka aistudio.google.com", url: "https://aistudio.google.com" },
-      { title: "Klik 'Get API Key' di menu", url: null },
-      { title: "Buat API key baru", url: null },
-      { title: "Salin API key Anda", url: null },
-    ],
-  };
-
-  const guideSteps = steps[service as keyof typeof steps] || steps["OpenAI"];
-
-  return (
-    <div className="space-y-2">
-      {guideSteps.map((step, index) => (
-        <div
-          key={index}
-          className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-        >
-          <div className="size-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-            {index + 1}
-          </div>
-          <div className="flex-1">
-            {step.url ? (
-              <a
-                href={step.url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-primary hover:underline font-medium flex items-center gap-1"
-              >
-                {step.title}
-                <ExternalLinkIcon className="size-3" />
-              </a>
-            ) : (
-              <p className="text-sm">{step.title}</p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // YouTube Guide Component
 function YouTubeGuide({

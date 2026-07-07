@@ -66,20 +66,7 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
         };
       }
 
-      // Add AI moderation results if available
-      const moderationResult = context.moderationResult as
-        | Record<string, unknown>
-        | undefined;
-      if (moderationResult) {
-        embed.fields = [
-          ...fields,
-          {
-            name: "AI Analysis",
-            value: `Toxicity: ${moderationResult.toxicity || "N/A"}\nSpam: ${moderationResult.spam || "N/A"}\nSentiment: ${moderationResult.sentiment || "N/A"}`,
-            inline: true,
-          },
-        ];
-      }
+
 
       const response = await fetch(webhookUrl, {
         method: "POST",

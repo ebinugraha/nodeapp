@@ -45,23 +45,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
 import { cn } from "@/lib/utils";
+import { VariablePicker } from "@/components/variable-picker";
+import { NodeOutputHint } from "@/components/node-output-hint";
 
 // ============================================
 // TYPES
 // ============================================
 
-// New improved format for append values (array of objects)
 type AppendRowData = Record<string, string>;
 
 const formSchema = z.object({
   variableName: z.string().min(1, "Nama variabel wajib diisi"),
   credentialId: z.string().min(1, "Credential wajib dipilih"),
-  operation: z.enum(["read", "append"]),
-  spreadsheetUrl: z.string().min(1, "URL Spreadsheet wajib diisi").optional(), // NEW: URL instead of ID
+  operation: z.enum(["append"]),
+  spreadsheetUrl: z.string().min(1, "URL Spreadsheet wajib diisi").optional(),
   spreadsheetId: z.string().min(1, "Spreadsheet ID wajib diisi"),
   range: z.string().min(1, "Range wajib diisi"),
-  // NEW: For visual append form
-  appendData: z.string().optional(), // JSON string of AppendRowData[]
+  appendData: z.string().optional(),
 });
 
 export type GoogleSheetsFormValues = z.infer<typeof formSchema>;
@@ -70,13 +70,6 @@ export type GoogleSheetsFormValues = z.infer<typeof formSchema>;
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Extract spreadsheet ID from Google Sheets URL
- * Supports formats:
- * - https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
- * - https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/
- * - https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/view
- */
 function extractSpreadsheetId(url: string): string | null {
   const patterns = [
     /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/,
@@ -93,9 +86,6 @@ function extractSpreadsheetId(url: string): string | null {
   return null;
 }
 
-/**
- * Format range string for Google Sheets API
- */
 function formatRange(
   sheetName: string,
   startCol?: string,
@@ -120,7 +110,7 @@ interface ColumnPreviewProps {
 function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
   if (columns.length === 0) {
     return (
-      <div className={cn("text-sm text-muted-foreground", className)}>
+      <div className={cn("text-xs text-muted-foreground p-3 text-center border border-dashed rounded-lg", className)}>
         Tidak ada data untuk di-preview
       </div>
     );
@@ -130,7 +120,7 @@ function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
     <div className={cn("rounded-lg border overflow-hidden", className)}>
       <div className="bg-muted/50 px-3 py-2 border-b flex items-center gap-2">
         <TableIcon className="size-4 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Preview Kolom
         </span>
       </div>
@@ -141,7 +131,7 @@ function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
               {columns.map((col, i) => (
                 <th
                   key={i}
-                  className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap"
+                  className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap text-xs uppercase tracking-wider"
                 >
                   {col || `Kolom ${i + 1}`}
                 </th>
@@ -153,12 +143,12 @@ function ColumnPreview({ columns, sampleData, className }: ColumnPreviewProps) {
               {sampleData.slice(0, 3).map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className="border-b last:border-0 hover:bg-muted/20"
+                  className="border-b last:border-0 hover:bg-muted/10 transition-colors"
                 >
                   {columns.map((_, colIndex) => (
                     <td
                       key={colIndex}
-                      className="px-3 py-2 text-muted-foreground whitespace-nowrap"
+                      className="px-3 py-2 text-muted-foreground whitespace-nowrap text-xs font-mono"
                     >
                       {row[colIndex] || "-"}
                     </td>
@@ -181,9 +171,10 @@ interface VisualAppendFormProps {
   columns: string[];
   value: Record<string, string>;
   onChange: (value: Record<string, string>) => void;
+  nodeId: string;
 }
 
-function VisualAppendForm({ columns, value, onChange }: VisualAppendFormProps) {
+function VisualAppendForm({ columns, value, onChange, nodeId }: VisualAppendFormProps) {
   const handleChange = (column: string, newValue: string) => {
     onChange({
       ...value,
@@ -200,27 +191,31 @@ function VisualAppendForm({ columns, value, onChange }: VisualAppendFormProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm font-medium text-muted-foreground">
-        Masukkan nilai untuk setiap kolom:
-      </div>
+    <div className="space-y-4">
       {columns.map((column) => (
-        <div key={column} className="flex items-center gap-3">
-          <label className="text-sm font-medium w-32 shrink-0 truncate">
-            {column}:
+        <div key={column} className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32 shrink-0 truncate sm:text-right">
+            {column}
           </label>
-          <Input
-            value={value[column] || ""}
-            onChange={(e) => handleChange(column, e.target.value)}
-            placeholder={`Nilai untuk ${column}`}
-            className="flex-1"
-          />
+          <div className="flex gap-2 flex-1">
+            <Input
+              value={value[column] || ""}
+              onChange={(e) => handleChange(column, e.target.value)}
+              placeholder={`Nilai untuk ${column}`}
+              className="flex-1 font-mono text-sm"
+            />
+            <VariablePicker
+              nodeId={nodeId}
+              onSelect={(val) => {
+                handleChange(column, (value[column] || "") + val);
+              }}
+            />
+          </div>
         </div>
       ))}
-      <div className="pt-2 border-t">
-        <p className="text-xs text-muted-foreground">
-          💡 Gunakan {"{{variabel}}"} untuk menggunakan nilai dari node
-          sebelumnya. Contoh: {"{{input.nama}}"}
+      <div className="pt-2 border-t border-border/50">
+        <p className="text-[11px] text-muted-foreground">
+          Gunakan ikon {"{}"} untuk mengambil data dinamis dari node sebelumnya secara otomatis.
         </p>
       </div>
     </div>
@@ -249,9 +244,7 @@ function SheetSelector({
   const [sheets, setSheets] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
-  // Fetch sheets when spreadsheetId changes
   useEffect(() => {
     if (!spreadsheetId || !credentialId) {
       setSheets([]);
@@ -262,19 +255,17 @@ function SheetSelector({
       setLoading(true);
       setError(null);
       try {
-        // Get credential from database via API
         const response = await fetch(`/api/credentials/${credentialId}`);
         if (!response.ok) throw new Error("Gagal mengambil credential");
 
         const credential = await response.json();
         const token = JSON.parse(credential.value).access_token;
 
-        // Fetch spreadsheet metadata to get sheet names
         const res = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
 
         if (!res.ok) {
@@ -289,7 +280,6 @@ function SheetSelector({
           data.sheets?.map((s: any) => s.properties.title) || [];
         setSheets(sheetNames);
 
-        // Auto-select first sheet if value is empty
         if (!value && sheetNames.length > 0) {
           onChange(sheetNames[0]);
         }
@@ -305,7 +295,6 @@ function SheetSelector({
     fetchSheets();
   }, [spreadsheetId, credentialId]);
 
-  // Fetch column preview when selected sheet changes
   useEffect(() => {
     if (!spreadsheetId || !credentialId || !value) {
       onColumnsChange([]);
@@ -320,12 +309,12 @@ function SheetSelector({
         const credential = await response.json();
         const token = JSON.parse(credential.value).access_token;
 
-        const range = `${value}!A1:Z1`; // Get first row for headers
+        const range = `${value}!A1:Z1`;
         const res = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
 
         if (!res.ok) {
@@ -336,12 +325,11 @@ function SheetSelector({
         const data = await res.json();
         const columns = data.values?.[0] || [];
 
-        // Also fetch a few sample rows
         const sampleRes = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(value)}!A1:Z5`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
 
         let sampleData: string[][] | undefined;
@@ -362,40 +350,38 @@ function SheetSelector({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2Icon className="size-4 animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md border-dashed">
+        <Loader2Icon className="size-4 animate-spin text-green-600" />
         Memuat daftar sheet...
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-sm text-destructive">⚠️ {error}</div>;
+    return <div className="text-sm text-destructive p-2 border border-destructive/20 bg-destructive/10 rounded-md">⚠️ {error}</div>;
   }
 
   if (sheets.length === 0 && spreadsheetId) {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground p-2 border border-dashed rounded-md">
         Tidak ada sheet ditemukan
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Pilih sheet..." />
-        </SelectTrigger>
-        <SelectContent>
-          {sheets.map((sheet) => (
-            <SelectItem key={sheet} value={sheet}>
-              {sheet}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full bg-background border-input">
+        <SelectValue placeholder="Pilih sheet..." />
+      </SelectTrigger>
+      <SelectContent>
+        {sheets.map((sheet) => (
+          <SelectItem key={sheet} value={sheet}>
+            {sheet}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -408,6 +394,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: GoogleSheetsFormValues) => void;
   defaultValues?: Partial<GoogleSheetsFormValues>;
+  nodeId: string;
 }
 
 export const GoogleSheetsDialog = ({
@@ -415,6 +402,7 @@ export const GoogleSheetsDialog = ({
   onOpenChange,
   onSubmit,
   defaultValues = {},
+  nodeId,
 }: Props) => {
   const { data: credentials } = useCredentialsByType(CredentialType.GOOGLE);
 
@@ -424,7 +412,6 @@ export const GoogleSheetsDialog = ({
     {},
   );
 
-  // Check if URL is being used (for backwards compatibility)
   const defaultUrl = defaultValues.spreadsheetId
     ? `https://docs.google.com/spreadsheets/d/${defaultValues.spreadsheetId}/edit`
     : "";
@@ -434,7 +421,7 @@ export const GoogleSheetsDialog = ({
     defaultValues: {
       variableName: defaultValues.variableName || "sheetData",
       credentialId: defaultValues.credentialId || "",
-      operation: defaultValues.operation || "read",
+      operation: "append",
       spreadsheetUrl: defaultUrl,
       spreadsheetId: defaultValues.spreadsheetId || "",
       range: defaultValues.range || "Sheet1",
@@ -442,7 +429,6 @@ export const GoogleSheetsDialog = ({
     },
   });
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       const url = defaultValues.spreadsheetId
@@ -452,14 +438,13 @@ export const GoogleSheetsDialog = ({
       form.reset({
         variableName: defaultValues.variableName || "sheetData",
         credentialId: defaultValues.credentialId || "",
-        operation: defaultValues.operation || "read",
+        operation: "append",
         spreadsheetUrl: url,
         spreadsheetId: defaultValues.spreadsheetId || "",
         range: defaultValues.range || "Sheet1",
         appendData: defaultValues.appendData || "{}",
       });
 
-      // Reset local state
       setColumns([]);
       setSampleData(undefined);
       try {
@@ -477,26 +462,22 @@ export const GoogleSheetsDialog = ({
   const credentialId = form.watch("credentialId");
   const range = form.watch("range");
 
-  // Handle URL change and extract spreadsheet ID
   const handleUrlChange = (url: string) => {
     form.setValue("spreadsheetUrl", url);
 
     const extractedId = extractSpreadsheetId(url);
     if (extractedId) {
       form.setValue("spreadsheetId", extractedId);
-      // Auto-set range to first sheet name (will be updated when sheet is selected)
       form.setValue("range", "Sheet1");
     } else {
       form.setValue("spreadsheetId", "");
     }
   };
 
-  // Handle sheet selection
   const handleSheetChange = (sheetName: string) => {
     form.setValue("range", sheetName);
   };
 
-  // Handle columns change
   const handleColumnsChange = (
     newColumns: string[],
     newSampleData?: string[][],
@@ -506,7 +487,6 @@ export const GoogleSheetsDialog = ({
 
     setAppendFormData((prev) => {
       const updated = { ...prev };
-      // Keep existing data, but we could optionally clean up keys that no longer exist in newColumns
       Object.keys(updated).forEach((key) => {
         if (!newColumns.includes(key)) {
           delete updated[key];
@@ -516,21 +496,16 @@ export const GoogleSheetsDialog = ({
     });
   };
 
-  // Handle append form data change
   const handleAppendFormChange = (data: Record<string, string>) => {
     setAppendFormData(data);
-    // Convert to JSON string for the form field
     form.setValue("appendData", JSON.stringify(data));
   };
 
   const handleSubmit = (values: GoogleSheetsFormValues) => {
-    // Convert append form data to the format expected by executor
-    // Gunakan 'columns' state untuk memastikan urutan value sesuai dengan urutan kolom di Spreadsheet
     const orderedValues = columns.map((col) => appendFormData[col] || "");
 
     const finalValues = {
       ...values,
-      // For append, convert the visual form data to array format ordered by actual columns
       values:
         operation === "append" ? JSON.stringify([orderedValues]) : undefined,
     };
@@ -540,224 +515,238 @@ export const GoogleSheetsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <svg
-              className="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+      <DialogContent className="sm:max-w-[700px] overflow-hidden p-0">
+        <div className="bg-gradient-to-r from-emerald-500/10 to-transparent p-6 pb-4 border-b border-border/50">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400">
+                <svg
+                  className="size-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" />
+                  <path
+                    d="M2 17L12 22L22 17"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M2 12L12 17L22 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Google Sheets</DialogTitle>
+                <DialogDescription className="mt-1 text-xs">
+                  Baca atau tambahkan data ke Google Sheets dengan mudah.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="px-6 py-4 max-h-[75vh] overflow-y-auto">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
             >
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#0F9D58" />
-              <path
-                d="M2 17L12 22L22 17"
-                stroke="#0F9D58"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M2 12L12 17L22 12"
-                stroke="#0F9D58"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-            Google Sheets
-          </DialogTitle>
-          <DialogDescription>
-            Baca atau tambahkan data ke Google Sheets dengan mudah.
-          </DialogDescription>
-        </DialogHeader>
+              <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Koneksi & Target Data
+                </h4>
+                
+                <FormField
+                  control={form.control}
+                  name="credentialId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Credential Google</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih credential..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {credentials?.length === 0 && (
+                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                              Belum ada credential Google.
+                              <a
+                                href="/credentials/new"
+                                className="text-primary hover:underline ml-1"
+                              >
+                                Buat baru?
+                              </a>
+                            </div>
+                          )}
+                          {credentials?.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              <div className="flex gap-2 items-center">
+                                <span className="font-medium">{c.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6 mt-4"
-          >
-            {/* Variable Name */}
-            <FormField
-              control={form.control}
-              name="variableName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    📤 Nama Variabel Output
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="sheetData" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Referensi hasil: {"{{sheetData.values}}"}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="spreadsheetUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        URL Spreadsheet
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://docs.google.com/spreadsheets/d/..."
+                          className="font-mono text-sm"
+                          {...field}
+                          onChange={(e) => handleUrlChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        Tempel URL Google Sheets Anda. ID akan otomatis diekstrak.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Credential */}
-            <FormField
-              control={form.control}
-              name="credentialId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>🔑 Credential Google</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih credential..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {credentials?.length === 0 && (
-                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                          Belum ada credential Google.
-                          <a
-                            href="/credentials/new"
-                            className="text-primary hover:underline ml-1"
-                          >
-                            Buat baru?
-                          </a>
-                        </div>
-                      )}
-                      {credentials?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          <div className="flex gap-2 items-center">
-                            <span className="font-medium">{c.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Spreadsheet URL */}
-            <FormField
-              control={form.control}
-              name="spreadsheetUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Link2Icon className="size-4" />
-                    URL Spreadsheet
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://docs.google.com/spreadsheets/d/..."
-                      {...field}
-                      onChange={(e) => handleUrlChange(e.target.value)}
+                {spreadsheetUrl && credentialId && (
+                  <div className="space-y-2">
+                    <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Target Sheet
+                    </FormLabel>
+                    <SheetSelector
+                      spreadsheetId={form.watch("spreadsheetId")}
+                      credentialId={credentialId}
+                      value={range}
+                      onChange={handleSheetChange}
+                      onColumnsChange={handleColumnsChange}
                     />
-                  </FormControl>
-                  <FormDescription>
-                    Tempel URL Google Sheets Anda. ID akan otomatis diekstrak.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Sheet Selector */}
-            {spreadsheetUrl && credentialId && (
-              <div className="space-y-2">
-                <FormLabel className="flex items-center gap-2">
-                  📋 Pilih Sheet
-                </FormLabel>
-                <SheetSelector
-                  spreadsheetId={form.watch("spreadsheetId")}
-                  credentialId={credentialId}
-                  value={range}
-                  onChange={handleSheetChange}
-                  onColumnsChange={handleColumnsChange}
-                />
+                  </div>
+                )}
+                
+                {columns.length > 0 && (
+                  <div className="pt-2">
+                    <ColumnPreview
+                      columns={columns}
+                      sampleData={sampleData}
+                      className="border-dashed"
+                    />
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Column Preview */}
-            {columns.length > 0 && (
-              <div className="space-y-2">
-                <ColumnPreview
-                  columns={columns}
-                  sampleData={sampleData}
-                  className="border rounded-lg"
+              <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Tindakan
+                </h4>
+
+                <FormField
+                  control={form.control}
+                  name="operation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operasi</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+
+                          <SelectItem value="append">
+                            <div className="flex items-center gap-2">
+                              <span>➕</span>
+                              <span>Tambah Baris (Append Rows)</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+
+                {operation === "append" && (
+                  <div className="mt-4 pt-4 border-t border-border/50">
+                    <div className="flex items-center gap-2 font-medium mb-4 text-emerald-600 dark:text-emerald-400">
+                      <PlusIcon className="size-4" />
+                      <span>Data yang akan ditambahkan</span>
+                    </div>
+                    <VisualAppendForm
+                      columns={columns}
+                      value={appendFormData}
+                      onChange={handleAppendFormChange}
+                      nodeId={nodeId}
+                    />
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Operation */}
-            <FormField
-              control={form.control}
-              name="operation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>⚙️ Operasi</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="read">
-                        <div className="flex items-center gap-2">
-                          <span>📖</span>
-                          <span>Baca Baris (Read Rows)</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="append">
-                        <div className="flex items-center gap-2">
-                          <span>➕</span>
-                          <span>Tambah Baris (Append Rows)</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Visual Append Form (Only for Append) */}
-            {operation === "append" && (
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
-                <div className="flex items-center gap-2 font-medium">
-                  <PlusIcon className="size-4" />
-                  <span>Tambah Baris Baru</span>
-                </div>
-                <VisualAppendForm
-                  columns={columns}
-                  value={appendFormData}
-                  onChange={handleAppendFormChange}
+              <div className="p-4 rounded-xl border border-border/50 bg-muted/20 space-y-4">
+                <FormField
+                  control={form.control}
+                  name="variableName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Nama Variabel Output
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="sheetData" 
+                          className="font-mono text-sm max-w-sm"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        Data hasil operasi ini akan disimpan dalam nama variabel di atas.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+
+                <NodeOutputHint nodeType={NodeType.GOOGLE_SHEETS} />
               </div>
-            )}
 
-            {/* Hidden field untuk spreadsheetId - digunakan sebagai sumber truth */}
-            <input type="hidden" {...form.register("spreadsheetId")} />
-            <input type="hidden" {...form.register("range")} />
-            <input type="hidden" {...form.register("appendData")} />
+              <input type="hidden" {...form.register("spreadsheetId")} />
+              <input type="hidden" {...form.register("range")} />
+              <input type="hidden" {...form.register("appendData")} />
 
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <SaveTemplateButton
-                nodeType={NodeType.GOOGLE_SHEETS}
-                currentConfig={form.getValues()}
-              />
-              <Button type="submit" disabled={!form.formState.isValid}>
-                💾 Simpan
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
+                <SaveTemplateButton
+                  nodeType={NodeType.GOOGLE_SHEETS}
+                  currentConfig={form.getValues()}
+                />
+                <Button type="submit" disabled={!form.formState.isValid} className="px-6 font-medium bg-emerald-600 hover:bg-emerald-700 text-white">
+                  Simpan Pengaturan
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

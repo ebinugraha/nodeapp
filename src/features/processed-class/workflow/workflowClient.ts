@@ -7,6 +7,7 @@ export class workflowClient {
     this.workflowServiceInstance = workflowServiceInstance;
   }
 
+
   public async createWorkflow(): Promise<any> {
     console.log(`[workflowClient] Requesting create workflow`);
     const name = this.generateRandomName();
@@ -23,9 +24,9 @@ export class workflowClient {
   }
   public async executeWorkflow(workflowId: string, onNodeStatus?: (status: string) => void): Promise<boolean> {
     console.log(`[workflowClient] Executing workflow: ${workflowId}`);
-    
+
     const layout = await this.validateDAGLayout();
-    
+
     if (layout.valid) {
       await this.workflowServiceInstance.triggerWorkflow(workflowId, onNodeStatus);
       return true;

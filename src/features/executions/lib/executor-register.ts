@@ -4,12 +4,9 @@ import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-
 import { YoutubeVideoCommentExecutor } from "@/features/triggers/components/youtube-video-comment/executor";
 import { DecisionExecutor } from "../components/decision/executor";
 import { DiscordNotifyExecutor } from "../components/discord-notify/executor";
-import { GeminiExecutor } from "../components/gemini/executor";
+import { GamblingCheckerExecutor } from "../components/gambling-checker/executor";
 import { GoogleSheetsExecutor } from "../components/google-sheets/executor";
 import { httpRequestExecutor } from "../components/http-request/executor";
-import { SentimentAnalysisExecutor } from "../components/sentiment-analysis/executor";
-import { SpamDetectionExecutor } from "../components/spam-detection/executor";
-import { GamblingCheckerExecutor } from "../components/gambling-checker/executor";
 import { WaitDelayExecutor } from "../components/wait-delay/executor";
 import { WebhookExecutor } from "../components/webhook/executor";
 import { YoutubeDeleteExecutor } from "../components/youtube-delete/executor";
@@ -25,10 +22,6 @@ export const executorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
   [NodeType.INTITAL]: manualTriggerExecutor,
   [NodeType.HTTP_REQUEST]: httpRequestExecutor,
-  [NodeType.GEMINI]: GeminiExecutor as NodeExecutor,
-  [NodeType.ANTHROPIC]: GeminiExecutor as NodeExecutor,
-  [NodeType.DEEPSEEK]: GeminiExecutor as NodeExecutor,
-  [NodeType.OPENAI]: GeminiExecutor as NodeExecutor,
   [NodeType.SLACK]: DiscordNotifyExecutor as NodeExecutor,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
   [NodeType.DECISION]: DecisionExecutor as NodeExecutor,
@@ -45,8 +38,6 @@ export const executorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.DISCORD_NOTIFY]: DiscordNotifyExecutor as NodeExecutor,
 
   // AI/Moderation Nodes
-  [NodeType.SENTIMENT_ANALYSIS]: SentimentAnalysisExecutor as NodeExecutor,
-  [NodeType.SPAM_DETECTION]: SpamDetectionExecutor as NodeExecutor,
   [NodeType.GAMBLING_CHECKER]: GamblingCheckerExecutor as NodeExecutor,
 
   // Logic Nodes

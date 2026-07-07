@@ -39,23 +39,54 @@ export const BadgeIndicator = ({
   pulse = false,
 }: BadgeIndicatorProps) => {
   const badgeStyles: Record<Exclude<NodeStatus, "initial">, string> = {
-    loading: "bg-blue-500",
-    success: "bg-emerald-500",
-    error: "bg-red-500 animate-error-shake",
-    skipped: "bg-slate-400",
-    pending: "bg-amber-500",
+    loading: "bg-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.8)]",
+    success: "bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.8)]",
+    error: "bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.8)] animate-error-shake",
+    skipped: "bg-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.6)]",
+    pending: "bg-amber-500 text-white shadow-[0_0_12px_rgba(245,158,11,0.8)]",
+  };
+
+  const ringStyles: Record<Exclude<NodeStatus, "initial">, string> = {
+    loading: "border-blue-500",
+    success: "border-emerald-500",
+    error: "border-red-500",
+    skipped: "border-slate-500",
+    pending: "border-amber-500",
   };
 
   return (
     <div
       className={cn(
-        "absolute top-1 right-1 z-50 w-6 h-6 rounded-full flex items-center justify-center shadow-md",
-        badgeStyles[status],
-        pulse && "animate-pulse",
+        "absolute -top-2.5 -right-2.5 z-50 flex items-center justify-center",
         className,
       )}
     >
-      {statusIcons[status]}
+      {/* Outer ripple/ping effect for active states */}
+      {(status === "loading" || status === "pending") && (
+        <span className={cn(
+          "absolute h-9 w-9 rounded-full border-2 animate-ping opacity-40",
+          ringStyles[status]
+        )} />
+      )}
+      
+      {/* Decorative slow spin ring */}
+      {(status === "loading" || status === "pending") && (
+        <span className={cn(
+          "absolute h-7 w-7 rounded-full border border-dashed animate-spin-slow opacity-60",
+          ringStyles[status]
+        )} />
+      )}
+
+      {/* Main Badge */}
+      <div
+        className={cn(
+          "relative z-10 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background transition-all duration-300",
+          badgeStyles[status],
+          pulse && "animate-pulse",
+        )}
+      >
+        {statusIcons[status]}
+      </div>
     </div>
   );
 };

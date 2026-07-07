@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 import { BaseExecutionNode } from "../base-execution-node"; //
 import { DecisionDialog, type DecisionFormValues } from "./dialog"; // (Kita buat di langkah 4)
 
-// Kita memodifikasi BaseExecutionNode sedikit atau membuat custom render
-// karena BaseExecutionNode di project Anda hanya punya 1 output handle fix.
-// Untuk Decision, kita butuh custom handle.
+import { NodeStatusIndicator } from "@/components/react-flow/node-status-indicator";
+import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
+import { decisionChannel } from "@/inngest/channels/logic";
+import { fetchDecisionToken } from "@/features/executions/components/actions/logic-actions";
 
 type DecisionNodeData = {
   variableName?: string;
@@ -29,8 +30,14 @@ type DecisionNodeType = Node<DecisionNodeData>;
 
 export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // Data settings bisa disimpan di sini atau hook status
   const { setNodes } = useReactFlow();
+
+  const status = useNodeStatus({
+    nodeId: props.id,
+    channel: decisionChannel.name,
+    topic: "status",
+    refreshToken: fetchDecisionToken,
+  });
 
   const nodeData = props.data as any;
   const description = nodeData.variable
@@ -66,6 +73,7 @@ export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
           setIsDialogOpen(false);
         }}
         defaultValues={nodeData}
+        nodeId={props.id}
       />
 
       <WorkflowNode
@@ -77,7 +85,8 @@ export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
         onSettings={() => setIsDialogOpen(true)}
         category="logic"
       >
-        <div
+        <NodeStatusIndicator status={status} variant="badge">
+          <div
           className={cn(
             "relative rounded-xl border border-border/70 bg-card text-card-foreground shadow-sm",
             "hover:border-primary/40 hover:shadow-md",
@@ -131,6 +140,7 @@ export const DecisionNode = memo((props: NodeProps<DecisionNodeType>) => {
             </div>
           </div>
         </div>
+        </NodeStatusIndicator>
       </WorkflowNode>
     </>
   );

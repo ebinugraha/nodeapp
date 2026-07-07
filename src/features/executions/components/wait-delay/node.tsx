@@ -2,7 +2,7 @@
 
 import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { Clock } from "lucide-react";
-import { memo, useState, useEffect } from "react";
+import { memo, useEffect, useState } from "react";
 import { fetchWaitDelayToken } from "@/features/executions/components/actions/moderation-actions";
 import { BaseExecutionNode } from "@/features/executions/components/base-execution-node";
 import { WaitDelayDialog } from "@/features/executions/components/wait-delay/dialog";
@@ -38,7 +38,9 @@ export const WaitDelayNode = memo(
 
     useEffect(() => {
       if (nodeState?.status === "loading" && nodeState.data?.expiresAt) {
-        const expiresAt = new Date(nodeState.data.expiresAt as string).getTime();
+        const expiresAt = new Date(
+          nodeState.data.expiresAt as string,
+        ).getTime();
 
         const updateTimer = () => {
           const now = Date.now();

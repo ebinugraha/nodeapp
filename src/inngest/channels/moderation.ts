@@ -39,15 +39,7 @@ export const aiModerationChannel = channel({
   topics: { status: { schema: statusSchema } },
 });
 
-export const sentimentAnalysisChannel = channel({
-  name: "sentiment-analysis-execution",
-  topics: { status: { schema: statusSchema } },
-});
 
-export const spamDetectionChannel = channel({
-  name: "spam-detection-execution",
-  topics: { status: { schema: statusSchema } },
-});
 
 export const filterChannel = channel({
   name: "filter-execution",

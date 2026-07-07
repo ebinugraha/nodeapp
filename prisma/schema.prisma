@@ -112,7 +112,7 @@ model Workflow {
 model Credential {
   id                String         @id @default(cuid()) @db.VarChar(36)
   name              String         @db.VarChar(100)
-  value             String         @db.VarChar(500)
+  value             String         @db.Text
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   type              CredentialType
@@ -178,7 +178,6 @@ model Execution {
 }
 
 enum CredentialType {
-  GEMINI
   YOUTUBE
   GOOGLE
 }
@@ -187,10 +186,6 @@ enum NodeType {
   INTITAL
   MANUAL_TRIGGER
   HTTP_REQUEST
-  ANTHROPIC
-  GEMINI
-  OPENAI
-  DEEPSEEK
   DISCORD_NOTIFY
   SLACK
   YOUTUBE_LIVE_CHAT
@@ -203,8 +198,6 @@ enum NodeType {
   DECISION
   WAIT_DELAY
   WEBHOOK
-  SENTIMENT_ANALYSIS
-  SPAM_DETECTION
   EMAIL_NOTIFY
   LOOP
   ROUTER

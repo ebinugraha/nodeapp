@@ -47,6 +47,7 @@ export const RegisterForm = () => {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 

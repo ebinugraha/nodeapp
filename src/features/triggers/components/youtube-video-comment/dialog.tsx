@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CredentialType } from "@prisma/client";
+import { CredentialType, NodeType } from "@prisma/client";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { NodeOutputHint } from "@/components/node-output-hint";
 
 const formSchema = z.object({
   videoId: z.string().min(1, "Video ID is required"),
@@ -164,6 +165,7 @@ export const YoutubeVideoCommentDialog = ({
             </DialogFooter>
           </form>
         </Form>
+        <NodeOutputHint nodeType={NodeType.YOUTUBE_VIDEO_COMMENT} />
       </DialogContent>
     </Dialog>
   );

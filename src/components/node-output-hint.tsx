@@ -17,7 +17,7 @@ export const NodeOutputHint = ({ nodeType }: Props) => {
       <h4 className="text-sm font-medium mb-2">Available Output Fields:</h4>
       <p className="text-xs text-muted-foreground mb-3">
         These variables will be available for subsequent nodes. Access them using:{" "}
-        <code className="text-primary bg-primary/10 px-1 py-0.5 rounded">{"{{yourVariableName.field}}"}</code>
+        <code className="text-primary bg-primary/10 px-1 py-0.5 rounded">{`{{${nodeType}.field}}`}</code>
       </p>
       <ul className="text-xs text-muted-foreground space-y-1.5">
         {outputs.map((output) => (

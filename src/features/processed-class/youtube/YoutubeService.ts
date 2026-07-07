@@ -13,7 +13,7 @@ export class YoutubeService {
   public async fetchComment(type: string, videoId?: string): Promise<any> {
     console.log(`[YoutubeService] Preparing HTTP GET request to ${this.baseUrl}/commentThreads`);
     console.log(`[YoutubeService] Parameters: part=snippet, videoId=${videoId || 'mock_video_id'}, maxResults=100`);
-    
+
     // Simulate API Network call latency
     await simulateNetworkDelay(800);
 
@@ -26,9 +26,8 @@ export class YoutubeService {
       if (type === "invalid") {
         throw new Error("HTTP 400: Bad Request. Invalid filter type.");
       }
-
       console.log(`[YoutubeService] Successfully fetched comments. Parsing JSON response...`);
-      
+
       // Mocked Google API Response structure
       const mockApiResponse = {
         kind: "youtube#commentThreadListResponse",
@@ -57,8 +56,8 @@ export class YoutubeService {
         ]
       };
 
-      return { 
-        status: "success", 
+      return {
+        status: "success",
         data: mockApiResponse,
         metadata: {
           quotaUsed: 1,
@@ -67,17 +66,17 @@ export class YoutubeService {
       };
     } catch (error: any) {
       console.error(`[YoutubeService] API call failed:`, error.message);
-      return { 
-        status: "error", 
+      return {
+        status: "error",
         code: error.message.includes("429") ? 429 : 400,
-        message: error.message 
+        message: error.message
       };
     }
   }
 
   public async youtubeResponse(): Promise<any> {
     await simulateNetworkDelay(200);
-    return { 
+    return {
       status: "youtube_api_success",
       connection: "healthy",
       pingMs: 120

@@ -51,6 +51,7 @@ export const GoogleSheetsNode = memo(
           onOpenChange={setIsDialogOpen}
           onSubmit={onSubmit}
           defaultValues={data}
+          nodeId={props.id}
         />
         <BaseExecutionNode
           {...props}

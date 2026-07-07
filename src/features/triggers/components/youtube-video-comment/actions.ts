@@ -38,7 +38,7 @@ export async function toggleYoutubeVideoPolling(
     where: { id: nodeId },
     data: {
       // [PERBAIKAN 1]: Update Relasi Foreign Key (Wajib agar Inngest bisa baca)
-      credentialId: credentialId,
+      credentialId: credentialId || undefined, // Gunakan undefined jika string kosong agar tidak error foreign key
 
       // Update JSON Data (Untuk UI)
       data: {

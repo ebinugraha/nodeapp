@@ -1,35 +1,23 @@
-import { NodeType } from "@prisma/client";
-import type { Edge, Node } from "@xyflow/react";
-import { generateSlug } from "random-word-slugs";
+import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { PAGINATION } from "@/config/constant";
-import { inngest } from "@/inngest/client";
-import prisma from "@/lib/db";
-import { sendWorkflowExecution } from "@/lib/send-workflow-execution";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-
-import { TRPCError } from "@trpc/server";
-import { topologicalSort } from "@/lib/topologicalSort";
+import { workflowService } from "../application/workflow.service";
 
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const workflow = await prisma.workflow.findFirstOrThrow({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-        include: {
-          nodes: true,
-          connections: true,
-        },
-      });
-
       try {
-        topologicalSort(workflow.nodes, workflow.connections);
+        return await workflowService.executeWorkflow(
+          input.id,
+          ctx.auth.user.id,
+        );
       } catch (error) {
-        if (error instanceof Error && error.message === "Workflow contains a cycle.") {
+        if (
+          error instanceof Error &&
+          error.message === "Workflow contains a cycle."
+        ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Error: Workflow contains a cycle.",
@@ -37,40 +25,18 @@ export const workflowsRouter = createTRPCRouter({
         }
         throw error;
       }
-
-      await sendWorkflowExecution({
-        workflowId: workflow.id,
-      });
-
-      return workflow;
     }),
 
-  create: protectedProcedure.mutation(async ({ ctx, input }) => {
-    return prisma.workflow.create({
-      data: {
-        name: generateSlug(3),
-        userId: ctx.auth.user.id,
-        nodes: {
-          create: {
-            type: NodeType.INTITAL,
-            position: { x: 0, y: 0 },
-            name: NodeType.INTITAL,
-          },
-        },
-      },
-    });
+  create: protectedProcedure.mutation(async ({ ctx }) => {
+    return await workflowService.createWorkflow(ctx.auth.user.id);
   }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return prisma.workflow.delete({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-      });
+      return await workflowService.deleteWorkflow(input.id, ctx.auth.user.id);
     }),
+
   update: protectedProcedure
     .input(
       z.object({
@@ -98,106 +64,28 @@ export const workflowsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { edges, id, nodes } = input;
-
-      const workflow = await prisma.workflow.findUniqueOrThrow({
-        where: {
-          id,
-          userId: ctx.auth.user.id,
-        },
-      });
-
-      // Transaction untuk memastikan konsistensi
-      return await prisma.$transaction(async (tx) => {
-        // hapus semua node terlebih dahulu
-        await tx.node.deleteMany({
-          where: {
-            workflowId: id,
-          },
-        });
-
-        // masukan lagi node terbaru
-        await tx.node.createMany({
-          data: nodes.map((node) => ({
-            id: node.id,
-            name: node.type || "unknown",
-            type: node.type as NodeType,
-            position: node.position,
-            data: node.data || {},
-            workflowId: id,
-          })),
-        });
-
-        // membuat connection
-        await tx.connection.createMany({
-          data: edges.map((edge) => ({
-            workflowId: id,
-            fromNodeId: edge.source,
-            toNodeId: edge.target,
-            fromOutput: edge.sourceHandle || "main",
-            toInput: edge.targetHandle || "main",
-          })),
-        });
-
-        // update kolom updatedAt di workflow
-        await tx.workflow.update({
-          data: {
-            updatedAt: new Date(),
-          },
-          where: {
-            id,
-          },
-        });
-
-        return workflow;
-      });
+      return await workflowService.updateWorkflowLayout(
+        id,
+        ctx.auth.user.id,
+        nodes,
+        edges,
+      );
     }),
+
   updateName: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return prisma.workflow.update({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-        data: {
-          name: input.name,
-        },
-      });
+      return await workflowService.updateWorkflowName(
+        input.id,
+        ctx.auth.user.id,
+        input.name,
+      );
     }),
+
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const workflow = await prisma.workflow.findUniqueOrThrow({
-        where: {
-          id: input.id,
-          userId: ctx.auth.user.id,
-        },
-        include: { nodes: true, connections: true },
-      });
-
-      // Mengubah node server menjadi kompatibel dengan react
-      const nodes: Node[] = workflow.nodes.map((node) => ({
-        id: node.id,
-        type: node.type,
-        position: node.position as { x: number; y: number },
-        data: (node.data as Record<string, unknown>) || {},
-      }));
-
-      // Mengubah connection server menjadi kompatibel dengan edge
-      const edges: Edge[] = workflow.connections.map((connection) => ({
-        id: connection.id,
-        source: connection.fromNodeId,
-        target: connection.toNodeId,
-        sourceHandle: connection.fromOutput,
-        targetHandle: connection.toInput,
-      }));
-
-      return {
-        id: workflow.id,
-        name: workflow.name,
-        nodes,
-        edges,
-      };
+      return await workflowService.getWorkflowById(input.id, ctx.auth.user.id);
     }),
 
   getAll: protectedProcedure
@@ -214,72 +102,20 @@ export const workflowsRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { page, pageSize, search } = input;
-
-      const [items, totalCount] = await Promise.all([
-        prisma.workflow.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          where: {
-            userId: ctx.auth.user.id,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          orderBy: {
-            updatedAt: "desc",
-          },
-        }),
-        prisma.workflow.count({
-          where: {
-            userId: ctx.auth.user.id,
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        }),
-      ]);
-
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const hasNextPage = page < totalPages;
-      const hasPreviousPage = page > 1;
-
-      return {
-        items,
+      return await workflowService.getWorkflows(
+        ctx.auth.user.id,
         page,
         pageSize,
-        totalCount,
-        totalPages,
-        hasNextPage,
-        hasPreviousPage,
-      };
+        search,
+      );
     }),
 
   search: protectedProcedure
     .input(z.object({ query: z.string().min(0).optional() }))
     .query(async ({ input, ctx }) => {
-      return prisma.workflow.findMany({
-        where: {
-          userId: ctx.auth.user.id,
-          ...(input.query
-            ? {
-                name: {
-                  contains: input.query,
-                  mode: "insensitive",
-                },
-              }
-            : {}),
-        },
-        take: 8,
-        orderBy: {
-          updatedAt: "desc",
-        },
-        select: {
-          id: true,
-          name: true,
-          updatedAt: true,
-        },
-      });
+      return await workflowService.searchWorkflows(
+        ctx.auth.user.id,
+        input.query,
+      );
     }),
 });

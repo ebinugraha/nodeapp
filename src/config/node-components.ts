@@ -2,13 +2,10 @@ import { NodeType } from "@prisma/client";
 import type { NodeTypes } from "@xyflow/react";
 import { InitialNode } from "@/components/initial-node";
 import { DecisionNode } from "@/features/executions/components/decision/node";
-import { GeminitNode } from "@/features/executions/components/gemini/node";
 import { GoogleSheetsNode } from "@/features/executions/components/google-sheets/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import {
   DiscordNotifyNode,
-  SentimentAnalysisNode,
-  SpamDetectionNode,
   WaitDelayNode,
   WebhookNode,
   YouTubePinNode,
@@ -25,7 +22,6 @@ export const nodeComponents = {
   [NodeType.INTITAL]: InitialNode,
   [NodeType.HTTP_REQUEST]: HttpRequestNode,
   [NodeType.MANUAL_TRIGGER]: ManualTriggerNode,
-  [NodeType.GEMINI]: GeminitNode,
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatNode,
   [NodeType.DECISION]: DecisionNode,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteNode,
@@ -36,8 +32,6 @@ export const nodeComponents = {
   [NodeType.YOUTUBE_PIN]: YouTubePinNode,
   [NodeType.YOUTUBE_TIMEOUT]: YouTubeTimeoutNode,
   [NodeType.DISCORD_NOTIFY]: DiscordNotifyNode,
-  [NodeType.SENTIMENT_ANALYSIS]: SentimentAnalysisNode,
-  [NodeType.SPAM_DETECTION]: SpamDetectionNode,
   [NodeType.GAMBLING_CHECKER]: GamblingCheckerNode,
   [NodeType.WAIT_DELAY]: WaitDelayNode,
   [NodeType.WEBHOOK]: WebhookNode,

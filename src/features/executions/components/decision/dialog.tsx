@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { SaveTemplateButton } from "@/components/save-template-button";
+import { VariablePicker } from "@/components/variable-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { GitBranchIcon } from "lucide-react";
 
 const formSchema = z.object({
   variableName: z.string().min(1, "Variable Name is required (e.g. isBadWord)"),
@@ -45,6 +47,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: DecisionFormValues) => void;
   defaultValues?: Partial<DecisionFormValues>;
+  nodeId: string;
 }
 
 export const DecisionDialog = ({
@@ -52,11 +55,12 @@ export const DecisionDialog = ({
   onOpenChange,
   onSubmit,
   defaultValues = {},
+  nodeId,
 }: Props) => {
   const form = useForm<DecisionFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      variableName: defaultValues.variableName || "", // Default value penting
+      variableName: defaultValues.variableName || "",
       variable: defaultValues.variable || "",
       operator: defaultValues.operator || "equals",
       value: defaultValues.value || "",
@@ -79,117 +83,169 @@ export const DecisionDialog = ({
     onOpenChange(false);
   };
 
+  const handleInsertVariable = (fieldName: "variable" | "value", val: string) => {
+    const currentVal = form.getValues(fieldName) || "";
+    form.setValue(fieldName, currentVal + val, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Decision Logic</DialogTitle>
-          <DialogDescription>
-            Jika kondisi <b>True</b>, workflow akan lanjut ke jalur hijau. Jika{" "}
-            <b>False</b>, ke jalur merah.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4 mt-4"
-          >
-            {/* PENTING: Variable Name untuk menyimpan hasil True/False */}
-            <FormField
-              control={form.control}
-              name="variableName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Result Variable Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="isBadWord" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Nama variabel untuk menyimpan hasil keputusan (True/False).
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <DialogContent className="sm:max-w-[550px] overflow-hidden p-0">
+        <div className="bg-gradient-to-r from-purple-500/10 to-transparent p-6 pb-4 border-b border-border/50">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/20 rounded-lg text-purple-600 dark:text-purple-400">
+                <GitBranchIcon className="size-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Decision Logic</DialogTitle>
+                <DialogDescription className="mt-1 text-xs">
+                  Create conditional branches based on dynamic variables.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-            <div className="grid grid-cols-12 gap-2 items-end">
-              {/* Value A (Dynamic) */}
-              <div className="col-span-5">
+        <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
+              <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Condition Settings
+                </h4>
+
+                {/* Value A (Dynamic) */}
                 <FormField
                   control={form.control}
                   name="variable"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>If this value...</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="{{youtubeLiveChat.message}}"
-                          {...field}
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        If this value
+                      </FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            placeholder="{{youtubeLiveChat.message}}"
+                            className="font-mono text-sm"
+                            {...field}
+                          />
+                        </FormControl>
+                        <VariablePicker
+                          nodeId={nodeId}
+                          onSelect={(val) =>
+                            handleInsertVariable("variable", val)
+                          }
                         />
-                      </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* Operator */}
-              <div className="col-span-3">
+                {/* Operator */}
                 <FormField
                   control={form.control}
                   name="operator"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Operator</FormLabel>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Operator
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="font-medium bg-muted/30">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="contains">Contains</SelectItem>
-                          <SelectItem value="equals">Equals</SelectItem>
+                          <SelectItem value="equals">Equals (==)</SelectItem>
+                          <SelectItem value="contains">Contains text</SelectItem>
                           <SelectItem value="not_contains">
-                            Does not contain
+                            Does not contain text
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* Value B (Static) */}
-              <div className="col-span-4">
+                {/* Value B (Static/Dynamic) */}
                 <FormField
                   control={form.control}
                   name="value"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>...matches this</FormLabel>
-                      <FormControl>
-                        <Input placeholder="judi" {...field} />
-                      </FormControl>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Matches this
+                      </FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input 
+                            placeholder="judi" 
+                            className="font-mono text-sm"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <VariablePicker
+                          nodeId={nodeId}
+                          onSelect={(val) =>
+                            handleInsertVariable("value", val)
+                          }
+                        />
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </div>
 
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <SaveTemplateButton
-                nodeType={NodeType.DECISION}
-                currentConfig={form.getValues()}
-              />
-              <Button type="submit">Save Logic</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              {/* Output Variable Name */}
+              <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
+                <FormField
+                  control={form.control}
+                  name="variableName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Output Result Variable
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="isBadWord" 
+                          className="font-mono text-sm max-w-sm"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        This variable will store <code className="text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">true</code> or <code className="text-red-500 bg-red-500/10 px-1 py-0.5 rounded">false</code> based on the condition above.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
+                <SaveTemplateButton
+                  nodeType={NodeType.DECISION}
+                  currentConfig={form.getValues()}
+                />
+                <Button type="submit" className="px-6 font-medium">Save Logic</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );
