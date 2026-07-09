@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CredentialType, NodeType } from "@prisma/client";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ import {
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
 import { NodeOutputHint } from "@/components/node-output-hint";
 import { MessageCircleIcon, YoutubeIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { authClient } from "@/lib/auth-client";
 
 const formSchema = z.object({
   videoId: z.string().min(1),
@@ -49,6 +51,14 @@ interface Props {
   defaultValues?: Partial<YoutubeLiveChatFormValues>;
 }
 
+const PRESETS = [
+  { value: 5, label: "Real-time (5s)", isPro: true },
+  { value: 30, label: "Fast (30s)", isPro: true },
+  { value: 60, label: "Standard (60s)", isPro: false },
+  { value: 300, label: "Slow (5m)", isPro: false },
+  { value: "custom", label: "Custom (PRO)", isPro: true },
+];
+
 export const YoutubeLiveChatDialog = ({
   open,
   onOpenChange,
@@ -56,6 +66,12 @@ export const YoutubeLiveChatDialog = ({
   defaultValues = {},
 }: Props) => {
   const { data: credentials } = useCredentialsByType(CredentialType.YOUTUBE);
+  const { data: session } = authClient.useSession();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isPro = (session?.user as any)?.plan === "PRO";
+  
+  const [isCustomInterval, setIsCustomInterval] = useState(false);
 
   const form = useForm<YoutubeLiveChatFormValues>({
     defaultValues: {
@@ -67,11 +83,13 @@ export const YoutubeLiveChatDialog = ({
 
   useEffect(() => {
     if (open) {
+      const initialInterval = defaultValues.pollingInterval || 60;
       form.reset({
         videoId: defaultValues.videoId || "",
-        pollingInterval: defaultValues.pollingInterval || 10,
+        pollingInterval: initialInterval,
         credentialId: defaultValues.credentialId || "", // [BARU]
       });
+      setIsCustomInterval(![5, 30, 60, 300].includes(initialInterval));
     }
   }, [open, form, defaultValues]);
 
@@ -186,18 +204,69 @@ export const YoutubeLiveChatDialog = ({
                         <span>Polling Interval</span>
                         <span className="text-primary normal-case font-normal">{field.value} seconds</span>
                       </FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="range" 
-                          min={5} 
-                          max={60} 
-                          step={1}
-                          className="cursor-pointer"
-                          {...field} 
-                        />
-                      </FormControl>
+                      <Select
+                        value={isCustomInterval ? "custom" : field.value.toString()}
+                        onValueChange={(val) => {
+                          const option = PRESETS.find(p => p.value.toString() === val);
+                          if (option?.isPro && !isPro) {
+                            window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+                            return;
+                          }
+                          if (val === "custom") {
+                            setIsCustomInterval(true);
+                          } else {
+                            setIsCustomInterval(false);
+                            field.onChange(Number(val));
+                          }
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select interval..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PRESETS.map((p) => (
+                            <SelectItem key={p.value} value={p.value.toString()}>
+                              <div className="flex items-center gap-2">
+                                {p.label}
+                                {p.isPro && !isPro && (
+                                  <Badge
+                                    variant="outline"
+                                    className="ml-2 text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                  >
+                                    PRO
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {isCustomInterval && (
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min={5} 
+                            className="mt-2"
+                            {...field}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (!isPro && val < 60) {
+                                window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+                                return;
+                              }
+                              field.onChange(e);
+                            }}
+                          />
+                        </FormControl>
+                      )}
+                      
                       <FormDescription className="text-[11px]">
-                        Check for new messages every {field.value} seconds. (Minimum 5s).
+                        {isPro 
+                          ? `Check for new messages every ${field.value} seconds. (Minimum 5s).`
+                          : `Check for new messages every ${field.value} seconds. (PRO required for < 60s)`}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

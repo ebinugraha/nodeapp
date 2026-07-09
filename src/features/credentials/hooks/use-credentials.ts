@@ -41,7 +41,11 @@ export const useCreateCredentials = () => {
         );
       },
       onError: (error) => {
-        toast.error(`Failed to create credential : ${error.message}`);
+        if (error.message.includes("Free plan is limited") || error.message.includes("upgrade to PRO")) {
+          window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        } else {
+          toast.error(`Failed to create credential : ${error.message}`);
+        }
       },
     }),
   );
@@ -93,7 +97,11 @@ export const useUpdateCredential = () => {
         );
       },
       onError: (error) => {
-        toast.error(`Failed to save credential : ${error.message}`);
+        if (error.message.includes("Free plan is limited") || error.message.includes("upgrade to PRO")) {
+          window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        } else {
+          toast.error(`Failed to save credential : ${error.message}`);
+        }
       },
     }),
   );

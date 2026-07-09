@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CredentialType, NodeType } from "@prisma/client";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/select";
 import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
 import { NodeOutputHint } from "@/components/node-output-hint";
+import { authClient } from "@/lib/auth-client";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   videoId: z.string().min(1, "Video ID is required"),
@@ -50,6 +52,13 @@ interface Props {
   defaultValues?: Partial<YoutubeVideoCommentFormValues>;
 }
 
+const PRESETS = [
+  { value: 30, label: "Fast (30s)", isPro: true },
+  { value: 60, label: "Standard (60s)", isPro: false },
+  { value: 300, label: "Slow (5m)", isPro: false },
+  { value: "custom", label: "Custom (PRO)", isPro: true },
+];
+
 export const YoutubeVideoCommentDialog = ({
   open,
   onOpenChange,
@@ -57,6 +66,13 @@ export const YoutubeVideoCommentDialog = ({
   defaultValues = {},
 }: Props) => {
   const { data: credentials } = useCredentialsByType(CredentialType.YOUTUBE);
+  const { data: session } = authClient.useSession();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isPro = (session?.user as any)?.plan === "PRO";
+  
+  const [isCustomInterval, setIsCustomInterval] = useState(false);
+
   const form = useForm<YoutubeVideoCommentFormValues>({
     defaultValues: {
       videoId: defaultValues.videoId || "",
@@ -67,11 +83,13 @@ export const YoutubeVideoCommentDialog = ({
 
   useEffect(() => {
     if (open) {
+      const initialInterval = defaultValues.pollingInterval || 60;
       form.reset({
         videoId: defaultValues.videoId || "",
-        pollingInterval: defaultValues.pollingInterval || 60,
+        pollingInterval: initialInterval,
         credentialId: defaultValues.credentialId || "", // [BARU]
       });
+      setIsCustomInterval(![30, 60, 300].includes(initialInterval));
     }
   }, [open, form, defaultValues]);
 
@@ -150,10 +168,74 @@ export const YoutubeVideoCommentDialog = ({
               name="pollingInterval"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Check Interval (seconds)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={30} {...field} />
-                  </FormControl>
+                  <FormLabel className="flex justify-between">
+                    <span>Check Interval</span>
+                    <span className="text-primary font-normal">{field.value} seconds</span>
+                  </FormLabel>
+                  <Select
+                    value={isCustomInterval ? "custom" : field.value.toString()}
+                    onValueChange={(val) => {
+                      const option = PRESETS.find(p => p.value.toString() === val);
+                      if (option?.isPro && !isPro) {
+                        window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+                        return;
+                      }
+                      if (val === "custom") {
+                        setIsCustomInterval(true);
+                      } else {
+                        setIsCustomInterval(false);
+                        field.onChange(Number(val));
+                      }
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select interval..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {PRESETS.map((p) => (
+                        <SelectItem key={p.value} value={p.value.toString()}>
+                          <div className="flex items-center gap-2">
+                            {p.label}
+                            {p.isPro && !isPro && (
+                              <Badge
+                                variant="outline"
+                                className="ml-2 text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/20"
+                              >
+                                PRO
+                              </Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {isCustomInterval && (
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min={30} 
+                        className="mt-2"
+                        {...field}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isPro && val < 60) {
+                            window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+                            return;
+                          }
+                          field.onChange(e);
+                        }}
+                      />
+                    </FormControl>
+                  )}
+                  
+                  <FormDescription className="text-xs">
+                    {isPro 
+                      ? "Minimum interval is 30s to avoid rate limits."
+                      : "PRO required for intervals under 60s."}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

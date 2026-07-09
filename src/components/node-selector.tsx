@@ -80,6 +80,7 @@ export type NodeTypeOption = {
   | "logic"
   | "ai"
   | "notification";
+  isProFeature?: boolean;
 };
 
 // Category configuration for visual styling
@@ -207,6 +208,7 @@ const notificationNodes: NodeTypeOption[] = [
     description: "Send notification to Discord channel",
     icon: SendIcon,
     category: "notification",
+    isProFeature: true,
   },
 ];
 
@@ -248,6 +250,7 @@ const actionNodes: NodeTypeOption[] = [
     description: "Read or write data to spreadsheets",
     icon: "/logos/google-sheet.svg",
     category: "action",
+    isProFeature: true,
   },
 ];
 
@@ -275,6 +278,8 @@ const TRIGGER_NODE_TYPES: NodeType[] = [
   NodeType.YOUTUBE_VIDEO_COMMENT,
 ];
 
+import { authClient } from "@/lib/auth-client";
+
 export function NodeSelector({
   open,
   onOpenChange,
@@ -282,6 +287,10 @@ export function NodeSelector({
 }: NodeSelectorProps) {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isPro = (session?.user as any)?.plan === "PRO";
 
   // Check if any trigger node already exists in the workflow
   // Note: We don't include INTITAL here because it's a placeholder node
@@ -303,6 +312,13 @@ export function NodeSelector({
 
   const handleNodeSelect = useCallback(
     (selection: NodeTypeOption) => {
+      const nodes = getNodes();
+
+      if (!isPro && nodes.length >= 5) {
+        window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        return;
+      }
+
       // Validate: only one trigger node allowed per workflow
       if (selection.category === "trigger") {
         const nodes = getNodes();
@@ -347,12 +363,17 @@ export function NodeSelector({
 
       onOpenChange(false);
     },
-    [setNodes, getNodes, screenToFlowPosition, onOpenChange],
+    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro],
   );
 
   const handleTemplateSelect = useCallback(
     (template: TemplateData) => {
       const nodes = getNodes();
+
+      if (!isPro && nodes.length >= 5) {
+        window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        return;
+      }
 
       // Check trigger constraint
       const isTriggerTemplate = TRIGGER_NODE_TYPES.includes(template.nodeType);
@@ -397,7 +418,7 @@ export function NodeSelector({
       onOpenChange(false);
       toast.success(`Template "${template.name}" applied`);
     },
-    [setNodes, getNodes, screenToFlowPosition, onOpenChange],
+    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro],
   );
 
   return (
@@ -430,6 +451,7 @@ export function NodeSelector({
               onSelect={handleNodeSelect}
               disabled={hasTriggerNode()}
               existingTrigger={existingTrigger?.type as NodeType}
+              isPro={isPro}
             />
 
             {/* Moderation */}
@@ -438,6 +460,7 @@ export function NodeSelector({
               config={CATEGORY_CONFIG.moderation}
               nodes={moderationNodes}
               onSelect={handleNodeSelect}
+              isPro={isPro}
             />
 
             {/* AI */}
@@ -446,6 +469,7 @@ export function NodeSelector({
               config={CATEGORY_CONFIG.ai}
               nodes={aiNodes}
               onSelect={handleNodeSelect}
+              isPro={isPro}
             />
 
             {/* Notification */}
@@ -454,6 +478,7 @@ export function NodeSelector({
               config={CATEGORY_CONFIG.notification}
               nodes={notificationNodes}
               onSelect={handleNodeSelect}
+              isPro={isPro}
             />
 
             {/* Logic */}
@@ -462,6 +487,7 @@ export function NodeSelector({
               config={CATEGORY_CONFIG.logic}
               nodes={logicNodes}
               onSelect={handleNodeSelect}
+              isPro={isPro}
             />
 
             {/* Actions */}
@@ -470,6 +496,7 @@ export function NodeSelector({
               config={CATEGORY_CONFIG.action}
               nodes={actionNodes}
               onSelect={handleNodeSelect}
+              isPro={isPro}
             />
           </div>
         </SheetContent>
@@ -686,14 +713,17 @@ function NodeItem({
   disabled = false,
   existingTrigger,
   iconColor = "text-primary",
+  isPro = false,
 }: {
   nodeType: NodeTypeOption;
   onSelect: (selection: NodeTypeOption) => void;
   disabled?: boolean;
   existingTrigger?: NodeType;
   iconColor?: string;
+  isPro?: boolean;
 }) {
   const Icon = nodeType.icon;
+  const isLocked = nodeType.isProFeature && !isPro;
 
   // Map trigger types to human-readable labels
   const triggerLabels: Partial<Record<NodeType, string>> = {
@@ -715,11 +745,15 @@ function NodeItem({
     <div
       className={cn(
         "group relative w-full h-auto py-2.5 px-2 rounded-lg transition-all duration-200",
-        disabled
+        (disabled || isLocked)
           ? "opacity-50 cursor-not-allowed"
           : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
       )}
       onClick={() => {
+        if (isLocked) {
+          window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+          return;
+        }
         if (disabled) {
           toast.error(
             `Only one trigger node allowed. Remove the existing "${triggerLabels[existingTrigger!] || "trigger"}" first.`,
@@ -782,6 +816,14 @@ function NodeItem({
             Used
           </Badge>
         )}
+        {isLocked && !disabled && (
+          <Badge
+            variant="outline"
+            className="text-[10px] px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border-amber-500/20"
+          >
+            PRO
+          </Badge>
+        )}
       </div>
     </div>
   );
@@ -795,6 +837,7 @@ function NodeCategory({
   onSelect,
   disabled,
   existingTrigger,
+  isPro,
 }: {
   category: keyof typeof CATEGORY_CONFIG;
   config: (typeof CATEGORY_CONFIG)[keyof typeof CATEGORY_CONFIG];
@@ -802,6 +845,7 @@ function NodeCategory({
   onSelect: (selection: NodeTypeOption) => void;
   disabled?: boolean;
   existingTrigger?: NodeType;
+  isPro?: boolean;
 }) {
   const CategoryIcon = config.icon;
 
@@ -827,6 +871,7 @@ function NodeCategory({
             disabled={disabled}
             existingTrigger={existingTrigger}
             iconColor={config.iconColor}
+            isPro={isPro}
           />
         ))}
       </div>

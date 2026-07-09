@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "ngrok:dev": "ngrok http --url=gopher-driven-cattle.ngrok-free.app 3000",
+    "ngrok:dev": "ngrok http 3000 --url gopher-driven-cattle.ngrok-free.app",
     "inngest:dev": "npx inngest-cli dev",
     "lint": "biome check",
     "format": "biome format --write"

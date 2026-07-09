@@ -22,6 +22,8 @@ model User {
   workflows     Workflow[]
   settings      Settings?
   templates     Template[]
+  plan          String       @default("FREE")
+  planExpiresAt DateTime?
 
   @@map("user")
 }

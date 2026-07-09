@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ChevronDown, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -25,6 +26,12 @@ const getGreeting = () => {
 
 export const AppHeader = () => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const avatarSrc =
@@ -44,7 +51,7 @@ export const AppHeader = () => {
     });
   };
 
-  const greetingText = `${getGreeting()}${user?.name ? `, ${user.name.split(" ")[0]}` : ""}!`;
+  const greetingText = mounted ? `${getGreeting()}${user?.name ? `, ${user.name.split(" ")[0]}` : ""}!` : "Welcome!";
 
   return (
     <>
@@ -91,55 +98,7 @@ export const AppHeader = () => {
         </Button>
 
         <div className="flex items-center gap-3 ml-auto lg:ml-4">
-          {/* User Profile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-9 gap-2 px-2 hover:bg-muted/50 rounded-full sm:rounded-md sm:pl-2 sm:pr-3"
-              >
-                <Avatar className="size-7">
-                  <AvatarImage src={avatarSrc} alt={user?.name ?? "User"} />
-                  <AvatarFallback suppressHydrationWarning className="text-xs">
-                    {user?.name?.charAt(0).toUpperCase() ?? "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden sm:flex flex-col items-start text-left">
-                  <span
-                    suppressHydrationWarning
-                    className="text-sm font-medium leading-none"
-                  >
-                    {user?.name ?? "User"}
-                  </span>
-                </div>
-                <ChevronDown className="size-4 text-muted-foreground hidden sm:block ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span suppressHydrationWarning>{user?.name ?? "User"}</span>
-                  <span
-                    suppressHydrationWarning
-                    className="text-xs text-muted-foreground font-normal"
-                  >
-                    {user?.email}
-                  </span>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="text-destructive"
-              >
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* User Profile moved to sidebar */}
         </div>
       </header>
     </>

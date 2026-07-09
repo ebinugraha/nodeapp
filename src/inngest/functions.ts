@@ -222,6 +222,13 @@ export const pollYoutubeLiveChat = inngest.createFunction(
             data: true,
             workflowId: true,
             credential: true,
+            workflow: {
+              select: {
+                user: {
+                  select: { plan: true },
+                },
+              },
+            },
           },
         });
 
@@ -231,6 +238,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
             workflowId: null,
             credential: null,
             dbPollingInterval: null,
+            userPlan: "FREE",
           };
 
         const data = node.data as {
@@ -242,6 +250,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
           workflowId: node.workflowId,
           credential: node.credential,
           dbPollingInterval: data?.pollingInterval ?? null,
+          userPlan: node.workflow.user.plan,
         };
       });
 
@@ -449,7 +458,12 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     }
 
     // Gunakan polling interval dari database jika ada, jika tidak, gunakan dari event atau default 20 detik
-    const nextInterval = dbPollingInterval ?? pollingInterval ?? 20;
+    let nextInterval = dbPollingInterval ?? pollingInterval ?? 20;
+
+    // Enforce 60s minimum polling interval for FREE plan
+    if (successResult.userPlan === "FREE") {
+      nextInterval = Math.max(60, nextInterval);
+    }
 
     await step.sleep("wait-interval", nextInterval * 1000);
 
@@ -478,7 +492,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     const { nodeId, videoId, pollingInterval = 60, credentialId } = event.data;
 
     // 1. Cek Status & CREDENTIAL (OAUTH)
-    const { isActive, workflowId, credential } = await step.run(
+    const { isActive, workflowId, credential, userPlan } = await step.run(
       "check-status",
       async () => {
         const node = await prisma.node.findUnique({
@@ -487,15 +501,23 @@ export const pollYoutubeVideoComments = inngest.createFunction(
             data: true,
             workflowId: true,
             credential: true,
+            workflow: {
+              select: {
+                user: {
+                  select: { plan: true },
+                },
+              },
+            },
           },
         });
         if (!node)
-          return { isActive: false, workflowId: null, credential: null };
+          return { isActive: false, workflowId: null, credential: null, userPlan: "FREE" };
         const data = node.data as { isActive?: boolean };
         return {
           isActive: data?.isActive ?? false,
           workflowId: node.workflowId,
           credential: node.credential,
+          userPlan: node.workflow.user.plan,
         };
       },
     );
@@ -559,6 +581,11 @@ export const pollYoutubeVideoComments = inngest.createFunction(
     } else {
       // Normal
       nextInterval = pollingInterval;
+    }
+
+    // Enforce minimum polling interval for FREE plan users
+    if (userPlan === "FREE") {
+      nextInterval = Math.max(60, nextInterval);
     }
 
     // 6. Trigger Workflow

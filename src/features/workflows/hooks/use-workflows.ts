@@ -40,7 +40,11 @@ export const useCreateWorkflow = () => {
         );
       },
       onError: (error) => {
-        toast.error(`Failed to create workflow : ${error.message}`);
+        if (error.message.includes("Free plan is limited") || error.message.includes("upgrade to PRO") || error.message.includes("use Premium nodes")) {
+          window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        } else {
+          toast.error(`Failed to create workflow : ${error.message}`);
+        }
       },
     }),
   );
@@ -92,7 +96,11 @@ export const useUpdateWorkflow = () => {
         );
       },
       onError: (error) => {
-        toast.error(`Failed to save workflow : ${error.message}`);
+        if (error.message.includes("Free plan is limited") || error.message.includes("upgrade to PRO") || error.message.includes("use Premium nodes")) {
+          window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+        } else {
+          toast.error(`Failed to save workflow : ${error.message}`);
+        }
       },
     }),
   );

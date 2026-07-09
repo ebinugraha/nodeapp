@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
   useCreateCredentials,
@@ -87,6 +88,7 @@ const credentialTypeOptions = [
     color: "bg-blue-500/10 border-blue-500/30 text-blue-600",
     description: "Google Sheets API for data operations",
     guideType: "google_sheets" as const,
+    isProFeature: true,
   },
 ];
 
@@ -105,6 +107,10 @@ export const CredentialForm = ({
   const router = useRouter();
   const createCredential = useCreateCredentials();
   const updateCredential = useUpdateCredential();
+  const { data: session } = authClient.useSession();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isPro = (session?.user as any)?.plan === "PRO";
 
   const [origin, setOrigin] = useState("");
   const [selectedTypeConfig, setSelectedTypeConfig] = useState(
@@ -326,8 +332,16 @@ export const CredentialForm = ({
                             Layanan
                           </FormLabel>
                           <Select
-                            onValueChange={field.onChange}
+                            onValueChange={(val) => {
+                              const option = credentialTypeOptions.find(o => o.value === val);
+                              if (option?.isProFeature && !isPro) {
+                                window.dispatchEvent(new CustomEvent("openUpgradeModal"));
+                                return;
+                              }
+                              field.onChange(val);
+                            }}
                             defaultValue={field.value}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger className="h-10 text-sm">
@@ -345,24 +359,35 @@ export const CredentialForm = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {credentialTypeOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  <div className="flex items-center gap-3 py-1">
-                                    <Image
-                                      src={option.logo}
-                                      alt={option.label}
-                                      width={18}
-                                      height={18}
-                                    />
-                                    <span className="font-medium">
-                                      {option.label}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {credentialTypeOptions.map((option) => {
+                                const isLocked = option.isProFeature && !isPro;
+                                return (
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    <div className={cn("flex items-center gap-3 py-1", isLocked && "opacity-50")}>
+                                      <Image
+                                        src={option.logo}
+                                        alt={option.label}
+                                        width={18}
+                                        height={18}
+                                      />
+                                      <span className="font-medium">
+                                        {option.label}
+                                      </span>
+                                      {isLocked && (
+                                        <Badge
+                                          variant="outline"
+                                          className="ml-2 text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                        >
+                                          PRO
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                           <FormMessage />

@@ -10,6 +10,7 @@ import {
   PlusIcon,
   ShieldCheckIcon,
   Trash2Icon,
+  ArrowRightIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -157,9 +158,7 @@ const credentialTypeConfig: Record<
 };
 
 export const CredentialCard = ({ data }: { data: Credential }) => {
-  const router = useRouter();
   const removeCredential = useRemoveCredentials();
-  const [isRemoving, setIsRemoving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const config =
@@ -179,175 +178,163 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
     }
   }
 
-  const handleDelete = async () => {
-    setIsRemoving(true);
-    try {
-      await removeCredential.mutateAsync({ id: data.id });
-      toast.success("Credential deleted");
-    } catch {
-      toast.error("Failed to delete credential");
-    } finally {
-      setIsRemoving(false);
-      setShowDeleteConfirm(false);
-    }
+  const handleRemove = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    removeCredential.mutate({ id: data.id });
   };
 
   return (
-    <Card
-      onClick={() => {
-        if (!showDeleteConfirm && !isRemoving) {
-          router.push(`/credentials/${data.id}`);
-        }
-      }}
-      className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200 py-3 px-4",
-        "hover:shadow-md hover:border-primary/40 cursor-pointer bg-card hover:bg-accent/10",
-        isRemoving && "opacity-50",
-      )}
-    >
-      {/* Subtle glow/shadow overlay on hover */}
-      <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-      {/* Left accent bar */}
+    <Link href={`/credentials/${data.id}`} className="block group prefetch">
       <div
         className={cn(
-          "absolute top-0 left-0 bottom-0 w-1",
-          isConnected ? "bg-emerald-500" : "bg-slate-400",
+          "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
+          "bg-card",
+          "hover:border-primary/40 hover:shadow-md cursor-pointer",
+          removeCredential.isPending && "opacity-50",
         )}
-      />
+      >
+        {/* Subtle glow/shadow overlay on hover */}
+        <div className="absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-      <div className="pl-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left Section: Logo & Info */}
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div
-            className={cn(
-              "flex shrink-0 items-center justify-center size-12 rounded-xl",
-              config.bgColor,
-            )}
-          >
-            <Image
-              src={config.logo}
-              alt={config.label}
-              width={24}
-              height={24}
-              className="object-contain"
-            />
-          </div>
+        {/* Left accent bar */}
+        <div
+          className={cn(
+            "absolute top-0 left-0 bottom-0 w-1",
+            isConnected ? "bg-emerald-500" : "bg-slate-400",
+          )}
+        />
 
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold truncate group-hover:text-primary transition-colors text-sm">
-                {data.name}
-              </h3>
-              {isConnected ? (
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200"
-                >
-                  Connected
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-2 py-0 bg-slate-50 text-slate-600 border-slate-200"
-                >
-                  API Key
-                </Badge>
-              )}
+        <div className="px-4 py-3">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left side - Icon and info */}
+            <div className="flex items-start gap-3 min-w-0">
+              <div
+                className={cn(
+                  "flex items-center justify-center size-10 rounded-lg shrink-0 border transition-colors",
+                  config.bgColor,
+                  config.borderColor
+                )}
+              >
+                <Image
+                  src={config.logo}
+                  alt={config.label}
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
+              </div>
 
-            </div>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              {config.description}
-            </p>
-          </div>
-        </div>
+              <div className="flex flex-col justify-center min-w-0 space-y-1">
+                {/* Name & Badge */}
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                    {data.name}
+                  </h3>
+                  {isConnected ? (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 uppercase"
+                    >
+                      Connected
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] px-1.5 py-0 h-4 bg-slate-50 text-slate-600 border-slate-200 uppercase"
+                    >
+                      API Key
+                    </Badge>
+                  )}
+                </div>
 
-        {/* Right Section: Metadata and Delete */}
-        <div className="flex items-center justify-between md:justify-end gap-6 text-[11px] text-muted-foreground border-t md:border-t-0 md:border-l border-border/50 pt-3 md:pt-0 md:pl-6">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex flex-col gap-1 md:items-end cursor-help">
-                  <span className="font-medium text-foreground flex items-center gap-1.5">
-                    <ShieldCheckIcon className="size-3.5" />
+                {/* Meta info */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mt-0.5">
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    <ShieldCheckIcon className="size-3" />
                     {isOAuth ? "OAuth 2.0" : "API Key"}
                   </span>
-                  <div
+                  <span
                     suppressHydrationWarning
-                    className="flex items-center gap-1.5"
+                    className="flex items-center gap-1.5 shrink-0"
+                    title={format(data.createdAt, "PPpp")}
                   >
-                    <CalendarIcon className="size-3.5" />
-                    <span>
-                      Created{" "}
-                      {formatDistanceToNow(data.createdAt, { addSuffix: true })}
-                    </span>
-                  </div>
+                    <CalendarIcon className="size-3" />
+                    Created {formatDistanceToNow(data.createdAt, { addSuffix: true })}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground/60 font-mono shrink-0">
+                    ID: {data.id.slice(0, 8)}...
+                  </span>
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {isOAuth
-                    ? "Uses OAuth 2.0 authentication"
-                    : "Uses API key authentication"}
-                </p>
-                <p className="text-muted-foreground">
-                  {format(data.createdAt, "PPpp")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </div>
+            </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-2">
-            {!showDeleteConfirm ? (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+            {/* Right side - Arrow (default state) */}
+            {!showDeleteConfirm && (
+              <div className="flex items-center gap-2 h-10 text-muted-foreground transition-all shrink-0">
+                {/* Delete trigger */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-8 opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all z-10"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                >
+                  <Trash2Icon className="size-4" />
+                </Button>
+
+                <div className="opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1">
+                  <ArrowRightIcon className="size-4" />
+                </div>
+              </div>
+            )}
+
+            {/* Right side - Delete Confirm State */}
+            {showDeleteConfirm && (
+              <div
+                className="flex items-center gap-2 h-10 shrink-0 z-10 animate-in fade-in zoom-in-95"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  setShowDeleteConfirm(true);
                 }}
               >
-                <Trash2Icon className="size-4" />
-              </Button>
-            ) : (
-              <div className="flex flex-col items-center gap-2 rounded-lg bg-red-50 p-2 border border-red-200 dark:bg-red-950/20 dark:border-red-900/30">
-                <p className="text-xs font-medium text-red-900 dark:text-red-300">
-                  Delete?
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="h-6 text-[10px] px-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                    disabled={isRemoving}
-                  >
-                    Yes
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 text-[10px] px-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteConfirm(false);
-                    }}
-                  >
-                    No
-                  </Button>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-destructive/10 border border-destructive/20 mr-2">
+                  <AlertCircleIcon className="size-3.5 text-destructive" />
+                  <span className="text-xs font-medium text-destructive">
+                    Delete?
+                  </span>
                 </div>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-8 text-xs"
+                  onClick={handleRemove}
+                  disabled={removeCredential.isPending}
+                >
+                  {removeCredential.isPending ? "..." : "Yes"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs hover:bg-muted"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowDeleteConfirm(false);
+                  }}
+                  disabled={removeCredential.isPending}
+                >
+                  No
+                </Button>
               </div>
             )}
           </div>
         </div>
       </div>
-    </Card>
+    </Link>
   );
 };
 

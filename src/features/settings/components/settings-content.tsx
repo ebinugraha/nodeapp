@@ -4,6 +4,8 @@ import { SettingsIcon, UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PreferencesSettings } from "./preferences-settings";
 import { ProfileSettings } from "./profile-settings";
+import { PlanSettings } from "./plan-settings";
+import { CreditCardIcon } from "lucide-react";
 
 export const SettingsContent = () => {
   return (
@@ -25,6 +27,10 @@ export const SettingsContent = () => {
             <SettingsIcon className="size-4" />
             Preferences
           </TabsTrigger>
+          <TabsTrigger value="plan" className="gap-2">
+            <CreditCardIcon className="size-4" />
+            Plan & Billing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -33,6 +39,10 @@ export const SettingsContent = () => {
 
         <TabsContent value="preferences">
           <PreferencesSettings />
+        </TabsContent>
+
+        <TabsContent value="plan">
+          <PlanSettings />
         </TabsContent>
       </Tabs>
     </div>

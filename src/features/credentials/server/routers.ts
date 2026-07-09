@@ -4,6 +4,7 @@ import z from "zod";
 import { PAGINATION } from "@/config/constant";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { credentialService } from "../application/credential.service";
+import prisma from "@/lib/db";
 
 export const credentialsRouter = createTRPCRouter({
   create: protectedProcedure
@@ -16,6 +17,17 @@ export const credentialsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { name, type, value } = input;
+      
+      if (type === CredentialType.GOOGLE) {
+        const user = await prisma.user.findUnique({ where: { id: ctx.auth.user.id } });
+        if (user?.plan === "FREE") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Free plan is limited. Please upgrade to PRO to use Google credentials.",
+          });
+        }
+      }
+
       return await credentialService.createCredential(
         ctx.auth.user.id,
         name,
@@ -44,6 +56,17 @@ export const credentialsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { name, id, type, value } = input;
+
+      if (type === CredentialType.GOOGLE) {
+        const user = await prisma.user.findUnique({ where: { id: ctx.auth.user.id } });
+        if (user?.plan === "FREE") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Free plan is limited. Please upgrade to PRO to use Google credentials.",
+          });
+        }
+      }
+
       return await credentialService.updateCredential(
         id,
         ctx.auth.user.id,

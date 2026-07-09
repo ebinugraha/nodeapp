@@ -3,6 +3,7 @@ import z from "zod";
 import { PAGINATION } from "@/config/constant";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { workflowService } from "../application/workflow.service";
+import prisma from "@/lib/db";
 
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
@@ -28,6 +29,16 @@ export const workflowsRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure.mutation(async ({ ctx }) => {
+    const user = await prisma.user.findUnique({ where: { id: ctx.auth.user.id } });
+    if (user?.plan === "FREE") {
+      const count = await prisma.workflow.count({ where: { userId: ctx.auth.user.id } });
+      if (count >= 3) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Free plan is limited to 3 workflows. Please upgrade to PRO.",
+        });
+      }
+    }
     return await workflowService.createWorkflow(ctx.auth.user.id);
   }),
 
@@ -64,6 +75,33 @@ export const workflowsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { edges, id, nodes } = input;
+      
+      const user = await prisma.user.findUnique({ where: { id: ctx.auth.user.id } });
+      if (user?.plan === "FREE") {
+        if (nodes.length > 5) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Free plan is limited to 5 nodes per workflow. Please upgrade to PRO.",
+          });
+        }
+        
+        for (const node of nodes) {
+          if (node.type === "GOOGLE_SHEETS" || node.type === "DISCORD_NOTIFY") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Free plan is limited. Please upgrade to PRO to use Premium nodes.",
+            });
+          }
+
+          if (node.data?.pollingInterval && typeof node.data.pollingInterval === "number" && node.data.pollingInterval < 60) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Free plan is limited to a minimum polling interval of 60 seconds. Please upgrade to PRO.",
+            });
+          }
+        }
+      }
+
       return await workflowService.updateWorkflowLayout(
         id,
         ctx.auth.user.id,
