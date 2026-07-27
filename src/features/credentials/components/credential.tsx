@@ -112,6 +112,7 @@ export const CredentialForm = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isPro = (session?.user as any)?.plan === "PRO";
 
+  const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [origin, setOrigin] = useState("");
   const [selectedTypeConfig, setSelectedTypeConfig] = useState(
     credentialTypeOptions[0],
@@ -191,28 +192,31 @@ export const CredentialForm = ({
       connected: false,
     };
 
+    setIsStartingOAuth(true);
     try {
-      let credentialId = initialData?.id;
+      const response = await fetch("/api/credentials/oauth/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          credentialId: isEdit ? initialData?.id : undefined,
+          name,
+          type,
+          clientId,
+          clientSecret,
+          origin: window.location.origin,
+        }),
+      });
 
-      if (isEdit && credentialId) {
-        await updateCredential.mutateAsync({
-          id: credentialId,
-          name,
-          type,
-          value: JSON.stringify(payload),
-        });
-      } else {
-        const newCred = await createCredential.mutateAsync({
-          name,
-          type,
-          value: JSON.stringify(payload),
-        });
-        credentialId = newCred.id;
+      if (!response.ok) {
+        throw new Error("Failed to start OAuth flow");
       }
 
-      window.location.href = `/api/credentials/oauth/start?credentialId=${credentialId}`;
+      const { url } = await response.json();
+      window.location.href = url;
     } catch {
-      toast.error("Failed to save configuration before connecting");
+      toast.error("Gagal memulai konfigurasi OAuth.");
+    } finally {
+      setIsStartingOAuth(false);
     }
   };
 
@@ -514,9 +518,9 @@ export const CredentialForm = ({
                         variant={isConnected ? "outline" : "default"}
                         className="w-full h-10 text-sm gap-2 mt-4"
                         onClick={handleConnect}
-                        disabled={isPending}
+                        disabled={isPending || isStartingOAuth}
                       >
-                        {isPending ? (
+                        {isPending || isStartingOAuth ? (
                           <Loader2Icon className="size-4 animate-spin" />
                         ) : (
                           <ExternalLinkIcon className="size-4" />

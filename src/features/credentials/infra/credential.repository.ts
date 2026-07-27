@@ -58,7 +58,13 @@ export class CredentialRepository {
     page: number,
     pageSize: number,
     search: string,
+    sortBy: string = "newest",
   ) {
+    let orderBy: any = { createdAt: "desc" };
+    if (sortBy === "oldest") orderBy = { createdAt: "asc" };
+    else if (sortBy === "name_asc") orderBy = { name: "asc" };
+    else if (sortBy === "name_desc") orderBy = { name: "desc" };
+
     const [items, totalCount] = await Promise.all([
       prisma.credential.findMany({
         skip: (page - 1) * pageSize,
@@ -70,7 +76,7 @@ export class CredentialRepository {
             mode: "insensitive",
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
       prisma.credential.count({
         where: {

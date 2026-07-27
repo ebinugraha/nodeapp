@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import type { Edge, Node } from "@xyflow/react";
 import { generateSlug } from "random-word-slugs";
 import { sendWorkflowExecution } from "@/lib/send-workflow-execution";
@@ -13,6 +14,10 @@ export class WorkflowService {
 
   async executeWorkflow(id: string, userId: string) {
     const workflow = await this.repository.findByIdAndUser(id, userId);
+
+    if (!workflow) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
+    }
 
     try {
       topologicalSort(workflow.nodes, workflow.connections);
@@ -56,6 +61,10 @@ export class WorkflowService {
   async getWorkflowById(id: string, userId: string) {
     const workflow = await this.repository.findByIdAndUser(id, userId);
 
+    if (!workflow) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
+    }
+
     const nodes: Node[] = workflow.nodes.map((node) => ({
       id: node.id,
       type: node.type,
@@ -84,12 +93,14 @@ export class WorkflowService {
     page: number,
     pageSize: number,
     search: string,
+    sortBy: string = "newest"
   ) {
     const { items, totalCount } = await this.repository.findManyWithPagination(
       userId,
       page,
       pageSize,
       search,
+      sortBy
     );
 
     const totalPages = Math.ceil(totalCount / pageSize);

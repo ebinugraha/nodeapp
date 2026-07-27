@@ -59,6 +59,14 @@ export const CredentialSearch = () => {
       value={searchValue}
       onChange={(value) => onSearchChange(value)}
       placeholder="Search credentials..."
+      sortBy={params.sortBy}
+      onSortChange={(value) => setParams({ sortBy: value })}
+      sortOptions={[
+        { label: "Newest", value: "newest" },
+        { label: "Oldest", value: "oldest" },
+        { label: "Name (A-Z)", value: "name_asc" },
+        { label: "Name (Z-A)", value: "name_desc" },
+      ]}
     />
   );
 };

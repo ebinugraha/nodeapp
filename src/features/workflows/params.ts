@@ -1,4 +1,4 @@
-import { parseAsInteger, parseAsString } from "nuqs/server";
+import { parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs/server";
 import { PAGINATION } from "@/config/constant";
 
 export const workflowsParams = {
@@ -10,6 +10,12 @@ export const workflowsParams = {
     .withOptions({ clearOnDefault: true }),
 
   search: parseAsString.withDefault("").withOptions({
+    clearOnDefault: true,
+  }),
+  sortBy: parseAsString.withDefault("newest").withOptions({
+    clearOnDefault: true,
+  }),
+  layout: parseAsStringEnum(["grid", "list"]).withDefault("grid").withOptions({
     clearOnDefault: true,
   }),
 };

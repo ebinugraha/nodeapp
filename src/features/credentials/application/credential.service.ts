@@ -46,12 +46,14 @@ export class CredentialService {
     page: number,
     pageSize: number,
     search: string,
+    sortBy: string = "newest",
   ) {
     const { items, totalCount } = await this.repository.findManyWithPagination(
       userId,
       page,
       pageSize,
       search,
+      sortBy,
     );
 
     const totalPages = Math.ceil(totalCount / pageSize);

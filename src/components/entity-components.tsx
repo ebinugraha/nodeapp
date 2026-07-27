@@ -1,7 +1,14 @@
+"use client";
+
+import React from "react";
 import {
   AlertTriangleIcon,
+  ArrowDownUpIcon,
+  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  LayoutGridIcon,
+  ListIcon,
   Loader2Icon,
   MoreVerticalIcon,
   PackageOpenIcon,
@@ -110,22 +117,85 @@ interface EntitySearchProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  sortBy?: string;
+  onSortChange?: (value: string) => void;
+  sortOptions?: { label: string; value: string }[];
+  layout?: "grid" | "list";
+  onLayoutChange?: (layout: "grid" | "list") => void;
 }
 
 export const EntitySearch = ({
   value,
   onChange,
   placeholder = "Search",
+  sortBy,
+  onSortChange,
+  sortOptions,
+  layout,
+  onLayoutChange,
 }: EntitySearchProps) => {
   return (
-    <div className="relative ml-auto">
-      <SearchIcon className="absolute size-3.5 left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        className="max-w-[200px] bg-background shadow-none border-border pl-8"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+    <div className="relative flex items-center gap-2 ml-auto w-full sm:w-auto">
+      <div className="relative flex items-center group w-full sm:w-[250px]">
+        <div className="relative flex items-center w-full h-9 rounded-full border border-border bg-background/50 backdrop-blur-md overflow-hidden focus-within:border-primary/50 hover:border-primary/50">
+          <SearchIcon className="absolute left-3 size-4 text-muted-foreground group-focus-within:text-foreground" />
+          <Input
+            className="w-full h-full bg-transparent border-0 shadow-none pl-9 pr-4 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70"
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {sortOptions && onSortChange && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-full shrink-0">
+              <ArrowDownUpIcon className="size-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {sortOptions.map((opt) => (
+              <DropdownMenuItem 
+                key={opt.value} 
+                onClick={() => onSortChange(opt.value)}
+                className="flex items-center justify-between min-w-[120px]"
+              >
+                {opt.label}
+                {sortBy === opt.value && <CheckIcon className="size-4 ml-2" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {layout && onLayoutChange && (
+        <div className="flex items-center bg-muted/50 border border-border p-0.5 rounded-full shrink-0 h-9">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-full w-8 rounded-full transition-all",
+              layout === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => onLayoutChange("grid")}
+          >
+            <LayoutGridIcon className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-full w-8 rounded-full transition-all",
+              layout === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => onLayoutChange("list")}
+          >
+            <ListIcon className="size-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

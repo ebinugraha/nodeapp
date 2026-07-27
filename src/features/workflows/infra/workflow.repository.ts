@@ -4,7 +4,7 @@ import prisma from "@/lib/db";
 
 export class WorkflowRepository {
   async findByIdAndUser(id: string, userId: string) {
-    return prisma.workflow.findFirstOrThrow({
+    return prisma.workflow.findFirst({
       where: { id, userId },
       include: { nodes: true, connections: true },
     });
@@ -94,7 +94,13 @@ export class WorkflowRepository {
     page: number,
     pageSize: number,
     search: string,
+    sortBy: string = "newest"
   ) {
+    let orderBy: any = { updatedAt: "desc" };
+    if (sortBy === "oldest") orderBy = { updatedAt: "asc" };
+    else if (sortBy === "name_asc") orderBy = { name: "asc" };
+    else if (sortBy === "name_desc") orderBy = { name: "desc" };
+
     const [items, totalCount] = await Promise.all([
       prisma.workflow.findMany({
         skip: (page - 1) * pageSize,
@@ -115,8 +121,10 @@ export class WorkflowRepository {
               id: true,
             },
           },
+          nodes: true,
+          connections: true,
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy,
       }),
       prisma.workflow.count({
         where: {

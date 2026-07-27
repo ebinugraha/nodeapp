@@ -75,7 +75,7 @@ export const workflowsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { edges, id, nodes } = input;
-      
+
       const user = await prisma.user.findUnique({ where: { id: ctx.auth.user.id } });
       if (user?.plan === "FREE") {
         if (nodes.length > 5) {
@@ -84,7 +84,7 @@ export const workflowsRouter = createTRPCRouter({
             message: "Free plan is limited to 5 nodes per workflow. Please upgrade to PRO.",
           });
         }
-        
+
         for (const node of nodes) {
           if (node.type === "GOOGLE_SHEETS" || node.type === "DISCORD_NOTIFY") {
             throw new TRPCError({
@@ -136,15 +136,17 @@ export const workflowsRouter = createTRPCRouter({
           .max(PAGINATION.MAX_PAGE_SIZE)
           .default(PAGINATION.DEFAULT_PAGE_SIZE),
         search: z.string().default(""),
+        sortBy: z.string().default("newest"),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { page, pageSize, search } = input;
+      const { page, pageSize, search, sortBy } = input;
       return await workflowService.getWorkflows(
         ctx.auth.user.id,
         page,
         pageSize,
         search,
+        sortBy,
       );
     }),
 

@@ -95,15 +95,17 @@ export const credentialsRouter = createTRPCRouter({
           .max(PAGINATION.MAX_PAGE_SIZE)
           .default(PAGINATION.DEFAULT_PAGE_SIZE),
         search: z.string().default(""),
+        sortBy: z.string().default("newest"),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { page, pageSize, search } = input;
+      const { page, pageSize, search, sortBy } = input;
       return await credentialService.getCredentials(
         ctx.auth.user.id,
         page,
         pageSize,
         search,
+        sortBy,
       );
     }),
 
