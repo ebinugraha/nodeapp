@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export const PRO_PRICE = 99000;
+const PRO_PRICE = 99000;
 const PAKKASIR_CHECKOUT_LINK = "https://app.pakasir.com/pay/cleenchat";
 
 export async function GET(req: Request) {
