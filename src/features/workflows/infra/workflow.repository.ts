@@ -106,6 +106,16 @@ export class WorkflowRepository {
             mode: "insensitive",
           },
         },
+        include: {
+          executions: {
+            where: {
+              status: "RUNNING",
+            },
+            select: {
+              id: true,
+            },
+          },
+        },
         orderBy: { updatedAt: "desc" },
       }),
       prisma.workflow.count({

@@ -28,13 +28,17 @@ import { authClient } from "@/lib/auth-client";
 
 const registerSchema = z
   .object({
-    email: z.email("Harap masukan email yang valid"),
-    password: z.string().min(1, "Password harus diisi"),
-    confirmPassword: z.string().min(1, "Konfirmasi password harus diisi"),
+    email: z.string().email("Harap masukan email yang valid"),
+    password: z.string().min(8, "Password minimal 8 karakter"),
+    confirmPassword: z.string().min(8, "Konfirmasi password minimal 8 karakter"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Password dan konfirmasi password harus sama",
     path: ["confirmPassword"],
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password dan konfirmasi password harus sama",
+    path: ["password"],
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -44,6 +48,7 @@ export const RegisterForm = () => {
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",

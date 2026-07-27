@@ -146,7 +146,11 @@ export const WorkflowsEmpty = () => {
   );
 };
 
-export const WorkflowItem = ({ data }: { data: Workflow }) => {
+export const WorkflowItem = ({
+  data,
+}: {
+  data: Workflow & { executions?: { id: string }[] };
+}) => {
   const removeWorkflow = useRemoveWorkflow();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -186,6 +190,15 @@ export const WorkflowItem = ({ data }: { data: Workflow }) => {
                   <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                     {data.name}
                   </h3>
+                  {data.executions && data.executions.length > 0 && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      </span>
+                      <span className="text-[10px] font-medium leading-none">Running</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Meta info */}

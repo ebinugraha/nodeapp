@@ -27,8 +27,8 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
 const loginSchema = z.object({
-  email: z.email("Harap masukan email yang valid"),
-  password: z.string().min(1, "Password harus diisi"),
+  email: z.string().email("Harap masukan email yang valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -38,6 +38,7 @@ export const LoginForm = () => {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",

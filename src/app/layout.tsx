@@ -4,7 +4,7 @@ import "./globals.css";
 import { Provider } from "jotai";
 import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 
