@@ -16,6 +16,16 @@ export class ExecutionRepository {
     });
   }
 
+  async findLatestByWorkflowId(workflowId: string, userId: string) {
+    return prisma.execution.findFirst({
+      where: {
+        workflowId,
+        workflow: { userId },
+      },
+      orderBy: { startedAt: "desc" },
+    });
+  }
+
   async findManyWithPagination(userId: string, page: number, pageSize: number) {
     const [items, totalCount] = await Promise.all([
       prisma.execution.findMany({

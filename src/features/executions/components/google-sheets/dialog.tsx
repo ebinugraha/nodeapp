@@ -256,7 +256,11 @@ function SheetSelector({
       setError(null);
       try {
         const response = await fetch(`/api/credentials/${credentialId}`);
-        if (!response.ok) throw new Error("Gagal mengambil credential");
+        if (!response.ok) {
+          setError("Gagal mengambil credential");
+          setSheets([]);
+          return;
+        }
 
         const credential = await response.json();
         const token = JSON.parse(credential.value).access_token;
@@ -270,9 +274,9 @@ function SheetSelector({
 
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(
-            errorData.error?.message || "Gagal mengambil daftar sheet",
-          );
+          setError(errorData.error?.message || "Gagal mengambil daftar sheet");
+          setSheets([]);
+          return;
         }
 
         const data = await res.json();

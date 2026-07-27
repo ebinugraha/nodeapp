@@ -13,6 +13,15 @@ export const exectutionRouter = createTRPCRouter({
       );
     }),
 
+  getLatestByWorkflowId: protectedProcedure
+    .input(z.object({ workflowId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await executionService.getLatestExecutionByWorkflowId(
+        input.workflowId,
+        ctx.auth.user.id,
+      );
+    }),
+
   getMany: protectedProcedure
     .input(
       z.object({

@@ -112,77 +112,98 @@ export const executeWorkflow = inngest.createFunction(
 
     let context = event.data.initialData || {};
     const skippedNodeIds = new Set<string>(); // Track node yang di-skip
+    const executionLogs: any[] = [];
 
     // execute each node
     for (const node of sortedNodes) {
-      // 1. Cek apakah node ini harus di-skip
       if (skippedNodeIds.has(node.id)) {
         continue;
       }
 
-      const executor = getExecutor(node.type as NodeType);
-      context = await executor({
-        data: node.data as Record<string, unknown>,
-        nodeId: node.id,
-        context,
-        userId,
-        step,
-      });
+      const startTime = Date.now();
+      try {
+        const executor = getExecutor(node.type as NodeType);
+        const oldContextKeys = Object.keys(context);
 
-      // 2. LOGIKA DECISION NODE
-      // C. Logika Khusus DECISION NODE
-      if (node.type === "DECISION") {
-        const nodeData = node.data as Record<string, any>;
+        context = await executor({
+          data: node.data as Record<string, unknown>,
+          nodeId: node.id,
+          context,
+          userId,
+          step,
+        });
 
-        // Fallback ke 'decision' jika user lupa isi variableName di UI
-        const variableName = nodeData.variableName || "decision";
-
-        console.log("variabel name = ", variableName);
-
-        // Ambil hasil dari context
-        const executionResult = (context as any)[variableName];
-
-        // DEBUGGING: Cek kenapa undefined
-        if (!executionResult) {
-          console.error(
-            `[Decision Node] ❌ ERROR: Variable '${variableName}' tidak ditemukan di context!`,
-          );
-          console.log(
-            `[Decision Node] ℹ️ Keys yang tersedia di context:`,
-            Object.keys(context),
-          );
-
-          // Lempar error agar execution status jadi FAILED dan kita sadar ada masalah
-          throw new NonRetriableError(
-            `Decision Node Error: Variable '${variableName}' not found in context. Please check your Decision Node configuration.`,
-          );
+        // Determine node output
+        const newContextKeys = Object.keys(context).filter(
+          (k) => !oldContextKeys.includes(k)
+        );
+        let nodeOutput: any = {};
+        if (newContextKeys.length > 0) {
+          newContextKeys.forEach((k) => {
+            nodeOutput[k] = (context as any)[k];
+          });
+        } else {
+          const variableName = (node.data as any).variableName;
+          if (variableName && (context as any)[variableName]) {
+            nodeOutput = (context as any)[variableName];
+          }
         }
 
-        const decisionResult = executionResult.result; // Harus boolean true/false
+        const endTime = Date.now();
+        executionLogs.push({
+          nodeId: node.id,
+          nodeName: node.name,
+          type: node.type,
+          duration: endTime - startTime,
+          status: "SUCCESS",
+          output: nodeOutput,
+        });
 
-        console.log(
-          `[Decision Node] ✅ Evaluasi '${variableName}':`,
-          decisionResult,
-        );
+        // 2. LOGIKA DECISION NODE
+        if (node.type === "DECISION") {
+          const nodeData = node.data as Record<string, any>;
+          const variableName = nodeData.variableName || "decision";
+          const executionResult = (context as any)[variableName];
 
-        // Tentukan jalur yang MATI (Inactive)
-        // Jika True -> Jalur 'false' dimatikan
-        // Jika False -> Jalur 'true' dimatikan
-        const inactiveHandle = decisionResult ? "false" : "true";
+          if (!executionResult) {
+            throw new NonRetriableError(
+              `Decision Node Error: Variable '${variableName}' not found in context.`
+            );
+          }
 
-        // Cari semua anak-cucu di jalur yang mati
-        const nodesToSkip = getDescendants(
-          workflow.nodes,
-          workflow.connections,
-          node.id,
-          inactiveHandle,
-        );
+          const decisionResult = executionResult.result;
+          const inactiveHandle = decisionResult ? "false" : "true";
 
-        nodesToSkip.forEach((id) => skippedNodeIds.add(id));
+          const nodesToSkip = getDescendants(
+            workflow.nodes,
+            workflow.connections,
+            node.id,
+            inactiveHandle
+          );
+          nodesToSkip.forEach((id) => skippedNodeIds.add(id));
+        }
+      } catch (error: any) {
+        const endTime = Date.now();
+        executionLogs.push({
+          nodeId: node.id,
+          nodeName: node.name,
+          type: node.type,
+          duration: endTime - startTime,
+          status: "FAILED",
+          error: error.message,
+        });
 
-        console.log(
-          `[Decision Node] 🚫 Skipping ${nodesToSkip.size} nodes di jalur '${inactiveHandle}'`,
-        );
+        // Update database with failed logs before throwing
+        await step.run("update-execution-failed-logs", async () => {
+          return prisma.execution.update({
+            where: { inngestEventId, workflowId },
+            data: {
+              output: { result: context, logs: executionLogs },
+            },
+          });
+        });
+
+        throw error;
       }
     }
 
@@ -192,7 +213,7 @@ export const executeWorkflow = inngest.createFunction(
         data: {
           status: ExecutionStatus.SUCCESS,
           completedAt: new Date(),
-          output: context,
+          output: { result: context, logs: executionLogs },
         },
       });
     });

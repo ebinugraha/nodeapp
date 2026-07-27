@@ -16,6 +16,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ImperativePanelHandle } from "react-resizable-panels";
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { nodeComponents } from "@/config/node-components";
 import { useSettings } from "@/features/settings/hooks/use-settings";
@@ -26,11 +27,18 @@ import {
 import "@xyflow/react/dist/style.css";
 import { NodeType } from "@prisma/client";
 import { useSetAtom } from "jotai";
-import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { AlertCircle, Check, Loader2, TerminalSquareIcon } from "lucide-react";
 import { useTheme } from "next-themes";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { editorAtom } from "../store/atoms";
 import { AddNoteButton } from "./add-node-button";
 import { ExecutionButton } from "./execution-button";
+import { EditorExecutionViewer } from "./editor-execution-viewer";
+import { Button } from "@/components/ui/button";
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -64,6 +72,8 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     Record<string, { x: number; y: number }>
   >({});
   const isSavingRef = useRef(false);
+  const logsPanelRef = useRef<ImperativePanelHandle>(null);
+  const [isLogsCollapsed, setIsLogsCollapsed] = useState(false);
 
   // Initialize last saved positions on mount
   useEffect(() => {
@@ -230,7 +240,9 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
 
   return (
     <div className="size-full">
-      <ReactFlow
+      <ResizablePanelGroup direction="vertical">
+        <ResizablePanel defaultSize={70} minSize={30} className="relative">
+          <ReactFlow
         nodes={nodes}
         edges={enhancedEdges}
         onNodesChange={onNodesChange}
@@ -260,6 +272,19 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
             <ExecutionButton workflowId={workflowId} />
           </Panel>
         )}
+        {isLogsCollapsed && (
+          <Panel position="bottom-right">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => logsPanelRef.current?.expand()}
+              className="bg-background mr-[210px] mb-2"
+              title="Show Logs"
+            >
+              <TerminalSquareIcon />
+            </Button>
+          </Panel>
+        )}
         {/* Position status indicator */}
         <Panel position="top-left">
           <div className="flex items-center gap-2">
@@ -279,7 +304,6 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
                 <span>Saved</span>
               </div>
             )}
-            {/* Save button */}
             {positionStatus === "changed" && (
               <button
                 onClick={handleSave}
@@ -291,6 +315,23 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           </div>
         </Panel>
       </ReactFlow>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle className="bg-border/50" />
+
+        <ResizablePanel
+          ref={logsPanelRef}
+          defaultSize={30}
+          minSize={20}
+          collapsible={true}
+          collapsedSize={0}
+          onCollapse={() => setIsLogsCollapsed(true)}
+          onExpand={() => setIsLogsCollapsed(false)}
+          className="bg-card"
+        >
+          <EditorExecutionViewer workflowId={workflowId} />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };

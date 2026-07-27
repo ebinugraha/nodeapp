@@ -11,6 +11,10 @@ export class ExecutionService {
     return this.repository.findByIdAndUser(id, userId);
   }
 
+  async getLatestExecutionByWorkflowId(workflowId: string, userId: string) {
+    return this.repository.findLatestByWorkflowId(workflowId, userId);
+  }
+
   async getExecutions(userId: string, page: number, pageSize: number) {
     const { items, totalCount } = await this.repository.findManyWithPagination(
       userId,
