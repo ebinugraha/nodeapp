@@ -177,7 +177,7 @@ export const WorkflowItem = ({
 
   if (layout === "list") {
     return (
-      <Link href={`/workflows/${data.id}`} className="block group prefetch">
+      <Link href={`/workflows/${data.id}`} className="block group" prefetch={true}>
         <div
           className={cn(
             "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",
@@ -242,7 +242,7 @@ export const WorkflowItem = ({
   }
 
   return (
-    <Link href={`/workflows/${data.id}`} className="block group prefetch h-full">
+    <Link href={`/workflows/${data.id}`} className="block group h-full" prefetch={true}>
       <div
         className={cn(
           "relative flex flex-col h-full overflow-hidden rounded-xl border border-border/70 transition-all duration-200",

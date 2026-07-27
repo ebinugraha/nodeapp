@@ -5,6 +5,7 @@ import {
   CredentialsContainer,
   CredentialsList,
 } from "@/features/credentials/components/credentials";
+import { LoadingView, ErrorView } from "@/components/entity-components";
 import { credentialsParamsLoader } from "@/features/credentials/server/params-loader";
 import { prefetchCredentials } from "@/features/credentials/server/prefetch";
 import { requireAuth } from "@/lib/auth-utils";
@@ -14,21 +15,27 @@ type Props = {
   searchParams: Promise<SearchParams>;
 };
 
-const Page = async ({ searchParams }: Props) => {
+const CredentialsLoader = async ({ searchParams }: { searchParams: Promise<SearchParams> }) => {
   const params = await credentialsParamsLoader(searchParams);
-
-  await requireAuth();
   await prefetchCredentials(params);
 
   return (
+    <HydrateClient>
+      <CredentialsList />
+    </HydrateClient>
+  );
+};
+
+const Page = async ({ searchParams }: Props) => {
+  await requireAuth();
+
+  return (
     <CredentialsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<p>Error...</p>}>
-          <Suspense fallback={<p>Loading...</p>}>
-            <CredentialsList />
-          </Suspense>
-        </ErrorBoundary>
-      </HydrateClient>
+      <ErrorBoundary fallback={<ErrorView message="Failed to load credentials" />}>
+        <Suspense fallback={<LoadingView message="Loading credentials..." />}>
+          <CredentialsLoader searchParams={searchParams} />
+        </Suspense>
+      </ErrorBoundary>
     </CredentialsContainer>
   );
 };

@@ -312,6 +312,31 @@ export const LoadingView = ({ message }: StateViewProps) => {
   );
 };
 
+export const DetailLoadingView = ({ message }: StateViewProps) => {
+  return (
+    <div className="flex flex-col gap-y-8 w-full h-full">
+      <div className="flex justify-between items-center w-full">
+        <Skeleton className="h-10 w-[200px]" />
+        <Skeleton className="h-10 w-[100px]" />
+      </div>
+      <Card className="shadow-none border cursor-default p-6 w-full">
+        <div className="flex flex-col gap-6 w-full">
+          <Skeleton className="h-8 w-[300px]" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+          <Skeleton className="h-[200px] w-full" />
+        </div>
+      </Card>
+      <div className="flex justify-center mt-4 text-muted-foreground items-center gap-2">
+        <Loader2Icon className="size-4 animate-spin text-primary" />
+        <p className="text-sm font-medium">{message || "Loading details..."}</p>
+      </div>
+    </div>
+  );
+};
+
 export const ErrorView = ({ message }: StateViewProps) => {
   return (
     <div className="flex justify-center items-center h-full flex-1 flex-col gap-y-4">

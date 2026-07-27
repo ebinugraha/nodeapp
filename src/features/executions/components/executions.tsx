@@ -143,7 +143,7 @@ export const ExecutionItem = ({
   };
 
   return (
-    <Link href={`/executions/${data.id}`} className="block group" prefetch>
+    <Link href={`/executions/${data.id}`} className="block group" prefetch={true}>
       <div
         className={cn(
           "relative overflow-hidden rounded-xl border border-border/70 transition-all duration-200",

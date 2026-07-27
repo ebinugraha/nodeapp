@@ -340,7 +340,7 @@ export const CredentialForm = ({
                               const option = credentialTypeOptions.find(o => o.value === val);
                               if (option?.isProFeature && !isPro) {
                                 window.dispatchEvent(new CustomEvent("openUpgradeModal"));
-                                return;
+                                // Kita biarkan user tetap bisa memilih meskipun session stale
                               }
                               field.onChange(val);
                             }}

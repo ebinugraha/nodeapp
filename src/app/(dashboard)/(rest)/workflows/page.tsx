@@ -16,21 +16,27 @@ type Props = {
   searchParams: Promise<SearchParams>;
 };
 
+const WorkflowsLoader = async ({ searchParams }: { searchParams: Promise<SearchParams> }) => {
+  const params = await workflowsParamsLoader(searchParams);
+  await prefetchWorkflows(params);
+  
+  return (
+    <HydrateClient>
+      <WorkflowsList />
+    </HydrateClient>
+  );
+};
+
 const Page = async ({ searchParams }: Props) => {
   await requireAuth();
 
-  const params = await workflowsParamsLoader(searchParams);
-  await prefetchWorkflows(params);
-
   return (
     <WorkflowsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<WorkflowsError />}>
-          <Suspense fallback={<WorkflowsLoading />}>
-            <WorkflowsList />
-          </Suspense>
-        </ErrorBoundary>
-      </HydrateClient>
+      <ErrorBoundary fallback={<WorkflowsError />}>
+        <Suspense fallback={<WorkflowsLoading />}>
+          <WorkflowsLoader searchParams={searchParams} />
+        </Suspense>
+      </ErrorBoundary>
     </WorkflowsContainer>
   );
 };

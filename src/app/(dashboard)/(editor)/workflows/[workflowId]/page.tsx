@@ -15,10 +15,7 @@ interface PageProps {
   params: Promise<{ workflowId: string }>;
 }
 
-const Page = async ({ params }: PageProps) => {
-  await requireAuth();
-  const { workflowId } = await params;
-
+const WorkflowEditorLoader = async ({ workflowId }: { workflowId: string }) => {
   try {
     await prefetchWorkflow(workflowId);
   } catch (error) {
@@ -27,15 +24,24 @@ const Page = async ({ params }: PageProps) => {
 
   return (
     <HydrateClient>
-      <ErrorBoundary fallback={<EditorError />}>
-        <Suspense fallback={<EditorLoading />}>
-          <EditorHeader workflowId={workflowId} />
-          <main className="flex-1">
-            <Editor workflowId={workflowId} />
-          </main>
-        </Suspense>
-      </ErrorBoundary>
+      <EditorHeader workflowId={workflowId} />
+      <main className="flex-1">
+        <Editor workflowId={workflowId} />
+      </main>
     </HydrateClient>
+  );
+};
+
+const Page = async ({ params }: PageProps) => {
+  await requireAuth();
+  const { workflowId } = await params;
+
+  return (
+    <ErrorBoundary fallback={<EditorError />}>
+      <Suspense fallback={<EditorLoading />}>
+        <WorkflowEditorLoader workflowId={workflowId} />
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

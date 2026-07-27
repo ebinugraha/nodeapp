@@ -16,21 +16,27 @@ type Props = {
   searchParams: Promise<SearchParams>;
 };
 
-const Page = async ({ searchParams }: Props) => {
+const ExecutionsLoader = async ({ searchParams }: { searchParams: Promise<SearchParams> }) => {
   const params = await executionsParamsLoader(searchParams);
-
-  await requireAuth();
   await prefetchExecutions(params);
+  
+  return (
+    <HydrateClient>
+      <ExecutionsList />
+    </HydrateClient>
+  );
+};
+
+const Page = async ({ searchParams }: Props) => {
+  await requireAuth();
 
   return (
     <ExecutionsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<ExecutionsError />}>
-          <Suspense fallback={<ExecutionslsLoading />}>
-            <ExecutionsList />
-          </Suspense>
-        </ErrorBoundary>
-      </HydrateClient>
+      <ErrorBoundary fallback={<ExecutionsError />}>
+        <Suspense fallback={<ExecutionslsLoading />}>
+          <ExecutionsLoader searchParams={searchParams} />
+        </Suspense>
+      </ErrorBoundary>
     </ExecutionsContainer>
   );
 };

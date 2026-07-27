@@ -147,7 +147,7 @@ export const AppSidebar = () => {
                     }
                     asChild
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} prefetch>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
                     </Link>
