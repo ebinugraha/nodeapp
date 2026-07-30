@@ -279,6 +279,8 @@ const TRIGGER_NODE_TYPES: NodeType[] = [
 ];
 
 import { authClient } from "@/lib/auth-client";
+import { useAtomValue } from "jotai";
+import { requestSaveAtom } from "@/features/editor/store/atoms";
 
 export function NodeSelector({
   open,
@@ -286,6 +288,7 @@ export function NodeSelector({
   children,
 }: NodeSelectorProps) {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow();
+  const requestSave = useAtomValue(requestSaveAtom);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const { data: session } = authClient.useSession();
   
@@ -361,9 +364,10 @@ export function NodeSelector({
         return [...nodes, newNode];
       });
 
+      requestSave?.();
       onOpenChange(false);
     },
-    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro],
+    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro, requestSave],
   );
 
   const handleTemplateSelect = useCallback(
@@ -415,10 +419,11 @@ export function NodeSelector({
         return [...nodes, newNode];
       });
 
+      requestSave?.();
       onOpenChange(false);
       toast.success(`Template "${template.name}" applied`);
     },
-    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro],
+    [setNodes, getNodes, screenToFlowPosition, onOpenChange, isPro, requestSave],
   );
 
   return (

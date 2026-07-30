@@ -35,8 +35,8 @@ export const WorkflowThumbnail = ({
     });
 
     const padding = 120;
-    const nodeWidth = 200;
-    const nodeHeight = 60;
+    const nodeWidth = 220;
+    const nodeHeight = 72;
 
     minX -= padding;
     minY -= padding;
@@ -48,51 +48,21 @@ export const WorkflowThumbnail = ({
 
     const viewBox = `${minX} ${minY} ${width} ${height}`;
 
-    const nodesRender = nodes.map((node) => {
-      const pos = nodePositions.get(node.id)!;
-      const isInitial = node.type === "INTITAL";
-
-      return (
-        <g key={node.id} filter="url(#drop-shadow)">
-          {/* Main Node Body */}
-          <rect
-            x={pos.x}
-            y={pos.y}
-            width={nodeWidth}
-            height={nodeHeight}
-            rx={12}
-            className={`fill-background stroke-[4] ${isInitial ? "stroke-primary" : "stroke-primary/40"}`}
-          />
-          {/* Node Icon Placeholder */}
-          <rect
-            x={pos.x + 12}
-            y={pos.y + 14}
-            width={32}
-            height={32}
-            rx={8}
-            className={isInitial ? "fill-primary" : "fill-primary/20"}
-          />
-          {/* Node Title Placeholder */}
-          <rect
-            x={pos.x + 56}
-            y={pos.y + 20}
-            width={nodeWidth - 76}
-            height={10}
-            rx={5}
-            className="fill-foreground/80"
-          />
-          {/* Node Subtitle Placeholder */}
-          <rect
-            x={pos.x + 56}
-            y={pos.y + 36}
-            width={(nodeWidth - 76) * 0.6}
-            height={8}
-            rx={4}
-            className="fill-muted-foreground/40"
-          />
-        </g>
-      );
-    });
+    const getNodeClasses = (type: string) => {
+      if (type.includes("TRIGGER") || type.includes("YOUTUBE") || type === "INTITAL") {
+        return { stroke: "stroke-amber-500", fill: "fill-amber-500", lightFill: "fill-amber-500/20" };
+      }
+      if (type.includes("HTTP_REQUEST") || type.includes("WEBHOOK")) {
+        return { stroke: "stroke-emerald-500", fill: "fill-emerald-500", lightFill: "fill-emerald-500/20" };
+      }
+      if (type === "DECISION" || type === "WAIT_DELAY") {
+        return { stroke: "stroke-blue-500", fill: "fill-blue-500", lightFill: "fill-blue-500/20" };
+      }
+      if (type.includes("GAMBLING_CHECKER")) {
+        return { stroke: "stroke-purple-500", fill: "fill-purple-500", lightFill: "fill-purple-500/20" };
+      }
+      return { stroke: "stroke-slate-500", fill: "fill-slate-500", lightFill: "fill-slate-500/20" };
+    };
 
     const edgesRender = connections?.map((edge) => {
       const source = nodePositions.get(edge.fromNodeId);
@@ -105,7 +75,7 @@ export const WorkflowThumbnail = ({
       const tx = target.x;
       const ty = target.y + nodeHeight / 2;
 
-      const dx = Math.abs(tx - sx) / 2;
+      const dx = Math.abs(tx - sx) / 2.5;
       const path = `M ${sx},${sy} C ${sx + dx},${sy} ${tx - dx},${ty} ${tx},${ty}`;
 
       return (
@@ -113,11 +83,68 @@ export const WorkflowThumbnail = ({
           key={edge.id}
           d={path}
           fill="none"
-          className="stroke-primary/60 stroke-[6]"
+          className="stroke-muted-foreground/30 stroke-[4] transition-all"
         />
       );
     });
 
+    const nodesRender = nodes.map((node) => {
+      const pos = nodePositions.get(node.id)!;
+      const type = node.type || "";
+      const { stroke, fill, lightFill } = getNodeClasses(type);
+
+      return (
+        <g key={node.id} filter="url(#drop-shadow)">
+          {/* Main Node Body */}
+          <rect
+            x={pos.x}
+            y={pos.y}
+            width={nodeWidth}
+            height={nodeHeight}
+            rx={16}
+            className={`fill-card stroke-[3] ${stroke}`}
+          />
+          {/* Node Icon Placeholder */}
+          <rect
+            x={pos.x + 16}
+            y={pos.y + 16}
+            width={40}
+            height={40}
+            rx={10}
+            className={lightFill}
+          />
+          <circle cx={pos.x + 36} cy={pos.y + 36} r={8} className={fill} />
+          
+          {/* Node Title Placeholder */}
+          <rect
+            x={pos.x + 72}
+            y={pos.y + 24}
+            width={nodeWidth - 100}
+            height={12}
+            rx={6}
+            className="fill-muted-foreground/30"
+          />
+          {/* Node Subtitle Placeholder */}
+          <rect
+            x={pos.x + 72}
+            y={pos.y + 42}
+            width={(nodeWidth - 100) * 0.6}
+            height={8}
+            rx={4}
+            className="fill-muted-foreground/20"
+          />
+          
+          {/* Input Handle (if not trigger) */}
+          {!type.includes("TRIGGER") && type !== "INTITAL" && !type.includes("YOUTUBE") && (
+            <circle cx={pos.x} cy={pos.y + nodeHeight / 2} r={6} className={`fill-background stroke-[3] ${stroke}`} />
+          )}
+          {/* Output Handle */}
+          <circle cx={pos.x + nodeWidth} cy={pos.y + nodeHeight / 2} r={6} className={`fill-background stroke-[3] ${stroke}`} />
+        </g>
+      );
+    });
+
+    // Render edges first so they appear behind nodes
     return { viewBox, nodesRender, edgesRender };
   }, [nodes, connections]);
 
@@ -137,7 +164,7 @@ export const WorkflowThumbnail = ({
     >
       <defs>
         <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.1" />
+          <feDropShadow dx="0" dy="6" stdDeviation="8" floodOpacity="0.15" />
         </filter>
       </defs>
       {edgesRender}

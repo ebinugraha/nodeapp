@@ -219,9 +219,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
             <div className="flex items-start gap-3 min-w-0">
               <div
                 className={cn(
-                  "flex items-center justify-center size-10 rounded-lg shrink-0 border transition-colors",
-                  config.bgColor,
-                  config.borderColor
+                  "flex items-center justify-center size-10 rounded-lg shrink-0 transition-colors bg-transparent",
                 )}
               >
                 <Image
@@ -234,26 +232,11 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
               </div>
 
               <div className="flex flex-col justify-center min-w-0 space-y-1">
-                {/* Name & Badge */}
+                {/* Name */}
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                     {data.name}
                   </h3>
-                  {isConnected ? (
-                    <Badge
-                      variant="outline"
-                      className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 uppercase"
-                    >
-                      Connected
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-[9px] px-1.5 py-0 h-4 bg-slate-50 text-slate-600 border-slate-200 uppercase"
-                    >
-                      API Key
-                    </Badge>
-                  )}
                 </div>
 
                 {/* Meta info */}
@@ -284,7 +267,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-8 opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all z-10"
+                  className="size-8 hover:text-destructive hover:bg-destructive/10 transition-all z-10"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -294,7 +277,7 @@ export const CredentialCard = ({ data }: { data: Credential }) => {
                   <Trash2Icon className="size-4" />
                 </Button>
 
-                <div className="opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1">
+                <div className="text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-1">
                   <ArrowRightIcon className="size-4" />
                 </div>
               </div>

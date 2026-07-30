@@ -25,6 +25,7 @@ import {
 } from "./ui/dropdown-menu";
 import { useCreateWorkflow } from "@/features/workflows/hooks/use-workflows";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import {
   Sidebar,
@@ -118,16 +119,16 @@ export const AppSidebar = () => {
         <Button
           onClick={handleCreateWorkflow}
           disabled={createWorkflow.isPending}
-          className="w-full gap-x-2 h-8"
+          className="w-full gap-x-2 h-8 group-data-[collapsible=icon]:p-0"
           size="sm"
           variant="outline"
         >
           {createWorkflow.isPending ? (
-            <Loader2Icon className="size-4 animate-spin" />
+            <Loader2Icon className="size-4 animate-spin shrink-0" />
           ) : (
-            <PlusIcon className="size-4" />
+            <PlusIcon className="size-4 shrink-0" />
           )}
-          <span>Create Workflow</span>
+          <span className="group-data-[collapsible=icon]:hidden">Create Workflow</span>
         </Button>
       </SidebarHeader>
       <SidebarContent>
@@ -165,54 +166,64 @@ export const AppSidebar = () => {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  className="h-auto p-1.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-accent/50 transition-all duration-200 border border-transparent hover:border-border/50 group-data-[collapsible=icon]:!p-0"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-full border border-border/50 shadow-sm shrink-0">
                     <AvatarImage src={avatarSrc} alt={user?.name ?? "User"} />
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback className="rounded-full bg-primary/10 text-primary font-medium">
                       {mounted ? (user?.name?.charAt(0).toUpperCase() ?? "U") : "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold">{mounted ? (user?.name ?? "User") : "User"}</span>
+                  <div className="flex flex-col flex-1 text-left space-y-0.5 group-data-[collapsible=icon]:hidden ml-1.5 overflow-hidden">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="truncate font-semibold text-sm tracking-tight">{mounted ? (user?.name ?? "User") : "User"}</span>
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {mounted && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase leading-none ${(user as any)?.plan === "PRO" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        <span className={cn(
+                          "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ml-1",
+                          (user as any)?.plan === "PRO" 
+                            ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm" 
+                            : "bg-muted text-muted-foreground border border-border/50"
+                        )}>
                           {(user as any)?.plan === "PRO" ? "PRO" : "FREE"}
                         </span>
                       )}
                     </div>
-                    <span className="truncate text-xs">{mounted ? user?.email : ""}</span>
+                    <span className="truncate text-[11px] text-muted-foreground/80 font-medium">{mounted ? user?.email : "Loading..."}</span>
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  <ChevronsUpDown className="ml-2 size-4 text-muted-foreground/70 group-data-[collapsible=icon]:hidden shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border-border/50 shadow-lg"
                 side="bottom"
                 align="end"
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
+                  <div className="flex items-center gap-3 px-2 py-2.5 text-left text-sm bg-muted/30">
+                    <Avatar className="h-10 w-10 rounded-full border border-border/50 shadow-sm">
                       <AvatarImage src={avatarSrc} alt={user?.name ?? "User"} />
-                      <AvatarFallback className="rounded-lg">
+                      <AvatarFallback className="rounded-full bg-primary/10 text-primary font-medium text-base">
                       {mounted ? (user?.name?.charAt(0).toUpperCase() ?? "U") : "U"}
                     </AvatarFallback>
                     </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate font-semibold">{mounted ? (user?.name ?? "User") : "User"}</span>
+                    <div className="flex flex-col flex-1 text-left space-y-0.5 overflow-hidden">
+                      <div className="flex items-center justify-between w-full">
+                        <span className="truncate font-semibold tracking-tight">{mounted ? (user?.name ?? "User") : "User"}</span>
                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                         {mounted && (
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase leading-none ${(user as any)?.plan === "PRO" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          <span className={cn(
+                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ml-1",
+                            (user as any)?.plan === "PRO" 
+                              ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm" 
+                              : "bg-muted text-muted-foreground border border-border/50"
+                          )}>
                             {(user as any)?.plan === "PRO" ? "PRO" : "FREE"}
                           </span>
                         )}
                       </div>
-                      <span className="truncate text-xs">{mounted ? user?.email : ""}</span>
+                      <span className="truncate text-xs text-muted-foreground/80 font-medium">{mounted ? user?.email : "Loading..."}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

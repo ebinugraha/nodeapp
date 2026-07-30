@@ -226,7 +226,7 @@ export const ExecutionItem = ({
             </div>
 
             {/* Right side - Arrow */}
-            <div className="flex items-center gap-2 h-10 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1 shrink-0">
+            <div className="flex items-center gap-2 h-10 text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-1 shrink-0">
               <ArrowRightIcon className="size-4" />
             </div>
           </div>

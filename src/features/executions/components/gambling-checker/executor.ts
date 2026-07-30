@@ -108,11 +108,54 @@ export const GamblingCheckerExecutor: NodeExecutor<
       };
     }
 
+    // 3. Second layer check with Llama 3.2 via Groq API
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const groqResponse = await ky
+          .post("https://api.groq.com/openai/v1/chat/completions", {
+            headers: {
+              Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+            },
+            json: {
+              model: "llama-3.2-3b-preview",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are a gambling detection assistant. Analyze the user's text and determine if it contains promotions, discussions, or keywords related to online gambling (judi online). Return ONLY a JSON object in this exact format, with no extra text or markdown:\\n{\\n  \"gamblingResult\": {\\n    \"label\": \"JUDI ONLINE\" or \"NON JUDI\",\\n    \"confidence\": <number between 0 and 100>,\\n    \"isGambling\": <true or false>,\\n    \"prediction\": <1 for gambling, 0 for not gambling>,\\n    \"probabilities\": {\\n      \"non_judi\": <number between 0.0 and 1.0>,\\n      \"judi_online\": <number between 0.0 and 1.0>\\n    },\\n    \"processed_text\": \"<the analyzed text>\"\\n  }\\n}"
+                },
+                {
+                  role: "user",
+                  content: commentText
+                }
+              ],
+              temperature: 0.1,
+              response_format: { type: "json_object" }
+            },
+            timeout: 15000,
+          })
+          .json<any>();
+
+        const groqContent = groqResponse.choices?.[0]?.message?.content;
+        if (groqContent) {
+          const parsed = JSON.parse(groqContent);
+          if (parsed && parsed.gamblingResult) {
+            result = {
+              ...result,
+              ...parsed.gamblingResult,
+              original_text: commentText, // always keep original_text
+            };
+          }
+        }
+      } catch (error: any) {
+        console.error("Groq Llama 3.2 Check error:", error);
+      }
+    }
+
     return {
       ...context,
       [data.variableName || "gamblingResult"]: {
         ...result,
-        isGambling: Number(result.prediction) === 1 || String(result.label).toLowerCase().includes("judi_online"),
+        isGambling: Number(result?.prediction) === 1 || String(result?.label).toLowerCase().includes("judi_online") || String(result?.label).toUpperCase() === "JUDI ONLINE",
         timestamp: new Date().toISOString(),
       },
     };

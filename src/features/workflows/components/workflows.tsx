@@ -222,7 +222,7 @@ export const WorkflowItem = ({
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10" 
+                    className="h-8 w-8 transition-opacity hover:text-destructive hover:bg-destructive/10" 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDeleteConfirm(true); }}
                   >
                     <Trash2Icon className="size-4" />
@@ -303,7 +303,7 @@ export const WorkflowItem = ({
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10" 
+                    className="h-8 w-8 transition-opacity hover:text-destructive hover:bg-destructive/10" 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDeleteConfirm(true); }}
                   >
                     <Trash2Icon className="size-4" />

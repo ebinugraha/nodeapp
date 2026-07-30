@@ -26,7 +26,7 @@ import {
 } from "@/features/workflows/hooks/use-workflows";
 import "@xyflow/react/dist/style.css";
 import { NodeType } from "@prisma/client";
-import { useSetAtom } from "jotai";
+import { useSetAtom, useAtomValue } from "jotai";
 import { AlertCircle, Check, Loader2, TerminalSquareIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -34,14 +34,19 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { editorAtom } from "../store/atoms";
+import { editorAtom, requestSaveAtom } from "../store/atoms";
 import { AddNoteButton } from "./add-node-button";
 import { ExecutionButton } from "./execution-button";
 import { EditorExecutionViewer } from "./editor-execution-viewer";
 import { Button } from "@/components/ui/button";
 
 export const EditorLoading = () => {
-  return <LoadingView message="Loading editor..." />;
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-background">
+      <Loader2 className="size-8 animate-spin text-primary" />
+      <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading editor...</p>
+    </div>
+  );
 };
 
 export const EditorError = () => {
@@ -55,6 +60,8 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { theme } = useTheme();
 
   const setWorkflow = useSetAtom(editorAtom);
+  const reactFlowInstance = useAtomValue(editorAtom);
+  const setRequestSave = useSetAtom(requestSaveAtom);
 
   const [nodes, setNodes] = useState<Node[]>(wofkflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(wofkflow.edges);
@@ -67,128 +74,137 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const showMiniMap = settings?.showMiniMap ?? true;
   const compactMode = settings?.compactMode ?? false;
 
-  // Refs for tracking position state
-  const lastSavedPositionsRef = useRef<
-    Record<string, { x: number; y: number }>
-  >({});
   const isSavingRef = useRef(false);
   const logsPanelRef = useRef<ImperativePanelHandle>(null);
   const [isLogsCollapsed, setIsLogsCollapsed] = useState(false);
 
-  // Initialize last saved positions on mount
-  useEffect(() => {
-    const positions: Record<string, { x: number; y: number }> = {};
-    wofkflow.nodes.forEach((node) => {
-      positions[node.id] = node.position;
-    });
-    lastSavedPositionsRef.current = positions;
-    setPositionStatus("saved");
-  }, [wofkflow.nodes]);
+  // Core save function
+  const saveWorkflow = useCallback(
+    async (currentNodes: Node[], currentEdges: Edge[]) => {
+      if (isSavingRef.current) return;
+      
+      const nodesToSave = reactFlowInstance?.getNodes() || currentNodes;
+      const edgesToSave = reactFlowInstance?.getEdges() || currentEdges;
+      
+      isSavingRef.current = true;
+      setPositionStatus("saving");
 
-  // Check if there are position changes
-  const checkPositionChanges = useCallback(() => {
-    const currentPositions: Record<string, { x: number; y: number }> = {};
-    nodes.forEach((node) => {
-      currentPositions[node.id] = node.position;
-    });
-
-    // Compare positions
-    let hasChanges = false;
-    const currentIds = Object.keys(currentPositions);
-    const savedIds = Object.keys(lastSavedPositionsRef.current);
-
-    if (currentIds.length !== savedIds.length) {
-      hasChanges = true;
-    } else {
-      for (const id of currentIds) {
-        const current = currentPositions[id];
-        const saved = lastSavedPositionsRef.current[id];
-        if (!saved || current.x !== saved.x || current.y !== saved.y) {
-          hasChanges = true;
-          break;
-        }
+      try {
+        await updateWorkflow.mutateAsync({
+          id: workflowId,
+          nodes: nodesToSave.map((node) => ({
+            id: node.id,
+            type: node.type || undefined,
+            data: node.data || {},
+            position: node.position,
+          })),
+          edges: edgesToSave.map((edge) => ({
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle || undefined,
+            targetHandle: edge.targetHandle || undefined,
+          })),
+        });
+        setPositionStatus("saved");
+      } catch (error) {
+        console.error("Failed to save workflow:", error);
+        setPositionStatus("changed");
+      } finally {
+        isSavingRef.current = false;
       }
+    },
+    [workflowId, updateWorkflow, reactFlowInstance]
+  );
+
+  // Track latest nodes and edges for debounced save
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const requestSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+    saveTimeoutRef.current = setTimeout(() => {
+      saveWorkflow(nodesRef.current, edgesRef.current);
+    }, 300); // 300ms debounce allows React to apply all node and edge state changes
+  }, [saveWorkflow]);
 
-    setPositionStatus(hasChanges ? "changed" : "saved");
-    return hasChanges;
-  }, [nodes]);
-
-  // Save workflow function
-  const handleSave = useCallback(async () => {
-    if (isSavingRef.current) return;
-    if (positionStatus === "saved") return;
-
-    isSavingRef.current = true;
-    setPositionStatus("saving");
-
-    try {
-      await updateWorkflow.mutateAsync({
-        id: workflowId,
-        nodes: nodes.map((node) => ({
-          id: node.id,
-          type: node.type || undefined,
-          data: node.data || {},
-          position: node.position,
-        })),
-        edges: edges.map((edge) => ({
-          source: edge.source,
-          target: edge.target,
-          sourceHandle: edge.sourceHandle || undefined,
-          targetHandle: edge.targetHandle || undefined,
-        })),
-      });
-
-      // Update last saved positions
-      const positions: Record<string, { x: number; y: number }> = {};
-      nodes.forEach((node) => {
-        positions[node.id] = node.position;
-      });
-      lastSavedPositionsRef.current = positions;
-      setPositionStatus("saved");
-    } catch (error) {
-      console.error("Failed to save workflow:", error);
-      setPositionStatus("changed");
-    } finally {
-      isSavingRef.current = false;
-    }
-  }, [workflowId, nodes, edges, updateWorkflow, positionStatus]);
+  // Expose requestSave globally for child components (like NodeSelector)
+  useEffect(() => {
+    setRequestSave(() => requestSave);
+    return () => setRequestSave(null);
+  }, [requestSave, setRequestSave]);
 
   // Keyboard shortcut for save (Ctrl+S)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        handleSave();
+        saveWorkflow(nodesRef.current, edgesRef.current);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave]);
+  }, [saveWorkflow]);
 
-  // Node change handler - track position changes
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      setNodes((nodesSnapshot) => {
-        const newNodes = applyNodeChanges(changes, nodesSnapshot);
-        // Check for position changes after state update
-        setTimeout(checkPositionChanges, 0);
-        return newNodes;
-      });
+  // Effect to auto-save when node data (configuration) changes
+  const previousDataRef = useRef(nodes.map(n => n.data));
+  useEffect(() => {
+    const currentData = nodes.map(n => n.data);
+    if (JSON.stringify(previousDataRef.current) !== JSON.stringify(currentData)) {
+      requestSave();
+      previousDataRef.current = currentData;
+    }
+  }, [nodes, requestSave]);
+
+  const onNodeDragStop = useCallback(
+    (_: React.MouseEvent, __: Node, ___: Node[]) => {
+      requestSave();
     },
-    [checkPositionChanges],
+    [requestSave]
   );
 
-  // Edge change handler - don't trigger for edges
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
-  }, []);
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const hasAddOrRemove = changes.some(
+        (c) => c.type === "remove" || c.type === "add"
+      );
+      if (hasAddOrRemove) {
+        requestSave();
+      }
+      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot));
+    },
+    [requestSave]
+  );
 
-  // Connection handler - don't trigger for connections
-  const onConnect = useCallback((params: Connection) => {
-    setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot));
-  }, []);
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      const hasAddOrRemove = changes.some(
+        (c) => c.type === "remove" || c.type === "add"
+      );
+      if (hasAddOrRemove) {
+        requestSave();
+      }
+      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
+    },
+    [requestSave]
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      requestSave();
+      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot));
+    },
+    [requestSave]
+  );
 
   const hasManualTrigger = useMemo(() => {
     return nodes.some((node) => node.type === NodeType.MANUAL_TRIGGER);
@@ -248,6 +264,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeComponents}
         colorMode={(theme as "light" | "dark" | "system") || "system"}
         fitView
@@ -306,7 +323,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
             )}
             {positionStatus === "changed" && (
               <button
-                onClick={handleSave}
+                onClick={() => saveWorkflow(nodes, edges)}
                 className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
                 Save

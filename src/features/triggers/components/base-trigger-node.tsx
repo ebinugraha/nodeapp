@@ -99,7 +99,7 @@ export const BaseTriggerNode = memo(
           <BaseNode
             onDoubleClick={onDoubleClick}
             className={cn(
-              "rounded-xl min-w-[140px] max-w-[200px]",
+              "rounded-lg min-w-[110px] max-w-[160px]",
               nodeError &&
                 "border-red-500/50 bg-linear-to-br from-red-50/50 to-card",
               !nodeError && config.border,
@@ -110,7 +110,7 @@ export const BaseTriggerNode = memo(
             {/* Icon header */}
             <div
               className={cn(
-                "relative flex items-center gap-2 px-2 py-1.5 bg-card rounded-t-xl overflow-hidden",
+                "relative flex items-center gap-1.5 px-2 py-1 bg-card rounded-t-lg overflow-hidden",
                 (children || description || nodeError) &&
                   "border-b border-border",
               )}
@@ -127,16 +127,15 @@ export const BaseTriggerNode = memo(
 
               <div
                 className={cn(
-                  "flex items-center justify-center size-6 rounded-md shrink-0 ml-1",
-                  nodeError ? "bg-red-500/10" : config.iconBg,
+                  "flex items-center justify-center size-5 rounded shrink-0 ml-0.5 bg-transparent",
                 )}
               >
                 {typeof Icon === "string" ? (
                   <Image
                     src={Icon}
                     alt={name}
-                    width={14}
-                    height={14}
+                    width={12}
+                    height={12}
                     className="object-contain"
                   />
                 ) : (
@@ -150,7 +149,7 @@ export const BaseTriggerNode = memo(
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-[11px] font-semibold truncate leading-none">
+                  <p className="text-[10px] font-semibold truncate leading-none">
                     {name}
                   </p>
                   {nodeError && (
@@ -164,7 +163,7 @@ export const BaseTriggerNode = memo(
 
             {/* Content area */}
             {(children || description || nodeError) && (
-              <BaseNodeContent className="gap-y-2 pb-2.5 px-2 pt-2">
+              <BaseNodeContent className="gap-y-2 pb-2 px-2 pt-2">
                 {/* Error panel */}
                 {nodeError && (
                   <NodeErrorPanel
@@ -176,7 +175,7 @@ export const BaseTriggerNode = memo(
 
                 {/* Configuration / Description */}
                 {!nodeError && description && !children && (
-                  <div className="text-[10px] text-muted-foreground bg-muted/20 px-2 py-1.5 rounded-md border border-border/50 truncate">
+                  <div className="text-[9px] text-muted-foreground/80 bg-muted/20 px-1.5 py-1 rounded border border-border/50 truncate">
                     {description}
                   </div>
                 )}

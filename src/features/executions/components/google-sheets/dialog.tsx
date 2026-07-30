@@ -255,26 +255,19 @@ function SheetSelector({
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/credentials/${credentialId}`);
-        if (!response.ok) {
-          setError("Gagal mengambil credential");
-          setSheets([]);
-          return;
-        }
-
-        const credential = await response.json();
-        const token = JSON.parse(credential.value).access_token;
-
-        const res = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch("/api/google-sheets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            credentialId,
+            spreadsheetId,
+            action: "get_sheets",
+          }),
+        });
 
         if (!res.ok) {
           const errorData = await res.json();
-          setError(errorData.error?.message || "Gagal mengambil daftar sheet");
+          setError(errorData.error || "Gagal mengambil daftar sheet");
           setSheets([]);
           return;
         }
@@ -307,19 +300,16 @@ function SheetSelector({
 
     const fetchPreview = async () => {
       try {
-        const response = await fetch(`/api/credentials/${credentialId}`);
-        if (!response.ok) return;
-
-        const credential = await response.json();
-        const token = JSON.parse(credential.value).access_token;
-
-        const range = `${value}!A1:Z1`;
-        const res = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch("/api/google-sheets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            credentialId,
+            spreadsheetId,
+            range: value,
+            action: "get_preview",
+          }),
+        });
 
         if (!res.ok) {
           onColumnsChange([]);
@@ -327,22 +317,7 @@ function SheetSelector({
         }
 
         const data = await res.json();
-        const columns = data.values?.[0] || [];
-
-        const sampleRes = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(value)}!A1:Z5`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        let sampleData: string[][] | undefined;
-        if (sampleRes.ok) {
-          const sampleJson = await sampleRes.json();
-          sampleData = sampleJson.values;
-        }
-
-        onColumnsChange(columns, sampleData);
+        onColumnsChange(data.columns || [], data.sampleData);
       } catch (err) {
         console.error("Error fetching preview:", err);
         onColumnsChange([]);
@@ -658,54 +633,16 @@ export const GoogleSheetsDialog = ({
               </div>
 
               <div className="space-y-4 p-4 rounded-xl border border-border bg-card shadow-sm">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  Tindakan
-                </h4>
-
-                <FormField
-                  control={form.control}
-                  name="operation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operasi</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-
-                          <SelectItem value="append">
-                            <div className="flex items-center gap-2">
-                              <span>➕</span>
-                              <span>Tambah Baris (Append Rows)</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <div className="flex items-center gap-2 font-medium mb-4 text-emerald-600 dark:text-emerald-400">
+                  <PlusIcon className="size-4" />
+                  <span>Data yang akan ditambahkan</span>
+                </div>
+                <VisualAppendForm
+                  columns={columns}
+                  value={appendFormData}
+                  onChange={handleAppendFormChange}
+                  nodeId={nodeId}
                 />
-
-                {operation === "append" && (
-                  <div className="mt-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-2 font-medium mb-4 text-emerald-600 dark:text-emerald-400">
-                      <PlusIcon className="size-4" />
-                      <span>Data yang akan ditambahkan</span>
-                    </div>
-                    <VisualAppendForm
-                      columns={columns}
-                      value={appendFormData}
-                      onChange={handleAppendFormChange}
-                      nodeId={nodeId}
-                    />
-                  </div>
-                )}
               </div>
 
               <div className="p-4 rounded-xl border border-border/50 bg-muted/20 space-y-4">
