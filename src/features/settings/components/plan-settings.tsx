@@ -125,7 +125,7 @@ export const PlanSettings = () => {
             <CardHeader>
               <CardTitle>Pro Plan</CardTitle>
               <CardDescription>For serious automation builders</CardDescription>
-              <div className="mt-4 text-3xl font-bold">Rp 99.000 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
+              <div className="mt-4 text-3xl font-bold">Rp 20.000 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
             </CardHeader>
             <CardContent className="flex-1">
               <ul className="space-y-2 text-sm">
@@ -151,7 +151,7 @@ export const PlanSettings = () => {
                   className="w-full"
                   variant="default"
                   onClick={() => {
-                    const amount = 99000;
+                    const amount = 20000;
                     const orderId = session?.user?.id ? `${session.user.id}_${Date.now()}` : `USER_${Date.now()}`;
                     const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/settings` : '';
                     window.open(`${PAKKASIR_CHECKOUT_LINK}/${amount}?order_id=${encodeURIComponent(orderId)}&email=${encodeURIComponent(session?.user?.email || '')}&redirect=${encodeURIComponent(redirectUrl)}`, "_blank");

@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     // Securely verify that the paid amount matches our price
     const paidAmount = parseInt(payload?.amount || payload?.data?.amount || payload?.gross_amount || "0");
-    const PRO_PRICE = 99000;
+    const PRO_PRICE = 20000;
     if (paidAmount < PRO_PRICE) {
       console.error(`Pakkasir Webhook: Security Alert! Payment amount ${paidAmount} is less than required ${PRO_PRICE}`);
       return NextResponse.json({ error: "Invalid payment amount" }, { status: 400 });

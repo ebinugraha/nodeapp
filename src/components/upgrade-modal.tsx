@@ -9,7 +9,7 @@ import { CheckIcon } from "lucide-react";
 export function UpgradeModal() {
   const [open, setOpen] = useState(false);
   const { data: session } = authClient.useSession();
-  
+
   // No client-side constants needed here anymore
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function UpgradeModal() {
             You have reached the limits of the Free plan. Upgrade to PRO to unlock more features!
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid md:grid-cols-2 gap-4 mt-4">
           {/* Free Plan */}
           <div className="flex flex-col border border-muted rounded-lg p-6">
@@ -73,14 +73,13 @@ export function UpgradeModal() {
             </div>
             <h3 className="font-semibold text-lg">Pro Plan</h3>
             <p className="text-sm text-muted-foreground mb-4">For serious automation builders</p>
-            <div className="text-3xl font-bold">Rp 99.000 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
+            <div className="text-3xl font-bold">Rp 20.000 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
             <ul className="space-y-2 text-sm mt-6 mb-6 flex-1">
               <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Unlimited Workflows</li>
               <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Unlimited Nodes</li>
               <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Polling &lt; 60 seconds</li>
               <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Google Sheets Integration</li>
               <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Discord Notifications</li>
-              <li className="flex items-center gap-2"><CheckIcon className="size-4 text-primary" /> Premium Support</li>
             </ul>
             <Button className="w-full mt-auto" onClick={handleUpgrade} disabled={isRedirecting}>
               {isRedirecting ? "Generating checkout..." : "Upgrade Now"}
