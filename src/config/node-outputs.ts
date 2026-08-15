@@ -13,13 +13,7 @@ export const NODE_OUTPUTS: Partial<Record<NodeType, VariableDefinition[]>> = {
     { key: "id", label: "Execution ID" },
     { key: "user", label: "User Info" },
   ],
-  [NodeType.YOUTUBE_VIDEO_COMMENT]: [
-    { key: "text", label: "Comment Text" },
-    { key: "author", label: "Author Name" },
-    { key: "publishedAt", label: "Publish Date" },
-    { key: "commentId", label: "Comment ID" },
-    { key: "raw", label: "Full Raw Data (JSON)" },
-  ],
+
   [NodeType.YOUTUBE_LIVE_CHAT]: [
     { key: "snippet.displayMessage", label: "Full Comment Text" },
     { key: "raw.authorDetails.displayName", label: "Commenter Name" },

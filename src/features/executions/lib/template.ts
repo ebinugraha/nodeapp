@@ -4,7 +4,7 @@ import type { workflowContext } from "@/features/executions/type";
  * Compiles template strings with context variables.
  * Supports patterns like:
  * - {{YOUTUBE_LIVE_CHAT.message}}
- * - {{YOUTUBE_VIDEO_COMMENT.author}}
+
  * - {{variableName.nestedProperty}}
  *
  * Also supports legacy patterns:
@@ -60,7 +60,6 @@ export function compileTemplate(
 
   // Legacy patterns for YouTube comment data
   const commentData =
-    (context.YOUTUBE_VIDEO_COMMENT as Record<string, unknown> | undefined) ||
     (context.YOUTUBE_LIVE_CHAT as Record<string, unknown> | undefined);
 
   if (commentData) {

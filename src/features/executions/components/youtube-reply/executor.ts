@@ -38,8 +38,7 @@ export const YouTubeReplyExecutor: NodeExecutor<YouTubeReplyData> = async ({
       throw new NonRetriableError("No access token available");
     }
 
-    const commentData = (context.YOUTUBE_VIDEO_COMMENT ||
-      context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
+    const commentData = context.YOUTUBE_LIVE_CHAT as YouTubeCommentData | undefined;
 
     if (!commentData) {
       throw new NonRetriableError("No YouTube comment data in context");

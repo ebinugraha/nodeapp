@@ -20,8 +20,7 @@ export const YouTubePinExecutor: NodeExecutor<YouTubePinData> = async ({
   step,
 }) => {
   return step.run("youtube-pin-comment", async () => {
-    const commentData = (context.YOUTUBE_VIDEO_COMMENT ||
-      context.YOUTUBE_LIVE_CHAT) as YouTubeCommentData | undefined;
+    const commentData = context.YOUTUBE_LIVE_CHAT as YouTubeCommentData | undefined;
 
     if (!commentData) {
       throw new NonRetriableError("No YouTube comment data in context");

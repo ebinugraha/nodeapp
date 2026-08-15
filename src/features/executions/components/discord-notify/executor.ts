@@ -58,9 +58,8 @@ export const DiscordNotifyExecutor: NodeExecutor<DiscordNotifyData> = async ({
       };
 
       // Add thumbnail for YouTube comments
-      const hasYouTubeData =
-        context.YOUTUBE_VIDEO_COMMENT || context.YOUTUBE_LIVE_CHAT;
-      if (hasYouTubeData) {
+      const commentData = context.YOUTUBE_LIVE_CHAT;
+      if (commentData) {
         embed.thumbnail = {
           url: "https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/yt_social_square_rgb.png",
         };

@@ -64,7 +64,7 @@ export const YouTubeReplyDialog = ({
       credentialId: defaultValues.credentialId || "",
       replyTemplate:
         defaultValues.replyTemplate ||
-        "Thank you for your comment, {{YOUTUBE_VIDEO_COMMENT.author}}!",
+        "Thank you for your comment, {{YOUTUBE_LIVE_CHAT.author}}!",
       variableName: defaultValues.variableName || "replyResult",
       delaySeconds: defaultValues.delaySeconds || 0,
     },
@@ -76,7 +76,7 @@ export const YouTubeReplyDialog = ({
         credentialId: defaultValues.credentialId || "",
         replyTemplate:
           defaultValues.replyTemplate ||
-          "Thank you for your comment, {{YOUTUBE_VIDEO_COMMENT.author}}!",
+          "Thank you for your comment, {{YOUTUBE_LIVE_CHAT.author}}!",
         variableName: defaultValues.variableName || "replyResult",
         delaySeconds: defaultValues.delaySeconds || 0,
       });
@@ -143,15 +143,13 @@ export const YouTubeReplyDialog = ({
                   <FormLabel>Reply Template</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Thank you for your comment, {{YOUTUBE_VIDEO_COMMENT.author}}!"
+                      placeholder="Thank you for your comment, {{YOUTUBE_LIVE_CHAT.author}}!"
                       rows={4}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Available variables: {"{{YOUTUBE_VIDEO_COMMENT.author}}"},{" "}
-                    {"{{YOUTUBE_VIDEO_COMMENT.text}}"},{" "}
-                    {"{{YOUTUBE_LIVE_CHAT.author}}"},{" "}
+                    Available variables: {"{{YOUTUBE_LIVE_CHAT.author}}"},{" "}
                     {"{{YOUTUBE_LIVE_CHAT.message}}"}
                   </FormDescription>
                   <FormMessage />

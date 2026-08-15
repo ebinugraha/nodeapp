@@ -1,7 +1,7 @@
 import { NodeType } from "@prisma/client";
 import { manualTriggerExecutor } from "@/features/triggers/components/manual-trigger/executor";
 import { YoutubeLiveChatExecutor } from "@/features/triggers/components/youtube-live-chat/executor";
-import { YoutubeVideoCommentExecutor } from "@/features/triggers/components/youtube-video-comment/executor";
+
 import { DecisionExecutor } from "../components/decision/executor";
 import { DiscordNotifyExecutor } from "../components/discord-notify/executor";
 import { GamblingCheckerExecutor } from "../components/gambling-checker/executor";
@@ -26,7 +26,6 @@ export const executorRegister: Record<NodeType, NodeExecutor> = {
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatExecutor,
   [NodeType.DECISION]: DecisionExecutor as NodeExecutor,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteExecutor,
-  [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentExecutor,
   [NodeType.GOOGLE_SHEETS]: GoogleSheetsExecutor as NodeExecutor,
 
   // New YouTube Moderation Actions

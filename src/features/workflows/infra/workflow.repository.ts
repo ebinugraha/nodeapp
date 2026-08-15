@@ -44,6 +44,13 @@ export class WorkflowRepository {
     });
 
     return await prisma.$transaction(async (tx) => {
+      // Get all valid credential IDs for this user to prevent foreign key constraint violations
+      const userCredentials = await tx.credential.findMany({
+        where: { userId },
+        select: { id: true },
+      });
+      const validCredentialIds = new Set(userCredentials.map((c) => c.id));
+
       // hapus semua node terlebih dahulu
       await tx.node.deleteMany({
         where: { workflowId: id },
@@ -58,6 +65,10 @@ export class WorkflowRepository {
           position: node.position,
           data: node.data || {},
           workflowId: id,
+          credentialId:
+            node.data?.credentialId && validCredentialIds.has(node.data.credentialId)
+              ? node.data.credentialId
+              : null,
         })),
       });
 

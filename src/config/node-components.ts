@@ -16,7 +16,6 @@ import {
 import { YoutubeDeleteNode } from "@/features/executions/components/youtube-delete/node";
 import { ManualTriggerNode } from "@/features/triggers/components/manual-trigger/node";
 import { YoutubeLiveChatNode } from "@/features/triggers/components/youtube-live-chat/node";
-import { YoutubeVideoCommentNode } from "@/features/triggers/components/youtube-video-comment/node";
 
 export const nodeComponents = {
   [NodeType.INTITAL]: InitialNode,
@@ -25,7 +24,6 @@ export const nodeComponents = {
   [NodeType.YOUTUBE_LIVE_CHAT]: YoutubeLiveChatNode,
   [NodeType.DECISION]: DecisionNode,
   [NodeType.YOUTUBE_DELETE_CHAT]: YoutubeDeleteNode,
-  [NodeType.YOUTUBE_VIDEO_COMMENT]: YoutubeVideoCommentNode,
   [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
   // New Moderation Nodes
   [NodeType.YOUTUBE_REPLY]: YouTubeReplyNode,

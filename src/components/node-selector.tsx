@@ -157,13 +157,7 @@ const triggerNodes: NodeTypeOption[] = [
     icon: "/logos/youtube.svg",
     category: "trigger",
   },
-  {
-    type: NodeType.YOUTUBE_VIDEO_COMMENT,
-    label: "YouTube Video Comment",
-    description: "Trigger workflow on new video comments",
-    icon: "/logos/youtube.svg",
-    category: "trigger",
-  },
+
 ];
 
 const moderationNodes: NodeTypeOption[] = [
@@ -275,7 +269,6 @@ const TEMPLATE_CATEGORY_CONFIG = {
 const TRIGGER_NODE_TYPES: NodeType[] = [
   NodeType.MANUAL_TRIGGER,
   NodeType.YOUTUBE_LIVE_CHAT,
-  NodeType.YOUTUBE_VIDEO_COMMENT,
 ];
 
 import { authClient } from "@/lib/auth-client";
@@ -734,7 +727,6 @@ function NodeItem({
   const triggerLabels: Partial<Record<NodeType, string>> = {
     [NodeType.MANUAL_TRIGGER]: "Manual Trigger",
     [NodeType.YOUTUBE_LIVE_CHAT]: "YouTube Live Chat",
-    [NodeType.YOUTUBE_VIDEO_COMMENT]: "YouTube Video Comment",
   };
 
   // Generate helpful message based on existing trigger

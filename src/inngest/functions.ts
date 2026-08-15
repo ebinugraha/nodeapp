@@ -374,9 +374,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     // Skenario A: Stream Offline
     if ("isOffline" in result && result.isOffline) {
       await step.sleep("wait-offline", 60 * 1000);
-      await step.sendEvent("continue-polling", {
-        name: "trigger/youtube.poll",
-        data: { ...event.data, pageToken: null, liveChatId: null },
+      await step.run("continue-polling-offline", async () => {
+        await inngest.send({
+          name: "trigger/youtube.poll",
+          data: { ...event.data, pageToken: null, liveChatId: null, _timestamp: Date.now() },
+        });
       });
       return { status: "stream-offline-retrying", newMessages: 0 };
     }
@@ -384,9 +386,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     // Skenario B: Token Error / Reset
     if ("reset" in result && result.reset) {
       await step.sleep("wait-reset", 5000);
-      await step.sendEvent("retry-reset", {
-        name: "trigger/youtube.poll",
-        data: { ...event.data, pageToken: null, liveChatId: null, _timestamp: Date.now() },
+      await step.run("retry-reset", async () => {
+        await inngest.send({
+          name: "trigger/youtube.poll",
+          data: { ...event.data, pageToken: null, liveChatId: null, _timestamp: Date.now() },
+        });
       });
       return { status: "resetting-state", newMessages: 0 };
     }
@@ -394,9 +398,11 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     // Skenario Rate Limit
     if ("rateLimit" in result && result.rateLimit) {
       await step.sleep("wait-ratelimit", 15 * 1000);
-      await step.sendEvent("retry-ratelimit", {
-        name: "trigger/youtube.poll",
-        data: { ...event.data, _timestamp: Date.now() },
+      await step.run("retry-ratelimit", async () => {
+        await inngest.send({
+          name: "trigger/youtube.poll",
+          data: { ...event.data, _timestamp: Date.now() },
+        });
       });
       return { status: "rate-limited", newMessages: 0 };
     }
@@ -513,178 +519,22 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
     await step.sleep("wait-interval", nextInterval * 1000);
 
-    await step.sendEvent("continue-polling", {
-      name: "trigger/youtube.poll",
-      data: {
-        nodeId,
-        videoId,
-        pollingInterval: nextInterval,
-        pageToken: successResult.nextPageToken,
-        liveChatId: successResult.activeLiveChatId,
-        _timestamp: Date.now(),
-      },
+    await step.run("continue-polling", async () => {
+      await inngest.send({
+        name: "trigger/youtube.poll",
+        data: {
+          nodeId,
+          videoId,
+          pollingInterval: nextInterval,
+          pageToken: successResult.nextPageToken,
+          liveChatId: successResult.activeLiveChatId,
+          _timestamp: Date.now(),
+        },
+      });
     });
 
     return { status: "polling-continued", newMessages: newMessages.length };
   },
 );
 
-// --- FUNCTION 3: POLL YOUTUBE VIDEO COMMENTS (OPTIMIZED) ---
-export const pollYoutubeVideoComments = inngest.createFunction(
-  {
-    id: "poll-youtube-video-comments",
-    triggers: [{ event: "trigger/youtube-video.poll" }],
-  },
-  async ({ event, step }) => {
-    const { nodeId, videoId, pollingInterval = 60, credentialId } = event.data;
 
-    // 1. Cek Status & CREDENTIAL (OAUTH)
-    const { isActive, workflowId, credential, userPlan } = await step.run(
-      "check-status",
-      async () => {
-        const node = await prisma.node.findUnique({
-          where: { id: nodeId },
-          select: {
-            data: true,
-            workflowId: true,
-            credential: true,
-            workflow: {
-              select: {
-                user: {
-                  select: { plan: true },
-                },
-              },
-            },
-          },
-        });
-        if (!node)
-          return { isActive: false, workflowId: null, credential: null, userPlan: "FREE" };
-        const data = node.data as { isActive?: boolean };
-        return {
-          isActive: data?.isActive ?? false,
-          workflowId: node.workflowId,
-          credential: node.credential,
-          userPlan: node.workflow.user.plan,
-        };
-      },
-    );
-
-    if (!isActive || !workflowId || !credential) {
-      return { status: "stopped" };
-    }
-
-    // 2. Parse Token
-    const accessToken = await step.run("get-access-token", async () => {
-      return await getOrRefreshAccessToken(credential.id);
-    });
-
-    const lastTimestamp = await step.run("load-timestamp", async () => {
-      return (event.data.lastTimestamp ?? null) as string | null;
-    });
-
-    // 3. Fetch Comments VIA TOKEN
-    const comments = await step.run("fetch-comments", async () => {
-      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&maxResults=20`;
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
-        },
-      });
-
-      const data = await res.json();
-      if (data.error)
-        throw new Error(`YouTube API Error: ${data.error.message}`);
-      return data.items || [];
-    });
-
-    // OPTIMASI: Track quota HANYA jika ada comments
-    if (comments.length > 0) {
-      await step.run("track-quota", async () => {
-        await trackYoutubeQuota(
-          credential.id,
-          "comments.list",
-          credential.userId,
-        );
-      });
-    }
-
-    // 4. Filter Komentar Baru
-    const newComments = comments.filter((item: any) => {
-      const publishedAt = item.snippet.topLevelComment.snippet.publishedAt;
-      if (!lastTimestamp) return false; // Skip run pertama agar tidak spam
-      return publishedAt > lastTimestamp;
-    });
-
-    // 5. OPTIMASI: Adaptive polling interval
-    let nextInterval: number;
-    if (newComments.length === 0) {
-      // Tidak ada komentar baru - tidur lebih lama
-      nextInterval = Math.min(pollingInterval * 2, 300); // Maks 5 menit
-    } else if (newComments.length > 3) {
-      // Banyak komentar baru - polling lebih sering
-      nextInterval = Math.max(30, pollingInterval / 2);
-    } else {
-      // Normal
-      nextInterval = pollingInterval;
-    }
-
-    // Enforce minimum polling interval for FREE plan users
-    if (userPlan === "FREE") {
-      nextInterval = Math.max(60, nextInterval);
-    }
-
-    // 6. Trigger Workflow
-    if (newComments.length > 0) {
-      const sortedNewComments = newComments.sort(
-        (a: any, b: any) =>
-          new Date(a.snippet.topLevelComment.snippet.publishedAt).getTime() -
-          new Date(b.snippet.topLevelComment.snippet.publishedAt).getTime(),
-      );
-
-      for (const comment of sortedNewComments) {
-        const snippet = comment.snippet.topLevelComment.snippet;
-        const executionId = createId();
-        await step.sendEvent("trigger-workflow", {
-          name: "workflows/execute.workflow",
-          data: {
-            workflowId,
-            executionId,
-            initialData: {
-              YOUTUBE_VIDEO_COMMENT: {
-                commentId: comment.id,
-                text: snippet.textDisplay,
-                author: snippet.authorDisplayName,
-                publishedAt: snippet.publishedAt,
-                raw: comment,
-              },
-            },
-          },
-          id: executionId,
-        });
-      }
-    }
-
-    // 7. Next Poll dengan adaptive interval
-    const newestCommentTime =
-      comments.length > 0
-        ? comments[0].snippet.topLevelComment.snippet.publishedAt
-        : lastTimestamp;
-    const nextTimestamp = lastTimestamp || new Date().toISOString();
-
-    await step.sleep("wait-interval", nextInterval * 1000);
-    await step.sendEvent("continue-polling", {
-      name: "trigger/youtube-video.poll",
-      data: {
-        nodeId,
-        videoId,
-        pollingInterval: nextInterval,
-        lastTimestamp: newestCommentTime || nextTimestamp,
-        _timestamp: Date.now(),
-      },
-    });
-
-    return { processed: newComments.length };
-  },
-);
