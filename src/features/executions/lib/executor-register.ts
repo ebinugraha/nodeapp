@@ -17,7 +17,7 @@ import { YouTubeTimeoutExecutor } from "../components/youtube-timeout/executor";
 import type { NodeExecutor } from "../type";
 
 // Cast all executors to generic NodeExecutor type
-export const executorRegister: Record<NodeType, NodeExecutor> = {
+export const executorRegister: Partial<Record<NodeType, NodeExecutor>> = {
   // Existing executors
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
   [NodeType.INTITAL]: manualTriggerExecutor,
