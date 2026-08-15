@@ -235,7 +235,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       event.data;
 
     // 1. Cek status node & AMBIL CREDENTIAL (OAUTH)
-    const { isActive, workflowId, credential, dbPollingInterval } =
+    const { isActive, workflowId, credential, dbPollingInterval, userPlan } =
       await step.run("check-node-status", async () => {
         const node = await prisma.node.findUnique({
           where: { id: nodeId },
@@ -279,14 +279,12 @@ export const pollYoutubeLiveChat = inngest.createFunction(
       return { status: "stopped" };
     }
 
-    // 2. Parse Token User
     // 2. GET VALID TOKEN (Auto Refresh Logic Here)
     const accessToken = await step.run("get-access-token", async () => {
       return await getOrRefreshAccessToken(credential.id);
     });
 
     // 3. Fetch YouTube messages
-    // Kita definisikan tipe return agar TypeScript paham
     const result = await step.run("fetch-youtube-messages", async () => {
       const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -337,7 +335,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
       // Handle Token Expired / Chat Reset
       if (!chatRes.ok) {
-        if ([400, 404, 410].includes(chatRes.status)) {
+        if ([400, 403, 404, 410].includes(chatRes.status)) {
           return { reset: true };
         }
         throw new Error(
@@ -479,10 +477,13 @@ export const pollYoutubeLiveChat = inngest.createFunction(
     }
 
     // Gunakan polling interval dari database jika ada, jika tidak, gunakan dari event atau default 20 detik
-    let nextInterval = dbPollingInterval ?? pollingInterval ?? 20;
+    const userInterval = dbPollingInterval ?? pollingInterval ?? 20;
+
+    // Mematuhi suggested interval dari YouTube untuk mencegah 403 Rate Limit
+    let nextInterval = Math.max(userInterval, successResult.suggestedInterval || 5);
 
     // Enforce 60s minimum polling interval for FREE plan
-    if (successResult.userPlan === "FREE") {
+    if (userPlan === "FREE") {
       nextInterval = Math.max(60, nextInterval);
     }
 
