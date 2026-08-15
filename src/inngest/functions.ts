@@ -333,17 +333,30 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
       const chatRes = await fetch(url.toString(), { headers });
 
+      let data: any = null;
+      try {
+        data = await chatRes.json();
+      } catch (e) {
+        // ignore
+      }
+
       // Handle Token Expired / Chat Reset
       if (!chatRes.ok) {
-        if ([400, 403, 404, 410].includes(chatRes.status)) {
+        const reason = data?.error?.errors?.[0]?.reason;
+        
+        if (reason === "rateLimitExceeded") {
+          return { rateLimit: true };
+        }
+        if (reason === "liveChatEnded" || chatRes.status === 403) {
+          return { isOffline: true };
+        }
+        if ([400, 404, 410].includes(chatRes.status)) {
           return { reset: true };
         }
         throw new Error(
-          `YouTube API Error: ${chatRes.status} ${chatRes.statusText}`,
+          `YouTube API Error: ${chatRes.status} ${data?.error?.message || chatRes.statusText}`,
         );
       }
-
-      const data = await chatRes.json();
 
       return {
         isSuccess: true, // Marker untuk TypeScript
@@ -370,11 +383,22 @@ export const pollYoutubeLiveChat = inngest.createFunction(
 
     // Skenario B: Token Error / Reset
     if ("reset" in result && result.reset) {
+      await step.sleep("wait-reset", 5000);
       await step.sendEvent("retry-reset", {
         name: "trigger/youtube.poll",
-        data: { ...event.data, pageToken: null, liveChatId: null },
+        data: { ...event.data, pageToken: null, liveChatId: null, _timestamp: Date.now() },
       });
       return { status: "resetting-state", newMessages: 0 };
+    }
+
+    // Skenario Rate Limit
+    if ("rateLimit" in result && result.rateLimit) {
+      await step.sleep("wait-ratelimit", 15 * 1000);
+      await step.sendEvent("retry-ratelimit", {
+        name: "trigger/youtube.poll",
+        data: { ...event.data, _timestamp: Date.now() },
+      });
+      return { status: "rate-limited", newMessages: 0 };
     }
 
     // Skenario C: Sukses (Normal Flow)
@@ -497,6 +521,7 @@ export const pollYoutubeLiveChat = inngest.createFunction(
         pollingInterval: nextInterval,
         pageToken: successResult.nextPageToken,
         liveChatId: successResult.activeLiveChatId,
+        _timestamp: Date.now(),
       },
     });
 
@@ -656,6 +681,7 @@ export const pollYoutubeVideoComments = inngest.createFunction(
         videoId,
         pollingInterval: nextInterval,
         lastTimestamp: newestCommentTime || nextTimestamp,
+        _timestamp: Date.now(),
       },
     });
 
