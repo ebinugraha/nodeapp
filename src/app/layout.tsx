@@ -19,10 +19,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cleen Chat",
-  description: "YouTube Moderation & Live Chat automation platform",
+  title: {
+    default: "CleenChat - Deteksi & Hapus Komentar Judi Online Otomatis",
+    template: "%s | CleenChat",
+  },
+  description: "Platform moderasi YouTube Live Chat otomatis berbasis DAG. Deteksi kata kunci judi online, slot, dan spam secara real-time tanpa perlu coding.",
+  keywords: ["moderasi youtube", "bot hapus komentar judi", "auto delete chat youtube", "bot youtube live", "sistem DAG moderasi"],
+  authors: [{ name: "CleenChat Team" }],
   icons: {
     icon: "/logos/logo.svg",
+  },
+  openGraph: {
+    type: "website",
+    title: "CleenChat - Deteksi Judi Online",
+    description: "Platform otomatis untuk menghapus komentar spam dan judi di YouTube Live berbasis AI.",
+    images: ["/og-image.png"],
+    url: "https://cleenchat.my.id",
+    siteName: "CleenChat",
   },
 };
 
